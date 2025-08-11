@@ -2,7 +2,7 @@ Package: ScPCAr
 Title: Interact with the ScPCA Portal API
 Version: 0.0.0.9000
 Authors@R:
-    person("Joshua", "Shapiro", , "josh.shappiro@ccdatalab.org", role = c("aut", "cre"))
+    person("Joshua", "Shapiro", , "josh.shapiro@ccdatalab.org", role = c("aut", "cre"))
 Description: An R package to interact with the Single-Cell Pediatric Cancer Atlas Portal API.
 License: BSD_3_clause + file LICENSE
 Encoding: UTF-8
