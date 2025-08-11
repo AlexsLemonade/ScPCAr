@@ -1,0 +1,5 @@
+^LICENSE\.md$
+^ScPCAr\.Rproj$
+^\.Rproj\.user$
+^\.pre-commit-config\.yaml$
+^air\.toml$
