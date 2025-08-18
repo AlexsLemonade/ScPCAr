@@ -3,3 +3,5 @@
 ^\.Rproj\.user$
 ^\.pre-commit-config\.yaml$
 ^air\.toml$
+^renv$
+^renv\.lock$
