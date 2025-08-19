@@ -1,6 +1,7 @@
 ^LICENSE\.md$
 ^ScPCAr\.Rproj$
 ^\.Rproj\.user$
+^\.github$
 ^\.pre-commit-config\.yaml$
 ^air\.toml$
 ^renv$
