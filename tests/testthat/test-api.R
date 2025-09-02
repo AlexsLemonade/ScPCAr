@@ -45,7 +45,7 @@ test_that("scpca_request handles authentication token", {
   # Test with authentication token
   req <- scpca_request("projects", auth_token = "testtoken123")
 
-  expect_equal(req$headers$`api-key`, "testtoken123")
+  expect_equal(as.character(req$headers$`api-key`), "testtoken123")
 })
 
 test_that("scpca_request without authentication token behaves as expected", {
