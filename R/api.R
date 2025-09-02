@@ -11,25 +11,25 @@ USER_AGENT <- "ScPCA R API Client" # nolint
 #'
 #' @import httr2
 #'
-#' @returns a httr2 request object (invisibly)
+#' @returns a httr2 request object
 scpca_request <- function(resource, body = list(), auth_token = "", ...) {
   stopifnot(
     "resource must be a non-empty string" = is.character(resource) && nchar(resource) > 0,
     "body must be a named list" = is.list(body) && (length(body) == 0 || !is.null(names(body)))
   )
 
-  call <- httr2::request(API_BASE) |>
+  req <- httr2::request(API_BASE) |>
     req_user_agent(USER_AGENT) |>
     req_url_path_append(resource) |>
     req_url_query(...)
 
-  if (nchar(auth_token) > 0) {
-    call <- call |> req_headers_redacted(`api-key` = auth_token)
-  }
-
   if (length(body) > 0) {
-    call <- call |> req_body_json(body)
+    req <- req |> req_body_json(body)
   }
 
-  invisible(call)
+  if (nchar(auth_token) > 0) {
+    req <- req |> req_headers_redacted(`api-key` = auth_token)
+  }
+
+  req
 }

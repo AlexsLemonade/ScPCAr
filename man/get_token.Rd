@@ -12,7 +12,7 @@ get_token(email, agree = FALSE)
 \item{agree}{A logical indicating whether the user agrees to the terms of service}
 }
 \value{
-A string containing the authorization token (invisibly)
+A string containing the authorization token
 }
 \description{
 Get an authorization token from the ScPCA API

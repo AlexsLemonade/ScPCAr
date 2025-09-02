@@ -16,7 +16,7 @@ scpca_request(resource, body = list(), auth_token = "", ...)
 \item{...}{additional query parameters to include in the request}
 }
 \value{
-a httr2 request object (invisibly)
+a httr2 request object
 }
 \description{
 Base request object for ScPCA API

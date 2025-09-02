@@ -3,7 +3,7 @@
 #' @param email The user's email address
 #' @param agree A logical indicating whether the user agrees to the terms of service
 #'
-#' @returns A string containing the authorization token (invisibly)
+#' @returns A string containing the authorization token
 #'
 #' @import httr2
 #'
@@ -19,5 +19,5 @@ get_token <- function(email, agree = FALSE) {
   response <- req_perform(req) |>
     resp_body_json(simplifyVector = TRUE)
 
-  invisible(response$id)
+  response$id
 }
