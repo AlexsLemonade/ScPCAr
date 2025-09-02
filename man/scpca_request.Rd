@@ -4,17 +4,17 @@
 \alias{scpca_request}
 \title{Base request object for ScPCA API}
 \usage{
-scpca_request(resource, limit = 20, offset = 0)
+scpca_request(resource, auth_token = "", ...)
 }
 \arguments{
 \item{resource}{API resource to query, e.g. "projects"}
 
-\item{limit}{number of records to return (default 20)}
+\item{auth_token}{optional API authentication token}
 
-\item{offset}{number of records to skip (default 0)}
+\item{...}{additional query parameters to include in the request}
 }
 \value{
-a httr2 request object
+a httr2 request object (invisibly)
 }
 \description{
 Base request object for ScPCA API
