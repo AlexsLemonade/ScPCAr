@@ -13,22 +13,22 @@ test_that("get_auth validates input parameters", {
   # Test email validation - invalid emails should error
   expect_error(
     get_auth("invalid-email", TRUE),
-    "Invalid email address"
+    "Invalid email address."
   )
 
   expect_error(
     get_auth("@example.com", TRUE),
-    "Invalid email address"
+    "Invalid email address."
   )
 
   expect_error(
     get_auth("test@", TRUE),
-    "Invalid email address"
+    "Invalid email address."
   )
 
   expect_error(
     get_auth("test.example.com", TRUE),
-    "Invalid email address"
+    "Invalid email address."
   )
 })
 

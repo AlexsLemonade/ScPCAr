@@ -17,7 +17,7 @@
 get_auth <- function(email, agree = FALSE) {
   stopifnot(
     "You must agree to the terms of service to get a token." = agree,
-    "Invalid email address" = grepl("^[^@]+@[^@]+\\.[^@]+$", email)
+    "Invalid email address." = grepl("^[^@]+@[^@]+\\.[^@]+$", email)
   )
 
   req <- scpca_request("tokens", body = list(email = email, is_activated = agree))
