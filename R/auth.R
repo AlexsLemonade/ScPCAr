@@ -7,6 +7,12 @@
 #'
 #' @import httr2
 #'
+#' @examples
+#' \dontrun{
+#' # Get a token (make sure to agree to the terms of service)
+#' auth_token <- get_auth("me@email.net", agree = TRUE)
+#' }
+#'
 #' @export
 get_auth <- function(email, agree = FALSE) {
   stopifnot(
