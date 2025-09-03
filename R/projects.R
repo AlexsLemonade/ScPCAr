@@ -23,3 +23,24 @@ scpca_projects <- function(simplify = TRUE) {
 
   df
 }
+
+get_project_samples <- function(project_id, simplify = TRUE) {
+  stopifnot(
+    "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id)
+  )
+
+  response <- scpca_request(paste0("projects/", project_id)) |>
+    req_perform()
+
+  df <- resp_body_json(response, simplifyVector = TRUE)$samples |>
+    as.data.frame()
+
+  if (simplify) {
+    # todo: pull out additional metadata
+    df <- df |> dplyr::select(where(\(col) !is.list(col)))
+  }
+
+  # reorder and return
+  df |>
+    dplyr::relocate(sample_id = scpca_id, project_id = project)
+}
