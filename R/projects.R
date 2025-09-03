@@ -6,20 +6,14 @@
 #'
 #' @export
 scpca_projects <- function() {
-  req <- scpca_request("projects") |>
-    req_perform()
+  responses <- scpca_request("projects") |>
+    req_perform_iterative(iterate_scpca)
 
-  result <- resp_body_json(req, simplifyVector = TRUE)
-  df <- result$results
-
-  # If there are more results, continue fetching them
-  while (!is.null(result[["next"]])) {
-    req <- httr2::request(result[["next"]]) |>
-      req_user_agent(USER_AGENT) |>
-      req_perform()
-    result <- httr2::resp_body_json(req, simplifyVector = TRUE)
-    df <- rbind(df, result$results)
-  }
+  df <- responses |>
+    resps_data(\(resp) {
+      resp_body_json(resp, simplifyVector = TRUE)$results |>
+        as.data.frame()
+    })
 
   df
 }

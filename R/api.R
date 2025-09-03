@@ -33,3 +33,23 @@ scpca_request <- function(resource, body = list(), auth_token = "", ...) {
 
   req
 }
+
+#' Helper function for iterating through paginated ScPCA API results
+#'
+#' @param resp httr2 response object
+#' @param req httr2 request object
+#'
+#' @returns updated httr2 request object for the next page, or NULL if there are no more pages
+#'
+#' @import httr2
+iterate_scpca <- function(resp, req) {
+  body <- resp_body_json(resp)
+  url <- body[["next"]]
+  if (is.null(url)) {
+    return(NULL)
+  }
+  # calculate total pages and signal to req_perform_iterative
+  pages <- ceiling(body[["count"]] / length(body[["results"]]))
+  signal_total_pages(pages)
+  req |> req_url(url)
+}
