@@ -8,7 +8,7 @@
 #' @import httr2
 #'
 #' @export
-get_token <- function(email, agree = FALSE) {
+get_auth <- function(email, agree = FALSE) {
   stopifnot(
     "You must agree to the terms of service to get a token." = agree,
     "Invalid email address" = grepl("^[^@]+@[^@]+\\.[^@]+$", email)

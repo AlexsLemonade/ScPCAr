@@ -1,38 +1,38 @@
-test_that("get_token validates input parameters", {
+test_that("get_auth validates input parameters", {
   # Test that agree parameter must be TRUE
   expect_error(
-    get_token("test@example.com", FALSE),
+    get_auth("test@example.com", FALSE),
     "You must agree to the terms of service to get a token."
   )
 
   expect_error(
-    get_token("test@example.com", agree = FALSE),
+    get_auth("test@example.com", agree = FALSE),
     "You must agree to the terms of service to get a token."
   )
 
   # Test email validation - invalid emails should error
   expect_error(
-    get_token("invalid-email", TRUE),
+    get_auth("invalid-email", TRUE),
     "Invalid email address"
   )
 
   expect_error(
-    get_token("@example.com", TRUE),
+    get_auth("@example.com", TRUE),
     "Invalid email address"
   )
 
   expect_error(
-    get_token("test@", TRUE),
+    get_auth("test@", TRUE),
     "Invalid email address"
   )
 
   expect_error(
-    get_token("test.example.com", TRUE),
+    get_auth("test.example.com", TRUE),
     "Invalid email address"
   )
 })
 
-test_that("get_token accepts valid email formats", {
+test_that("get_auth accepts valid email formats", {
   # Mock httr2 functions to avoid actual API calls
   local_mocked_bindings(
     # nolint start
@@ -46,12 +46,12 @@ test_that("get_token accepts valid email formats", {
   )
 
   # These should all pass validation
-  expect_no_error(get_token("user@example.com", TRUE))
-  expect_no_error(get_token("test.user+tag@subdomain.example.org", TRUE))
-  expect_no_error(get_token("user123@company-name.co.uk", TRUE))
+  expect_no_error(get_auth("user@example.com", TRUE))
+  expect_no_error(get_auth("test.user+tag@subdomain.example.org", TRUE))
+  expect_no_error(get_auth("user123@company-name.co.uk", TRUE))
 })
 
-test_that("get_token makes correct API request", {
+test_that("get_auth makes correct API request", {
   # Mock the httr2 functions to capture the request details
   captured_request <- NULL
   local_mocked_bindings(
@@ -65,7 +65,7 @@ test_that("get_token makes correct API request", {
     # nolint end
   )
 
-  result <- get_token("test@example.com", TRUE)
+  result <- get_auth("test@example.com", TRUE)
 
   # Check that the function returns the token ID
   expect_equal(result, "mock-token-123")
