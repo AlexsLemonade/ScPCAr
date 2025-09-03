@@ -4,7 +4,10 @@
 \alias{scpca_projects}
 \title{Get data frame of all ScPCA projects}
 \usage{
-scpca_projects()
+scpca_projects(simplify = TRUE)
+}
+\arguments{
+\item{simplify}{A logical indicating whether to simplify the resulting data frame by removing list columns. Default is TRUE.}
 }
 \value{
 a data frame of project information from the ScPCA API.
