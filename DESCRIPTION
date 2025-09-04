@@ -12,7 +12,10 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Imports:
+    curl,
     dplyr,
     glue,
     httr2 (>= 1.2.0),
+    purrr,
+    stringr,
     tidyr
