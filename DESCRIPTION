@@ -13,4 +13,6 @@ Suggests:
 Config/testthat/edition: 3
 Imports:
     dplyr,
-    httr2 (>= 1.2.0)
+    glue,
+    httr2 (>= 1.2.0),
+    tidyr
