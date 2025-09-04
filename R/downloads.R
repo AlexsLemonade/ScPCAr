@@ -57,7 +57,7 @@ download_sample <- function(sample_id, auth_token, path = ".", format = "sce") {
   download_urls <- req_perform_parallel(file_requests) |>
     resps_data(\(resp) resp_body_json(resp)$download_url)
 
-  file_paths <- purrr::map(download_urls, \(url) {
+  file_paths <- purrr::map_chr(download_urls, \(url) {
     base_dir <- extract_download_basename(url)
     download_dir <- file.path(path, base_dir)
 
@@ -67,10 +67,10 @@ download_sample <- function(sample_id, auth_token, path = ".", format = "sce") {
     message(glue::glue("Downloading {base_dir} ..."))
     curl::curl_download(url, file_temp, quiet = FALSE)
 
-    message(glue::glue("Unzipping {base_dir} to {download_dir}..."))
+    message(glue::glue("Unzipping to {download_dir}..."))
     unzip(file_temp, exdir = download_dir)
   })
-  file_paths
+  invisible(file_paths)
 }
 
 #' Get the base filename from a ScPCA portal download URL
