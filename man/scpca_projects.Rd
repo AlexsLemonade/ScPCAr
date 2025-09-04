@@ -7,11 +7,21 @@
 scpca_projects(simplify = TRUE)
 }
 \arguments{
-\item{simplify}{A logical indicating whether to simplify the resulting data frame by removing list columns. Default is TRUE.}
+\item{simplify}{A logical indicating whether to simplify the resulting data frame
+by removing list columns. Default is TRUE.}
 }
 \value{
 a data frame of project information from the ScPCA API.
 }
 \description{
 Get data frame of all ScPCA projects
+}
+\examples{
+\dontrun{
+# a simplified data frame of all projects
+project_df <- scpca_projects()
+
+# a data frame of all projects without simplification
+project_df_full <- scpca_projects(simplify = FALSE)
+}
 }
