@@ -6,6 +6,7 @@
 #' @returns a data frame of project information from the ScPCA API.
 #'
 #' @import httr2
+#' @importFrom dplyr .data
 #'
 #' @export
 #'
@@ -29,17 +30,17 @@ scpca_projects <- function(simplify = TRUE) {
 
   if (simplify) {
     project_df <- project_df |>
-      dplyr::select(where(\(col) !is.list(col)))
+      dplyr::select(dplyr::where(\(col) !is.list(col)))
   }
 
   # convert types and relocate columns
   project_df <- project_df |>
     dplyr::mutate(
-      created_at = as.POSIXct(created_at),
-      updated_at = as.POSIXct(updated_at),
-      dplyr::across(where(is.character), dplyr::na_if, "NA")
+      created_at = as.POSIXct(.data$created_at),
+      updated_at = as.POSIXct(.data$updated_at),
+      dplyr::across(dplyr::where(is.character), dplyr::na_if, "NA")
     ) |>
-    dplyr::relocate(project_id = scpca_id)
+    dplyr::relocate(project_id = .data$scpca_id)
 
   project_df
 }
@@ -53,6 +54,7 @@ scpca_projects <- function(simplify = TRUE) {
 #' @returns a data frame of sample information for the specified project from the ScPCA API.
 #'
 #' @import httr2
+#' @importFrom dplyr .data
 #'
 #' @export
 #'
@@ -86,21 +88,21 @@ get_project_samples <- function(project_id, simplify = TRUE) {
     as.data.frame()
 
   # always unnest the additional metadata column
-  sample_df <- tidyr::unnest(additional_metadata)
+  sample_df <- tidyr::unnest(.data$additional_metadata)
   if (simplify) {
     sample_df <- sample_df |>
-      dplyr::select(where(\(col) !is.list(col)))
+      dplyr::select(dplyr::where(\(col) !is.list(col)))
   }
 
   # reorganize and recast columns
   sample_df <- sample_df |>
     dplyr::mutate(
-      age = as.numeric(age),
-      created_at = as.POSIXct(created_at),
-      updated_at = as.POSIXct(updated_at),
-      dplyr::across(where(is.character), dplyr::na_if, "NA")
+      age = as.numeric(.data$age),
+      created_at = as.POSIXct(.data$created_at),
+      updated_at = as.POSIXct(.data$updated_at),
+      dplyr::across(dplyr::where(is.character), dplyr::na_if, "NA")
     ) |>
-    dplyr::relocate(sample_id = scpca_id, project_id = project)
+    dplyr::relocate(sample_id = .data$scpca_id, project_id = .data$project)
 
   sample_df
 }

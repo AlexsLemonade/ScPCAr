@@ -19,7 +19,6 @@ a data frame of sample information for the specified project from the ScPCA API.
 Get a data frame of all samples in a given project
 }
 \examples{
-
 \dontrun{
 # Get sample info for a specific project
 samples_df <- get_project_samples("SCPCP000001")
