@@ -4,11 +4,29 @@
 \alias{scpca_projects}
 \title{Get data frame of all ScPCA projects}
 \usage{
-scpca_projects()
+scpca_projects(simplify = TRUE)
+}
+\arguments{
+\item{simplify}{A logical indicating whether to simplify the resulting data frame
+by removing list columns. Default is TRUE.}
 }
 \value{
 a data frame of project information from the ScPCA API.
 }
 \description{
-Get data frame of all ScPCA projects
+This retrieves the full list of projects from the ScPCA Portal and returns
+a data frame of project metadata. By default, list columns are removed to create
+a simplified data frame, but this can be disabled by setting \code{simplify = FALSE}.
+The unsimplified data frame contains nested list columns with additional details
+about the samples within each project, such as the set of diagnoses associated with
+each project and the individual sample ids.
+}
+\examples{
+\dontrun{
+# a simplified data frame of all projects
+project_df <- scpca_projects()
+
+# a data frame of all projects without simplification
+project_df_full <- scpca_projects(simplify = FALSE)
+}
 }
