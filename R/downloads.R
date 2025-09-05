@@ -43,12 +43,13 @@
 #' download_sample("SCPCS000001", auth_token, path = "scpca_data", format = "anndata")
 #' }
 download_sample <- function(
-    sample_id,
-    auth_token,
-    path = "scpca_data",
-    format = "sce",
-    overwrite = FALSE,
-    quiet = FALSE) {
+  sample_id,
+  auth_token,
+  path = "scpca_data",
+  format = "sce",
+  overwrite = FALSE,
+  quiet = FALSE
+) {
   stopifnot(
     "Invalid sample_id" = grepl("^SCPCS\\d{6}$", sample_id),
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
