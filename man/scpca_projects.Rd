@@ -14,7 +14,12 @@ by removing list columns. Default is TRUE.}
 a data frame of project information from the ScPCA API.
 }
 \description{
-Get data frame of all ScPCA projects
+This retrieves the full list of projects from the ScPCA Portal and returns
+a data frame of project metadata. By default, list columns are removed to create
+a simplified data frame, but this can be disabled by setting \code{simplify = FALSE}.
+The unsimplified data frame contains nested list columns with additional details
+about the samples within each project, such as the set of diagnoses associated with
+each project and the individual sample ids.
 }
 \examples{
 \dontrun{

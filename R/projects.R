@@ -1,5 +1,12 @@
 #' Get data frame of all ScPCA projects
 #'
+#' This retrieves the full list of projects from the ScPCA Portal and returns
+#' a data frame of project metadata. By default, list columns are removed to create
+#' a simplified data frame, but this can be disabled by setting `simplify = FALSE`.
+#' The unsimplified data frame contains nested list columns with additional details
+#' about the samples within each project, such as the set of diagnoses associated with
+#' each project and the individual sample ids.
+#'
 #' @param simplify A logical indicating whether to simplify the resulting data frame
 #'  by removing list columns. Default is TRUE.
 #'
@@ -19,7 +26,7 @@
 #' project_df_full <- scpca_projects(simplify = FALSE)
 #' }
 scpca_projects <- function(simplify = TRUE) {
-  responses <- scpca_request("projects") |>
+  responses <- scpca_request("projects", limit = 50) |>
     req_perform_iterative(iterate_scpca)
 
   project_df <- responses |>
@@ -40,12 +47,18 @@ scpca_projects <- function(simplify = TRUE) {
       updated_at = as.POSIXct(.data$updated_at),
       dplyr::across(dplyr::where(is.character), dplyr::na_if, "NA")
     ) |>
-    dplyr::relocate(project_id = .data$scpca_id)
+    dplyr::relocate(scpca_project_id = .data$scpca_id)
 
   project_df
 }
 
 #' Get a data frame of all samples in a given project
+#'
+#' This function retrievs a data frame of all biological samples associated with a SCPCA project,
+#' including sample-level metadata. By default, list columns are removed to create
+#' a simplified data frame, but this can be disabled by setting `simplify = FALSE`.
+#' The unsimplified data frame contains nested list columns with additional details,
+#' such as the experimental modalities associated with each sample.
 #'
 #' @param project_id The project ID (e.g. "SCPCP000001")
 #' @param simplify A logical indicating whether to simplify the resulting data frame
@@ -85,10 +98,10 @@ get_project_samples <- function(project_id, simplify = TRUE) {
   }
 
   sample_df <- resp_body_json(response, simplifyVector = TRUE)$samples |>
-    as.data.frame()
+    as.data.frame() |>
+    # unnest additional_metadata column
+    tidyr::unnest(.data$additional_metadata)
 
-  # always unnest the additional metadata column
-  sample_df <- tidyr::unnest(.data$additional_metadata)
   if (simplify) {
     sample_df <- sample_df |>
       dplyr::select(dplyr::where(\(col) !is.list(col)))
@@ -102,7 +115,7 @@ get_project_samples <- function(project_id, simplify = TRUE) {
       updated_at = as.POSIXct(.data$updated_at),
       dplyr::across(dplyr::where(is.character), dplyr::na_if, "NA")
     ) |>
-    dplyr::relocate(sample_id = .data$scpca_id, project_id = .data$project)
+    dplyr::relocate(scpca_sample_id = .data$scpca_id, scpca_project_id = .data$project)
 
   sample_df
 }
