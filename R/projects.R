@@ -1,5 +1,12 @@
 #' Get data frame of all ScPCA projects
 #'
+#' This retrieves the full list of projects from the ScPCA Portal and returns
+#' a data frame of project metadata. By default, list columns are removed to create
+#' a simplified data frame, but this can be disabled by setting `simplify = FALSE`.
+#' The unsimplified data frame contains nested list columns with additional details
+#' about the samples within each project, such as the set of diagnoses associated with
+#' each project and the individual sample ids.
+#'
 #' @param simplify A logical indicating whether to simplify the resulting data frame
 #'  by removing list columns. Default is TRUE.
 #'
@@ -46,6 +53,12 @@ scpca_projects <- function(simplify = TRUE) {
 }
 
 #' Get a data frame of all samples in a given project
+#'
+#' This function retrievs a data frame of all biological samples associated with a SCPCA project,
+#' including sample-level metadata. By default, list columns are removed to create
+#' a simplified data frame, but this can be disabled by setting `simplify = FALSE`.
+#' The unsimplified data frame contains nested list columns with additional details,
+#' such as the experimental modalities associated with each sample.
 #'
 #' @param project_id The project ID (e.g. "SCPCP000001")
 #' @param simplify A logical indicating whether to simplify the resulting data frame
