@@ -21,6 +21,7 @@ scpca_request <- function(resource, body = list(), auth_token = "", ...) {
   req <- httr2::request(API_BASE) |>
     req_user_agent(USER_AGENT) |>
     req_url_path_append(resource) |>
+    req_throttle(capacity = 60) |> # No more than 60 calls per minute
     req_url_query(...)
 
   if (length(body) > 0) {
