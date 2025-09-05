@@ -20,7 +20,7 @@
 #'
 #' @param sample_id The SCPCA sample ID (e.g. "SCPCS000001")
 #' @param auth_token An authorization token obtained from `get_auth()`
-#' @param path The path to the directory where the unzipped file directory should be saved. Default is "scpca_data".
+#' @param destination The path to the directory where the unzipped file directory should be saved. Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
 #'  "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
 #'  Default is "sce".
@@ -37,15 +37,15 @@
 #' # Get a token first
 #' auth_token <- get_auth("me@email.net", agree = TRUE)
 #' # Then ask for a sample download
-#' download_sample("SCPCS000001", auth_token, path = "scpca_data", format = "sce")
+#' download_sample("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
 #'
 #' # Downloading in AnnData format
-#' download_sample("SCPCS000001", auth_token, path = "scpca_data", format = "anndata")
+#' download_sample("SCPCS000001", auth_token, destination = "scpca_data", format = "anndata")
 #' }
 download_sample <- function(
   sample_id,
   auth_token,
-  path = "scpca_data",
+  destination = "scpca_data",
   format = "sce",
   overwrite = FALSE,
   quiet = FALSE
@@ -79,9 +79,9 @@ download_sample <- function(
       " (with some additional variants accepted)."
     )
   }
-  # create target directory if it doesn't exist
-  if (!dir.exists(path)) {
-    dir.create(path, recursive = TRUE)
+  # create destination directory if it doesn't exist
+  if (!dir.exists(destination)) {
+    dir.create(destination, recursive = TRUE)
   }
 
   sample_info <- tryCatch(
@@ -134,36 +134,48 @@ download_sample <- function(
     resps_data(\(resp) resp_body_json(resp)$download_url)
 
   file_paths <- purrr::map(download_urls, \(url) {
-    download_filename <- parse_download_file(url)
-    destination_dir <- file.path(path, stringr::str_remove(download_filename, "\\.zip$"))
-
-    # exit if directory already exists
-    if (dir.exists(destination_dir) && !overwrite) {
-      message(glue::glue(
-        "Directory {destination_dir} already exists; skipping download.",
-        " Use 'overwrite = TRUE' to replace existing files."
-      ))
-      # no files downloaded, return empty vector
-      return(c())
-    }
-
-    # TODO: Do we want to warn if a directory exists that matches except for the date?
-
-    file_temp <- file.path(tempdir(), download_filename)
-    on.exit(unlink(file_temp), add = TRUE)
-
-    if (!quiet) {
-      message(glue::glue("Downloading {download_filename} ..."))
-    }
-    curl::curl_download(url, file_temp, quiet = quiet)
-
-    if (!quiet) {
-      message(glue::glue("Unzipping to {destination_dir}..."))
-    }
-    utils::unzip(file_temp, exdir = destination_dir)
+    download_and_extract_file(url, destination, overwrite, quiet)
   }) |>
     purrr::list_c()
   invisible(file_paths)
+}
+
+#' Download and extract a single file from a URL
+#'
+#' @param url The download URL
+#' @param parent_dir The parent directory where files should be extracted
+#' @param overwrite Whether to overwrite existing directories
+#' @param quiet Whether to suppress progress messages
+#'
+#' @returns A character vector of extracted file paths
+download_and_extract_file <- function(url, parent_dir, overwrite, quiet) {
+  download_filename <- parse_download_file(url)
+  destination_dir <- file.path(parent_dir, stringr::str_remove(download_filename, "\\.zip$"))
+
+  # exit if directory already exists
+  if (dir.exists(destination_dir) && !overwrite) {
+    message(glue::glue(
+      "Directory {destination_dir} already exists; skipping download.",
+      "\nUse 'overwrite = TRUE' to replace existing files."
+    ))
+    # no files downloaded, return empty vector
+    return(c())
+  }
+
+  # TODO: Do we want to warn if a directory exists that matches except for the date?
+
+  file_temp <- file.path(tempdir(), download_filename)
+  on.exit(unlink(file_temp), add = TRUE)
+
+  if (!quiet) {
+    message(glue::glue("Downloading {download_filename} ..."))
+  }
+  curl::curl_download(url, file_temp, quiet = quiet)
+
+  if (!quiet) {
+    message(glue::glue("Unzipping to {destination_dir}..."))
+  }
+  utils::unzip(file_temp, exdir = destination_dir)
 }
 
 #' Get the base filename from a ScPCA portal download URL

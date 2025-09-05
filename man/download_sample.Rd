@@ -7,7 +7,7 @@
 download_sample(
   sample_id,
   auth_token,
-  path = "scpca_data",
+  destination = "scpca_data",
   format = "sce",
   overwrite = FALSE,
   quiet = FALSE
@@ -18,7 +18,7 @@ download_sample(
 
 \item{auth_token}{An authorization token obtained from \code{get_auth()}}
 
-\item{path}{The path to the directory where the unzipped file directory should be saved. Default is "scpca_data".}
+\item{destination}{The path to the directory where the unzipped file directory should be saved. Default is "scpca_data".}
 
 \item{format}{The desired file format, either "sce" (SingleCellExperiment),
 "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
@@ -55,9 +55,9 @@ using the \code{get_auth()} function.
 # Get a token first
 auth_token <- get_auth("me@email.net", agree = TRUE)
 # Then ask for a sample download
-download_sample("SCPCS000001", auth_token, path = "scpca_data", format = "sce")
+download_sample("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
 
 # Downloading in AnnData format
-download_sample("SCPCS000001", auth_token, path = "scpca_data", format = "anndata")
+download_sample("SCPCS000001", auth_token, destination = "scpca_data", format = "anndata")
 }
 }
