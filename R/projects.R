@@ -19,7 +19,7 @@
 #' project_df_full <- scpca_projects(simplify = FALSE)
 #' }
 scpca_projects <- function(simplify = TRUE) {
-  responses <- scpca_request("projects") |>
+  responses <- scpca_request("projects", limit = 50) |>
     req_perform_iterative(iterate_scpca)
 
   project_df <- responses |>
@@ -40,7 +40,7 @@ scpca_projects <- function(simplify = TRUE) {
       updated_at = as.POSIXct(.data$updated_at),
       dplyr::across(dplyr::where(is.character), dplyr::na_if, "NA")
     ) |>
-    dplyr::relocate(project_id = .data$scpca_id)
+    dplyr::relocate(scpca_project_id = .data$scpca_id)
 
   project_df
 }
@@ -85,10 +85,10 @@ get_project_samples <- function(project_id, simplify = TRUE) {
   }
 
   sample_df <- resp_body_json(response, simplifyVector = TRUE)$samples |>
-    as.data.frame()
+    as.data.frame() |>
+    # unnest additional_metadata column
+    tidyr::unnest(.data$additional_metadata)
 
-  # always unnest the additional metadata column
-  sample_df <- tidyr::unnest(sample_df, additional_metadata)
   if (simplify) {
     sample_df <- sample_df |>
       dplyr::select(dplyr::where(\(col) !is.list(col)))
@@ -102,7 +102,7 @@ get_project_samples <- function(project_id, simplify = TRUE) {
       updated_at = as.POSIXct(.data$updated_at),
       dplyr::across(dplyr::where(is.character), dplyr::na_if, "NA")
     ) |>
-    dplyr::relocate(sample_id = .data$scpca_id, project_id = .data$project)
+    dplyr::relocate(scpca_sample_id = .data$scpca_id, scpca_project_id = .data$project)
 
   sample_df
 }
