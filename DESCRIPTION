@@ -18,4 +18,5 @@ Imports:
     httr2 (>= 1.2.0),
     purrr,
     stringr,
-    tidyr
+    tidyr,
+    utils
