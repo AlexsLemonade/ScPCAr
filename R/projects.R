@@ -88,7 +88,7 @@ get_project_samples <- function(project_id, simplify = TRUE) {
     as.data.frame()
 
   # always unnest the additional metadata column
-  sample_df <- tidyr::unnest(.data$additional_metadata)
+  sample_df <- tidyr::unnest(sample_df, additional_metadata)
   if (simplify) {
     sample_df <- sample_df |>
       dplyr::select(dplyr::where(\(col) !is.list(col)))
