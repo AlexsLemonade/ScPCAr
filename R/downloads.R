@@ -1,4 +1,4 @@
-download_sample <- function(sample_id, auth_token, path = ".", format = "sce") {
+download_sample <- function(sample_id, auth_token, path = "scpca_data", format = "sce") {
   stopifnot(
     "Invalid sample_id" = grepl("^SCPCS\\d{6}$", sample_id),
     "path must be a valid directory" = dir.exists(path),
@@ -74,6 +74,8 @@ download_sample <- function(sample_id, auth_token, path = ".", format = "sce") {
 }
 
 #' Get the base filename from a ScPCA portal download URL
+#'
+#' (this may become obsolete if we get download filenames in the API response)
 #'
 #' @param url
 #'
