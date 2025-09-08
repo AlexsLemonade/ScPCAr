@@ -123,7 +123,7 @@ download_sample <- function(
   # build requests for each file
   # most samples will only have one file, but in some multiplexed cases there may be more
   file_requests <- file_list |>
-    purrr::map_chr(as.character("id")) |>
+    purrr::map_chr(\(x) as.character(x$id)) |>
     purrr::map(\(id) {
       scpca_request(
         resource = paste0("computed-files/", id),
