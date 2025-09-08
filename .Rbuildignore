@@ -7,3 +7,4 @@
 ^renv$
 ^renv\.lock$
 ^scpca_data$
+^typos.toml$

@@ -1,0 +1,396 @@
+{
+    "count": 2,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "abstract": "Abstract 1 text",
+            "additional_metadata_keys": [
+                "development_stage_ontology_term_id",
+                "disease_ontology_term_id",
+                "molecular_characteristics",
+                "organism",
+                "organism_ontology_id",
+                "outcome",
+                "participant_id",
+                "self_reported_ethnicity_ontology_term_id",
+                "sex_ontology_term_id",
+                "submitter_id",
+                "tissue_ontology_term_id"
+            ],
+            "additional_restrictions": "Research or academic purposes only",
+            "computed_files": [
+                {
+                    "created_at": "2025-08-26T08:00:37.620862Z",
+                    "format": null,
+                    "has_bulk_rna_seq": false,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22877,
+                    "includes_merged": false,
+                    "metadata_only": true,
+                    "portal_metadata_only": false,
+                    "modality": null,
+                    "project": "SCPCP000001",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000001_ALL_METADATA.zip",
+                    "sample": null,
+                    "size_in_bytes": 33606,
+                    "updated_at": "2025-08-26T08:00:37.620880Z",
+                    "workflow_version": "v0.8.7"
+                },
+                {
+                    "created_at": "2025-08-26T08:01:08.851049Z",
+                    "format": "SINGLE_CELL_EXPERIMENT",
+                    "has_bulk_rna_seq": true,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22886,
+                    "includes_merged": true,
+                    "metadata_only": false,
+                    "portal_metadata_only": false,
+                    "modality": "SINGLE_CELL",
+                    "project": "SCPCP000001",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_MERGED.zip",
+                    "sample": null,
+                    "size_in_bytes": 839453678,
+                    "updated_at": "2025-08-26T08:01:08.851067Z",
+                    "workflow_version": "v0.8.7"
+                },
+                {
+                    "created_at": "2025-08-26T08:01:14.401494Z",
+                    "format": "ANN_DATA",
+                    "has_bulk_rna_seq": true,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22887,
+                    "includes_merged": true,
+                    "metadata_only": false,
+                    "portal_metadata_only": false,
+                    "modality": "SINGLE_CELL",
+                    "project": "SCPCP000001",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000001_SINGLE-CELL_ANN-DATA_MERGED.zip",
+                    "sample": null,
+                    "size_in_bytes": 1259665370,
+                    "updated_at": "2025-08-26T08:01:14.401514Z",
+                    "workflow_version": "v0.8.7"
+                },
+                {
+                    "created_at": "2025-08-26T08:01:40.483168Z",
+                    "format": "SINGLE_CELL_EXPERIMENT",
+                    "has_bulk_rna_seq": true,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22888,
+                    "includes_merged": false,
+                    "metadata_only": false,
+                    "portal_metadata_only": false,
+                    "modality": "SINGLE_CELL",
+                    "project": "SCPCP000001",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT.zip",
+                    "sample": null,
+                    "size_in_bytes": 1293666029,
+                    "updated_at": "2025-08-26T08:01:40.483188Z",
+                    "workflow_version": "v0.8.7"
+                },
+                {
+                    "created_at": "2025-08-26T08:02:30.130065Z",
+                    "format": "ANN_DATA",
+                    "has_bulk_rna_seq": true,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22900,
+                    "includes_merged": false,
+                    "metadata_only": false,
+                    "portal_metadata_only": false,
+                    "modality": "SINGLE_CELL",
+                    "project": "SCPCP000001",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000001_SINGLE-CELL_ANN-DATA.zip",
+                    "sample": null,
+                    "size_in_bytes": 2775090263,
+                    "updated_at": "2025-08-26T08:02:30.130086Z",
+                    "workflow_version": "v0.8.7"
+                }
+            ],
+            "contacts": [
+                {
+                    "email": "email@address.com",
+                    "name": "Researcher Name"
+                }
+            ],
+            "created_at": "2025-08-26T07:31:52.445764Z",
+            "diagnoses_counts": {
+                "Glioblastoma": 16,
+                "Non-cancerous": 1,
+                "Anaplastic glioma": 1,
+                "High-grade glioma": 2,
+                "Anaplastic astrocytoma": 1,
+                "Diffuse midline glioma": 1,
+                "Pleomorphic xanthoastrocytoma": 1
+            },
+            "diagnoses": [
+                "Disease 1",
+                "Disease 2"
+            ],
+            "disease_timings": [
+                "Initial diagnosis",
+                "Recurrence"
+            ],
+            "downloadable_sample_count": 23,
+            "external_accessions": [
+
+            ],
+            "has_bulk_rna_seq": true,
+            "has_cite_seq_data": false,
+            "has_multiplexed_data": false,
+            "has_single_cell_data": true,
+            "has_spatial_data": false,
+            "human_readable_pi_name": "Researcher Name",
+            "includes_anndata": true,
+            "includes_cell_lines": false,
+            "includes_merged_anndata": true,
+            "includes_merged_sce": true,
+            "includes_xenografts": false,
+            "metadata_dataset_id": null,
+            "modalities": [
+                "SINGLE_CELL",
+                "BULK_RNA_SEQ"
+            ],
+            "multiplexed_sample_count": 0,
+            "organisms": [
+                "Homo sapiens"
+            ],
+            "pi_name": "researcher_name",
+            "publications": [
+
+            ],
+            "sample_count": 23,
+            "samples": [
+                "SCPCS000001",
+                "SCPCS000002",
+                "SCPCS000003"
+            ],
+            "scpca_id": "SCPCP000001",
+            "seq_units": [
+                "cell"
+            ],
+            "summaries": [
+                {
+                    "diagnosis": "Disease 1",
+                    "sample_count": 1,
+                    "seq_unit": "cell",
+                    "technology": "10Xv3",
+                    "updated_at": "2025-08-26T07:31:54.003344Z"
+                },
+                {
+                    "diagnosis": "Disease 2",
+                    "sample_count": 1,
+                    "seq_unit": "cell",
+                    "technology": "10Xv3",
+                    "updated_at": "2025-08-26T07:31:54.014658Z"
+                }
+            ],
+            "technologies": [
+                "10Xv3"
+            ],
+            "title": "Project Title 1",
+            "unavailable_samples_count": 0,
+            "updated_at": "2025-08-26T08:05:32.770401Z"
+        },
+        {
+            "abstract": "Abstract 2 text",
+            "additional_metadata_keys": [
+                "development_stage_ontology_term_id",
+                "disease_ontology_term_id",
+                "mutation_status",
+                "organism",
+                "organism_ontology_id",
+                "participant_id",
+                "self_reported_ethnicity_ontology_term_id",
+                "sex_ontology_term_id",
+                "spinal_leptomeningeal_mets",
+                "submitter_id",
+                "tissue_ontology_term_id"
+            ],
+            "additional_restrictions": "Research or academic purposes only",
+            "computed_files": [
+                {
+                    "created_at": "2025-08-26T08:05:27.923815Z",
+                    "format": null,
+                    "has_bulk_rna_seq": false,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22926,
+                    "includes_merged": false,
+                    "metadata_only": true,
+                    "portal_metadata_only": false,
+                    "modality": null,
+                    "project": "SCPCP000002",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000002_ALL_METADATA.zip",
+                    "sample": null,
+                    "size_in_bytes": 32430,
+                    "updated_at": "2025-08-26T08:05:27.923833Z",
+                    "workflow_version": "v0.8.7"
+                },
+                {
+                    "created_at": "2025-08-26T08:05:46.419585Z",
+                    "format": "SINGLE_CELL_EXPERIMENT",
+                    "has_bulk_rna_seq": true,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22930,
+                    "includes_merged": false,
+                    "metadata_only": false,
+                    "portal_metadata_only": false,
+                    "modality": "SINGLE_CELL",
+                    "project": "SCPCP000002",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000002_SINGLE-CELL_SINGLE-CELL-EXPERIMENT.zip",
+                    "sample": null,
+                    "size_in_bytes": 1701297300,
+                    "updated_at": "2025-08-26T08:05:46.419605Z",
+                    "workflow_version": "v0.8.7"
+                },
+                {
+                    "created_at": "2025-08-26T08:05:58.287568Z",
+                    "format": "SINGLE_CELL_EXPERIMENT",
+                    "has_bulk_rna_seq": true,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22933,
+                    "includes_merged": true,
+                    "metadata_only": false,
+                    "portal_metadata_only": false,
+                    "modality": "SINGLE_CELL",
+                    "project": "SCPCP000002",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000002_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_MERGED.zip",
+                    "sample": null,
+                    "size_in_bytes": 1145079704,
+                    "updated_at": "2025-08-26T08:05:58.287587Z",
+                    "workflow_version": "v0.8.7"
+                },
+                {
+                    "created_at": "2025-08-26T08:06:22.534855Z",
+                    "format": "ANN_DATA",
+                    "has_bulk_rna_seq": true,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22936,
+                    "includes_merged": true,
+                    "metadata_only": false,
+                    "portal_metadata_only": false,
+                    "modality": "SINGLE_CELL",
+                    "project": "SCPCP000002",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000002_SINGLE-CELL_ANN-DATA_MERGED.zip",
+                    "sample": null,
+                    "size_in_bytes": 1704623431,
+                    "updated_at": "2025-08-26T08:06:22.534878Z",
+                    "workflow_version": "v0.8.7"
+                },
+                {
+                    "created_at": "2025-08-26T08:06:57.324692Z",
+                    "format": "ANN_DATA",
+                    "has_bulk_rna_seq": true,
+                    "has_cite_seq_data": false,
+                    "has_multiplexed_data": false,
+                    "id": 22945,
+                    "includes_merged": false,
+                    "metadata_only": false,
+                    "portal_metadata_only": false,
+                    "modality": "SINGLE_CELL",
+                    "project": "SCPCP000002",
+                    "s3_bucket": "bucket-name",
+                    "s3_key": "SCPCP000002_SINGLE-CELL_ANN-DATA.zip",
+                    "sample": null,
+                    "size_in_bytes": 3727625129,
+                    "updated_at": "2025-08-26T08:06:57.324710Z",
+                    "workflow_version": "v0.8.7"
+                }
+            ],
+            "contacts": [
+                {
+                    "email": "email2@address.com",
+                    "name": "Researcher2 Name"
+                }
+            ],
+            "created_at": "2025-08-26T07:31:54.076405Z",
+            "diagnoses_counts": {
+                "Disease2": 1,
+                "Disease 3": 5
+            },
+            "diagnoses": [
+                "Disease 2",
+                "Disease 3"
+            ],
+            "disease_timings": [
+                "Initial diagnosis"
+            ],
+            "downloadable_sample_count": 26,
+            "external_accessions": [
+
+            ],
+            "has_bulk_rna_seq": true,
+            "has_cite_seq_data": false,
+            "has_multiplexed_data": false,
+            "has_single_cell_data": true,
+            "has_spatial_data": false,
+            "human_readable_pi_name": "Researcher2 Name",
+            "includes_anndata": true,
+            "includes_cell_lines": false,
+            "includes_merged_anndata": true,
+            "includes_merged_sce": true,
+            "includes_xenografts": false,
+            "metadata_dataset_id": null,
+            "modalities": [
+                "SINGLE_CELL",
+                "BULK_RNA_SEQ"
+            ],
+            "multiplexed_sample_count": 0,
+            "organisms": [
+                "Homo sapiens"
+            ],
+            "pi_name": "researcher2_name",
+            "publications": [
+
+            ],
+            "sample_count": 26,
+            "samples": [
+                "SCPCS000024",
+                "SCPCS000025"
+            ],
+            "scpca_id": "SCPCP000002",
+            "seq_units": [
+                "cell"
+            ],
+            "summaries": [
+                {
+                    "diagnosis": "Disease 2",
+                    "sample_count": 18,
+                    "seq_unit": "cell",
+                    "technology": "10Xv3",
+                    "updated_at": "2025-08-26T07:31:55.726291Z"
+                },
+                {
+                    "diagnosis": "Disease 3",
+                    "sample_count": 5,
+                    "seq_unit": "cell",
+                    "technology": "10Xv3",
+                    "updated_at": "2025-08-26T07:31:55.735047Z"
+                }
+            ],
+            "technologies": [
+                "10Xv3"
+            ],
+            "title": "Project Title 2",
+            "unavailable_samples_count": 0,
+            "updated_at": "2025-08-26T08:10:27.165233Z"
+        }
+    ]
+}
