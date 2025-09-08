@@ -112,10 +112,12 @@ download_sample <- function(
   file_list <- sample_info$computed_files |>
     # filter to requested format or modality (only applies to spatial data)
     purrr::keep(\(cf) {
-      (cf$format == format_str || cf$modality == format_str)
+      (cf$format == format_str && cf$modality != "SPATIAL") || cf$modality == format_str
     })
   if (length(file_list) == 0) {
-    stop(glue::glue("No files found for sample {sample_id} in format {format}."))
+    warning(glue::glue("No files found for sample {sample_id} in format {format}."))
+    # return empty vector
+    return(invisible(c()))
   }
 
   # build requests for each file
