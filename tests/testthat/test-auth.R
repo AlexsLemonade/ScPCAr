@@ -34,6 +34,7 @@ test_that("get_auth validates input parameters", {
 
 test_that("get_auth accepts valid email formats", {
   # Mock httr2 functions to avoid actual API calls
+  # not using httptest2::with_mock_api because we just want to test validation here
   local_mocked_bindings(
     # nolint start
     req_perform = function(req) {
@@ -51,22 +52,11 @@ test_that("get_auth accepts valid email formats", {
   expect_no_error(get_auth("user123@company-name.co.uk", TRUE))
 })
 
-test_that("get_auth makes correct API request", {
-  # Mock the httr2 functions to capture the request details
-  captured_request <- NULL
-  local_mocked_bindings(
-    # nolint start
-    req_perform = function(req) {
-      structure(list(status_code = 201), class = "httr2_response")
-    },
-    resp_body_json = function(resp, simplifyVector = TRUE) {
-      list(id = "mock-token-123")
-    }
-    # nolint end
-  )
+with_mock_dir("auth", {
+  test_that("get_auth gets a token", {
+    result <- get_auth("scpca@alexslemonade.org", TRUE)
 
-  result <- get_auth("test@example.com", TRUE)
-
-  # Check that the function returns the token ID
-  expect_equal(result, "mock-token-123")
+    # Check that the function returns the token ID
+    expect_equal(result, "mock-token-123")
+  })
 })
