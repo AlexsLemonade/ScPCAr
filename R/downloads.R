@@ -1,3 +1,13 @@
+SCE_FORMATS <- c(
+  "sce",
+  "singlecellexperiment",
+  "single-cell-experiment",
+  "single_cell_experiment"
+)
+ANNDATA_FORMATS <- c("anndata", "h5ad")
+SPATIAL_FORMATS <- c("spatial", "spaceranger", "space ranger")
+
+
 #' Download a sample's data files from the ScPCA Portal
 #'
 #' This function downloads the data files for a specified sample from the ScPCA Portal.
@@ -54,23 +64,13 @@ download_sample <- function(
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
-
-  sce_formats <- c(
-    "sce",
-    "singlecellexperiment",
-    "single-cell-experiment",
-    "single_cell_experiment"
-  )
-  anndata_formats <- c("anndata", "h5ad")
-  spatial_formats <- c("spatial", "spaceranger", "space ranger")
-
   # normalize format input to match API values
   format <- tolower(format)
-  if (format %in% sce_formats) {
+  if (format %in% SCE_FORMATS) {
     format_str <- "SINGLE_CELL_EXPERIMENT"
-  } else if (format %in% anndata_formats) {
+  } else if (format %in% ANNDATA_FORMATS) {
     format_str <- "ANN_DATA"
-  } else if (format %in% spatial_formats) {
+  } else if (format %in% SPATIAL_FORMATS) {
     format_str <- "SPATIAL"
   } else {
     stop(
@@ -83,7 +83,7 @@ download_sample <- function(
     dir.create(destination, recursive = TRUE)
   }
 
-  sample_info <- get_sample_info(sample_id, auth_token)
+  sample_info <- get_sample_info(sample_id)
 
   # message if multiplexed
   if (sample_info$has_multiplexed_data) {
@@ -129,6 +129,7 @@ download_project <- function(
   auth_token,
   destination = "scpca_data",
   format = "sce",
+  merged = FALSE,
   overwrite = FALSE,
   quiet = FALSE
 ) {
@@ -136,6 +137,20 @@ download_project <- function(
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
+  # normalize format input to match API values
+  format <- tolower(format)
+  if (format %in% SCE_FORMATS) {
+    format_str <- "SINGLE_CELL_EXPERIMENT"
+  } else if (format %in% ANNDATA_FORMATS) {
+    format_str <- "ANN_DATA"
+  } else if (format %in% SPATIAL_FORMATS) {
+    format_str <- "SPATIAL"
+  } else {
+    stop(
+      "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
+      " (with some additional variants accepted)."
+    )
+  }
 
   # create destination directory if it doesn't exist
   if (!dir.exists(destination)) {
@@ -144,7 +159,28 @@ download_project <- function(
 
   project_info <- get_project_info(project_id)
 
-  get_computed_file_ids(project_info)
+  files_filter <- computed_files_filter(format_str)
+  files_filter$includes_merged <- merged
+
+  file_id <- get_computed_file_ids(project_info, filters = files_filter)
+
+  if (length(file_id) == 0) {
+    stop(glue::glue("No computed files found for project {project_id} in format {format}."))
+  }
+  if (length(file_id) > 1) {
+    stop("Multiple download files found; something is wrong.")
+  }
+  # get signed download URL
+  download_url <- scpca_request(
+    resource = paste0("computed-files/", file_id),
+    auth_token = auth_token
+  ) |>
+    req_perform() |>
+    resp_body_json() |>
+    purrr::pluck("download_url")
+
+  file_paths <- download_and_extract_file(download_url, destination, overwrite, quiet)
+  invisible(file_paths)
 }
 
 #' Download and extract a single file from a URL
@@ -206,7 +242,8 @@ parse_download_file <- function(scpca_url) {
 #' @param filters A named list of filtering criteria, where names are fields in
 #'  the computed_files objects, and values are the desired values to match.
 #'  Values can be negated by prefixing with "!". For example, to get all non-spatial
-#'  computed files in AnnData format, use: list(modality = "!SPATIAL", format = "ANN_DATA").
+#'  computed files in SingleCellExperiment format, use:
+#'  list(format = "SINGLE_CELL_EXPERIMENT", modality = "!SPATIAL").
 #'
 #' @returns a character vector of computed file ids matching the filtering criteria
 #'
@@ -226,7 +263,7 @@ get_computed_file_ids <- function(info_list, filters = list()) {
   ids <- info_list$computed_files |>
     purrr::keep(\(cf) {
       all(purrr::imap_lgl(filters, \(val, key) {
-        (key %in% names(cf)) &&
+        (key %in% names(cf) && !is.null(cf[[key]])) &&
           if (is.character(val) && grepl("^!", val)) {
             # negated filter
             cf[[key]] != stringr::str_remove(val, "^!")
