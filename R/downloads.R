@@ -51,7 +51,6 @@ download_sample <- function(
   quiet = FALSE
 ) {
   stopifnot(
-    "Invalid sample_id" = grepl("^SCPCS\\d{6}$", sample_id),
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
@@ -84,19 +83,7 @@ download_sample <- function(
     dir.create(destination, recursive = TRUE)
   }
 
-  sample_info <- tryCatch(
-    {
-      scpca_request(paste0("samples/", sample_id)) |>
-        req_perform() |>
-        resp_body_json()
-    },
-    # return NULL if 404
-    httr2_http_404 = \(cnd) NULL
-  )
-
-  if (is.null(sample_info)) {
-    stop(glue::glue("Sample `{sample_id}` not found."))
-  }
+  sample_info <- get_sample_info(sample_id, auth_token)
 
   # message if multiplexed
   if (sample_info$has_multiplexed_data) {
