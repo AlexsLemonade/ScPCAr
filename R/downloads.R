@@ -96,21 +96,20 @@ download_sample <- function(
     ))
   }
 
-  file_list <- sample_info$computed_files |>
-    # filter to requested format or modality (only applies to spatial data)
-    purrr::keep(\(cf) {
-      (cf$format == format_str && cf$modality != "SPATIAL") || cf$modality == format_str
-    })
-  if (length(file_list) == 0) {
-    warning(glue::glue("No files found for sample {sample_id} in format {format}."))
-    # return empty vector
-    return(invisible(c()))
+  filter_list = if (format_str == "SPATIAL") {
+    list(modality = format_str)
+  } else {
+    list(format = format_str, modality = "!SPATIAL")
+  }
+  file_ids <- get_computed_file_ids(sample_info, filters = filter_list)
+
+  if (length(file_ids) == 0) {
+    stop(glue::glue("No computed files found for sample {sample_id} in format {format}."))
   }
 
   # build requests for each file
   # most samples will only have one file, but in some multiplexed cases there may be more
-  file_requests <- file_list |>
-    purrr::map_chr(\(x) as.character(x$id)) |>
+  file_requests <- file_ids |>
     purrr::map(\(id) {
       scpca_request(
         resource = paste0("computed-files/", id),
@@ -178,4 +177,47 @@ parse_download_file <- function(scpca_url) {
   params <- curl::curl_parse_url(scpca_url)$params
   params["response-content-disposition"] |>
     stringr::str_extract("SCPC[^\\s]+\\.zip")
+}
+
+
+#' Get computed file ids from a sample info list, optionally filtered by criteria
+#'
+#' @param info_list A list object that includes a "computed_files" element,
+#' such as returned by get_sample_info() or get_project_info()
+#' @param filters A named list of filtering criteria, where names are fields in
+#'  the computed_files objects, and values are the desired values to match.
+#'  Values can be negated by prefixing with "!". For example, to get all non-spatial
+#'  computed files in AnnData format, use: list(modality = "!SPATIAL", format = "ANN_DATA").
+#'
+#' @returns a character vector of computed file ids matching the filtering criteria
+#'
+#'
+get_computed_file_ids <- function(info_list, filters = list()) {
+  stopifnot(
+    "info_list must contain a computed_files element" = "computed_files" %in% names(info_list),
+    "no computed files found in info_list" = length(info_list$computed_files) > 0,
+    "all computed_files must have an id element" = all(
+      purrr::map_lgl(info_list$computed_files, \(cf) "id" %in% names(cf))
+    ),
+    "filters must be a named list of filtering criteria" = {
+      is.list(filters) && (length(filters) == 0 || !is.null(names(filters)))
+    }
+  )
+
+  ids <- info_list$computed_files |>
+    purrr::keep(\(cf) {
+      all(purrr::imap_lgl(filters, \(val, key) {
+        (key %in% names(cf)) &&
+          if (is.character(val) && grepl("^!", val)) {
+            # negated filter
+            cf[[key]] != stringr::str_remove(val, "^!")
+          } else {
+            # regular filter
+            cf[[key]] == val
+          }
+      }))
+    }) |>
+    purrr::map_chr(\(x) as.character(x$id))
+
+  ids
 }
