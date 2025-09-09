@@ -4,7 +4,7 @@ USER_AGENT <- "ScPCA R API Client" # nolint
 
 #' Base request object for ScPCA API
 #'
-#' @param resource API resource to query, e.g. "projects"
+#' @param resource API resource to query, e.g. "projects", default is "" (base URL)
 #' @param body optional named list to include as JSON body in the request
 #' @param auth_token optional API authentication token
 #' @param ... additional query parameters to include in the request
@@ -12,9 +12,8 @@ USER_AGENT <- "ScPCA R API Client" # nolint
 #' @import httr2
 #'
 #' @returns a httr2 request object
-scpca_request <- function(resource, body = list(), auth_token = "", ...) {
+scpca_request <- function(resource = "", body = list(), auth_token = "", ...) {
   stopifnot(
-    "resource must be a non-empty string" = is.character(resource) && nchar(resource) > 0,
     "body must be a named list" = is.list(body) && (length(body) == 0 || !is.null(names(body)))
   )
 
@@ -53,4 +52,29 @@ iterate_scpca <- function(resp, req) {
   pages <- ceiling(body[["count"]] / length(body[["results"]]))
   signal_total_pages(pages)
   req |> req_url(url)
+}
+
+
+#' Check if the ScPCA API is reachable
+#'
+#' This function performs a simple GET request to the ScPCA API to verify that it is reachable.
+#'
+#' @returns TRUE if the API is reachable, otherwise an error is raised.
+#' @import httr2
+#'
+check_api <- function() {
+  status <- tryCatch(
+    {
+      scpca_request() |>
+        req_perform() |>
+        resp_status()
+    },
+    httr2_http_404 = \(cnd) NULL
+  )
+  if (is.null(response) || status != 200) {
+    stop(
+      "The API may be down or unreachable. Please check your internet connection or try again later."
+    )
+  }
+  TRUE
 }
