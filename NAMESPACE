@@ -2,6 +2,7 @@
 
 export(download_sample)
 export(get_auth)
+export(get_project_info)
 export(get_project_samples)
 export(scpca_projects)
 import(httr2)
