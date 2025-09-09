@@ -5,7 +5,7 @@
 #' by the base filename of the downloaded zip file, which includes the sample ID, modality,
 #' format, and date.
 #'
-#' For single-cell and single-nucleotide data, files can be downloaded in either
+#' For single-cell and single-nuclei data, files can be downloaded in either
 #' SingleCellExperiment ("sce") or AnnData ("anndata") format,
 #' and all downloads include the unfiltered, filtered, and processed data objects, as well as
 #' associated metadata and QC files.
@@ -18,7 +18,7 @@
 #' using the `get_auth()` function.
 #'
 #'
-#' @param sample_id The SCPCA sample ID (e.g. "SCPCS000001")
+#' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
 #' @param auth_token An authorization token obtained from `get_auth()`
 #' @param destination The path to the directory where the unzipped file directory should be saved. Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
@@ -63,7 +63,7 @@ download_sample <- function(
     "single_cell_experiment"
   )
   anndata_formats <- c("anndata", "h5ad")
-  spatial_formats <- c("spatial", "spaceranger")
+  spatial_formats <- c("spatial", "spaceranger", "space ranger")
 
   # normalize format input to match API values
   format <- tolower(format)
@@ -112,16 +112,18 @@ download_sample <- function(
   file_list <- sample_info$computed_files |>
     # filter to requested format or modality (only applies to spatial data)
     purrr::keep(\(cf) {
-      (cf$format == format_str || cf$modality == format_str)
+      (cf$format == format_str && cf$modality != "SPATIAL") || cf$modality == format_str
     })
   if (length(file_list) == 0) {
-    stop(glue::glue("No files found for sample {sample_id} in format {format}."))
+    warning(glue::glue("No files found for sample {sample_id} in format {format}."))
+    # return empty vector
+    return(invisible(c()))
   }
 
   # build requests for each file
   # most samples will only have one file, but in some multiplexed cases there may be more
   file_requests <- file_list |>
-    purrr::map_chr(as.character("id")) |>
+    purrr::map_chr(\(x) as.character(x$id)) |>
     purrr::map(\(id) {
       scpca_request(
         resource = paste0("computed-files/", id),
