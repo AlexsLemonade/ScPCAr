@@ -1,6 +1,6 @@
-with_mock_dir("scpca_projects", {
-  # uses recorded API responses from httptest2
-  test_that("scpca_projects returns simplified data frame by default", {
+# uses recorded API responses from httptest2
+test_that("scpca_projects returns simplified data frame by default", {
+  with_mock_dir("scpca_projects", {
     projects_df <- scpca_projects()
 
     # Check that it returns a data frame
@@ -45,8 +45,8 @@ with_mock_dir("scpca_projects", {
   })
 })
 
-with_mock_dir("get_project_samples", {
-  test_that("get_project_samples returns simplified data frame by default", {
+test_that("get_project_samples returns simplified data frame by default", {
+  with_mock_dir("get_project_samples", {
     samples_df <- get_project_samples("SCPCP000001")
 
     # Check that it returns a data frame
