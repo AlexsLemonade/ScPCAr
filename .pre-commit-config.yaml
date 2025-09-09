@@ -4,8 +4,9 @@ repos:
   - repo: https://github.com/lorenzwalthert/precommit
     rev: v0.4.3.9014
     hooks:
-      - id: style-files
-        args: [--style_pkg=styler, --style_fun=tidyverse_style]
+      # temporarily disable styler since it is fighting with air about function definitions (air is correct)
+      # - id: style-files
+      #   args: [--style_pkg=styler, --style_fun=tidyverse_style]
       # codemeta must be above use-tidy-description when both are used
       # -   id: codemeta-description-updated
       - id: use-tidy-description

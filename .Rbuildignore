@@ -6,3 +6,4 @@
 ^air\.toml$
 ^renv$
 ^renv\.lock$
+^scpca_data$
