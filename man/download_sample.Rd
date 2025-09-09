@@ -14,7 +14,7 @@ download_sample(
 )
 }
 \arguments{
-\item{sample_id}{The SCPCA sample ID (e.g. "SCPCS000001")}
+\item{sample_id}{The ScPCA sample ID (e.g. "SCPCS000001")}
 
 \item{auth_token}{An authorization token obtained from \code{get_auth()}}
 
@@ -38,7 +38,7 @@ by the base filename of the downloaded zip file, which includes the sample ID, m
 format, and date.
 }
 \details{
-For single-cell and single-nucleotide data, files can be downloaded in either
+For single-cell and single-nuclei data, files can be downloaded in either
 SingleCellExperiment ("sce") or AnnData ("anndata") format,
 and all downloads include the unfiltered, filtered, and processed data objects, as well as
 associated metadata and QC files.
