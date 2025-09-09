@@ -52,6 +52,35 @@ scpca_projects <- function(simplify = TRUE) {
   project_df
 }
 
+#' Get project metadata by project ID
+#'
+#' @param project_id the project ID (e.g. "SCPCP000001")
+#'
+#' @returns a list of project metadata from the ScPCA API.
+#'
+#' @export
+#' @examples
+get_project_info <- function(project_id) {
+  stopifnot(
+    "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id)
+  )
+
+  response <- tryCatch(
+    {
+      scpca_request(paste0("projects/", project_id)) |>
+        req_perform()
+    },
+    # return NULL if 404 and the API is reachable (check_api will raise error if not)
+    httr2_http_404 = \(cnd) if (check_api()) NULL
+  )
+  # if we get a 404, check if the API then give project error if not found
+  if (is.null(response)) {
+    stop(glue::glue("Project `{project_id}` not found."))
+  }
+
+  resp_body_json(response, simplifyVector = TRUE)
+}
+
 #' Get a data frame of all samples in a given project
 #'
 #' This function retrievs a data frame of all biological samples associated with a SCPCA project,
@@ -80,24 +109,8 @@ scpca_projects <- function(simplify = TRUE) {
 #' samples_df_full <- get_project_samples("SCPCP000001", simplify = FALSE)
 #' }
 get_project_samples <- function(project_id, simplify = TRUE) {
-  stopifnot(
-    "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id)
-  )
-
-  response <- tryCatch(
-    {
-      scpca_request(paste0("projects/", project_id)) |>
-        req_perform()
-    },
-    # return NULL if 404
-    httr2_http_404 = \(cnd) NULL
-  )
-  # if we get a 404, return empty df
-  if (is.null(response)) {
-    stop(glue::glue("Project `{project_id}` not found."))
-  }
-
-  sample_df <- resp_body_json(response, simplifyVector = TRUE)$samples |>
+  project_info <- get_project_info(project_id)
+  sample_df <- project_info$samples |>
     as.data.frame() |>
     # unnest additional_metadata column
     tidyr::unnest("additional_metadata")
