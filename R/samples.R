@@ -1,13 +1,10 @@
-get_sample_info <- function(sample_id, auth_token = NULL) {
+get_sample_info <- function(sample_id) {
   stopifnot(
-    "Invalid sample_id" = grepl("^SCPCS\\d{6}$", sample_id),
-    "Authorization token, if provided, must be a non-empty string." = {
-      is.null(auth_token) || (is.character(auth_token) && nchar(auth_token) > 0)
-    }
+    "Invalid sample_id" = grepl("^SCPCS\\d{6}$", sample_id)
   )
   sample_info <- tryCatch(
     {
-      scpca_request(paste0("samples/", sample_id), auth_token = auth_token) |>
+      scpca_request(paste0("samples/", sample_id)) |>
         req_perform() |>
         resp_body_json()
     },
