@@ -55,12 +55,15 @@ scpca_projects <- function(simplify = TRUE) {
 #' Get project metadata by project ID
 #'
 #' @param project_id the project ID (e.g. "SCPCP000001")
+#' @param simplifyVector passed to resp_body_json to simplify the returned JSON structure
 #'
 #' @returns a list of project metadata from the ScPCA API.
 #'
+#' @import httr2
+#'
 #' @export
 #' @examples
-get_project_info <- function(project_id) {
+get_project_info <- function(project_id, simplifyVector = FALSE) {
   stopifnot(
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id)
   )
@@ -78,7 +81,7 @@ get_project_info <- function(project_id) {
     stop(glue::glue("Project `{project_id}` not found."))
   }
 
-  resp_body_json(response, simplifyVector = TRUE)
+  resp_body_json(response, simplifyVector = simplifyVector)
 }
 
 #' Get a data frame of all samples in a given project
@@ -109,7 +112,7 @@ get_project_info <- function(project_id) {
 #' samples_df_full <- get_project_samples("SCPCP000001", simplify = FALSE)
 #' }
 get_project_samples <- function(project_id, simplify = TRUE) {
-  project_info <- get_project_info(project_id)
+  project_info <- get_project_info(project_id, simplifyVector = TRUE)
   sample_df <- project_info$samples |>
     as.data.frame() |>
     # unnest additional_metadata column

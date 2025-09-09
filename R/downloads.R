@@ -96,12 +96,7 @@ download_sample <- function(
     ))
   }
 
-  filter_list = if (format_str == "SPATIAL") {
-    list(modality = format_str)
-  } else {
-    list(format = format_str, modality = "!SPATIAL")
-  }
-  file_ids <- get_computed_file_ids(sample_info, filters = filter_list)
+  file_ids <- get_computed_file_ids(sample_info, filters = computed_files_filter(format_str))
 
   if (length(file_ids) == 0) {
     stop(glue::glue("No computed files found for sample {sample_id} in format {format}."))
@@ -126,6 +121,30 @@ download_sample <- function(
   }) |>
     purrr::list_c()
   invisible(file_paths)
+}
+
+
+download_project <- function(
+  project_id,
+  auth_token,
+  destination = "scpca_data",
+  format = "sce",
+  overwrite = FALSE,
+  quiet = FALSE
+) {
+  stopifnot(
+    "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
+    "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
+  )
+
+  # create destination directory if it doesn't exist
+  if (!dir.exists(destination)) {
+    dir.create(destination, recursive = TRUE)
+  }
+
+  project_info <- get_project_info(project_id)
+
+  get_computed_file_ids(project_info)
 }
 
 #' Download and extract a single file from a URL
@@ -220,4 +239,23 @@ get_computed_file_ids <- function(info_list, filters = list()) {
     purrr::map_chr(\(x) as.character(x$id))
 
   ids
+}
+
+
+#' Helper function to create a filtering list for computed files by format
+#'
+#' @param format_str a string indicating the desired format
+#'
+#' @returns a list suitable for passing as the `filters` argument to `get_computed_file_ids()`.
+computed_files_filter <- function(
+  format_str = c("SINGLE_CELL_EXPERIMENT", "ANN_DATA", "SPATIAL")
+) {
+  format_str <- match.arg(format_str)
+  filter_list = if (format_str == "SPATIAL") {
+    list(modality = "SPATIAL")
+  } else {
+    list(format = format_str, modality = "!SPATIAL")
+  }
+
+  filter_list
 }
