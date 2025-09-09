@@ -1,3 +1,4 @@
+# Accepted format strings (case insensitive) for the `format` argument in download functions
 SCE_FORMATS <- c(
   "sce",
   "singlecellexperiment",
@@ -30,7 +31,8 @@ SPATIAL_FORMATS <- c("spatial", "spaceranger", "space ranger")
 #'
 #' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
 #' @param auth_token An authorization token obtained from `get_auth()`
-#' @param destination The path to the directory where the unzipped file directory should be saved. Default is "scpca_data".
+#' @param destination The path to the directory where the unzipped file directory should be saved.
+#'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
 #'  "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
 #'  Default is "sce".
@@ -124,6 +126,40 @@ download_sample <- function(
 }
 
 
+#' Download a project's data files from the ScPCA Portal
+#'
+#' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
+#' @param auth_token An authorization token obtained from `get_auth()`
+#' @param destination The path to the directory where the unzipped file directory should be saved.
+#'  Default is "scpca_data".
+#' @param format The desired file format, either "sce" (SingleCellExperiment),
+#'  "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
+#'  Default is "sce".
+#' @param merged Whether to download merged data files, if available.
+#'  Default is FALSE.
+#' @param overwrite Whether to overwrite existing directories if they already exist. Default is FALSE.
+#' @param quiet Whether to suppress download progress messages. Default is FALSE.
+#'
+#' @returns a vector of file paths for the downloaded files (invisibly)
+#'
+#' @export
+#' @examples
+#'
+#' \dontrun{
+#' # Get a token first
+#' auth_token <- get_auth("me@email.net", agree = TRUE)
+#' # Then ask for a sample download
+#' download_project("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
+#'
+#' # Downloading merged files in AnnData format
+#' download_project(
+#'   "SCPCS000001",
+#'   auth_token,
+#'   destination = "scpca_data",
+#'   format = "anndata",
+#'   merged = TRUE
+#' )
+#' }
 download_project <- function(
   project_id,
   auth_token,
@@ -160,6 +196,7 @@ download_project <- function(
   project_info <- get_project_info(project_id)
 
   files_filter <- computed_files_filter(format_str)
+  # add merged filter
   files_filter$includes_merged <- merged
 
   file_id <- get_computed_file_ids(project_info, filters = files_filter)
@@ -168,7 +205,7 @@ download_project <- function(
     stop(glue::glue("No computed files found for project {project_id} in format {format}."))
   }
   if (length(file_id) > 1) {
-    stop("Multiple download files found; something is wrong.")
+    stop("Multiple files found for {project_id} in format {format}; something is wrong?")
   }
   # get signed download URL
   download_url <- scpca_request(

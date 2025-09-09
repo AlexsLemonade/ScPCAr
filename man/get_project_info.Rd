@@ -7,13 +7,21 @@
 get_project_info(project_id, simplifyVector = FALSE)
 }
 \arguments{
-\item{project_id}{the project ID (e.g. "SCPCP000001")}
+\item{project_id}{The ScPCA project ID (e.g. "SCPCP000001")}
 
-\item{simplifyVector}{passed to resp_body_json to simplify the returned JSON structure}
+\item{simplifyVector}{Simplify the returned list structure,
+creating vectors and data frames instead of lists when possible.
+Default is FALSE.}
 }
 \value{
-a list of project metadata from the ScPCA API.
+A nested list of project metadata from the ScPCA API.
 }
 \description{
 Get project metadata by project ID
+}
+\examples{
+\dontrun{
+# Get metadata for a specific project
+project_info <- get_project_info("SCPCP000001")
+}
 }

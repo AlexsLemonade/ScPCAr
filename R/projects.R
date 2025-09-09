@@ -54,15 +54,21 @@ scpca_projects <- function(simplify = TRUE) {
 
 #' Get project metadata by project ID
 #'
-#' @param project_id the project ID (e.g. "SCPCP000001")
-#' @param simplifyVector passed to resp_body_json to simplify the returned JSON structure
+#' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
+#' @param simplifyVector Simplify the returned list structure,
+#'  creating vectors and data frames instead of lists when possible.
+#'  Default is FALSE.
 #'
-#' @returns a list of project metadata from the ScPCA API.
+#' @returns A nested list of project metadata from the ScPCA API.
 #'
 #' @import httr2
 #'
 #' @export
 #' @examples
+#' \dontrun{
+#' # Get metadata for a specific project
+#' project_info <- get_project_info("SCPCP000001")
+#' }
 get_project_info <- function(project_id, simplifyVector = FALSE) {
   stopifnot(
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id)
@@ -92,11 +98,11 @@ get_project_info <- function(project_id, simplifyVector = FALSE) {
 #' The unsimplified data frame contains nested list columns with additional details,
 #' such as the experimental modalities associated with each sample.
 #'
-#' @param project_id The project ID (e.g. "SCPCP000001")
+#' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
 #' @param simplify A logical indicating whether to simplify the resulting data frame
 #'  by removing list columns. Default is TRUE.
 #'
-#' @returns a data frame of sample information for the specified project from the ScPCA API.
+#' @returns A data frame of sample information for the specified project from the ScPCA API.
 #'
 #' @import httr2
 #' @importFrom dplyr .data
