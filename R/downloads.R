@@ -171,7 +171,8 @@ download_project <- function(
 ) {
   stopifnot(
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
-    "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
+    "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
+    "merged must be a logical value" = is.logical(merged) && length(merged) == 1,
   )
   # normalize format input to match API values
   format <- tolower(format)
@@ -188,6 +189,10 @@ download_project <- function(
     )
   }
 
+  if (format_str == "SPATIAL" && merged) {
+    stop("Merged spatial files are not available.")
+  }
+
   # create destination directory if it doesn't exist
   if (!dir.exists(destination)) {
     dir.create(destination, recursive = TRUE)
@@ -196,7 +201,7 @@ download_project <- function(
   project_info <- get_project_info(project_id)
 
   files_filter <- computed_files_filter(format_str)
-  # add merged filter
+  # add filter for whether to get merged files
   files_filter$includes_merged <- merged
 
   file_id <- get_computed_file_ids(project_info, filters = files_filter)

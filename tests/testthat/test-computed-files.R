@@ -1,4 +1,4 @@
-# tests/testthat/test-computed-files.R
+# tests for get_computed_file_ids and computed_files_filter functions in downloads.R
 
 test_that("get_computed_file_ids validates input parameters", {
   # Test that info_list must contain computed_files element
@@ -110,4 +110,21 @@ test_that("get_computed_file_ids handles filters for non-existent fields", {
   # Filter for non-existent field should return no matches
   result <- get_computed_file_ids(info_list, filters = list(nonexistent_field = "value"))
   expect_equal(result, character(0))
+})
+
+
+test_that("computed_files_filter works with expected inputs", {
+  sce_filter <- computed_files_filter("SINGLE_CELL_EXPERIMENT")
+  expect_mapequal(sce_filter, list(format = "SINGLE_CELL_EXPERIMENT", modality = "!SPATIAL"))
+
+  anndata_filter <- computed_files_filter("ANN_DATA")
+  expect_mapequal(anndata_filter, list(format = "ANN_DATA", modality = "!SPATIAL"))
+
+  spatial_filter <- computed_files_filter("SPATIAL")
+  expect_mapequal(spatial_filter, list(modality = "SPATIAL"))
+})
+
+test_that("computed_files_filter returns fails with unexpected inputs", {
+  expect_error(computed_files_filter("UNKNOWN_FORMAT"))
+  expect_error(computed_files_filter(""))
 })
