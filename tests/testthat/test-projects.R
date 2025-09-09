@@ -45,8 +45,61 @@ test_that("scpca_projects returns simplified data frame by default", {
   })
 })
 
+test_that("get_project_info validates project_id format", {
+  # Test invalid project IDs
+  expect_error(
+    get_project_info("invalid"),
+    "Invalid project_id"
+  )
+
+  expect_error(
+    get_project_info("SCPCP00001"), # too few digits
+    "Invalid project_id"
+  )
+
+  expect_error(
+    get_project_info("SCPCP0000001"), # too many digits
+    "Invalid project_id"
+  )
+
+  expect_error(
+    get_project_info("SCPCS000001"), # wrong prefix
+    "Invalid project_id"
+  )
+})
+
+
+test_that("get_project_info works with valid project_id", {
+  # Mock the API response for a valid project
+  with_mock_dir("project_info", {
+    result <- get_project_info("SCPCP000001")
+
+    # Verify the result structure
+    expect_type(result, "list")
+    expect_equal(result$scpca_id, "SCPCP000001")
+    expect_contains(
+      names(result),
+      c("computed_files", "diagnoses", "abstract", "title", "additional_metadata_keys")
+    )
+  })
+})
+
+test_that("get_project_info handles 404 errors correctly", {
+  # Mock check_api to return TRUE (API is reachable)
+  local_mocked_bindings(
+    check_api = function() TRUE
+  )
+
+  with_mock_dir("project_info_404", {
+    expect_error(
+      get_project_info("SCPCP999999"),
+      "Project `SCPCP999999` not found."
+    )
+  })
+})
+
 test_that("get_project_samples returns simplified data frame by default", {
-  with_mock_dir("get_project_samples", {
+  with_mock_dir("project_info", {
     samples_df <- get_project_samples("SCPCP000001")
 
     # Check that it returns a data frame
