@@ -43,9 +43,9 @@ scpca_projects <- function(simplify = TRUE) {
   # convert types and relocate columns
   project_df <- project_df |>
     dplyr::mutate(
+      dplyr::across(dplyr::where(is.character), \(x) dplyr::na_if(x, "NA")),
       created_at = as.POSIXct(.data$created_at),
-      updated_at = as.POSIXct(.data$updated_at),
-      dplyr::across(dplyr::where(is.character), \(x) dplyr::na_if(x, "NA"))
+      updated_at = as.POSIXct(.data$updated_at)
     ) |>
     dplyr::relocate(scpca_project_id = "scpca_id")
 
@@ -126,10 +126,10 @@ get_project_samples <- function(project_id, simplify = TRUE) {
   # reorganize and recast columns
   sample_df <- sample_df |>
     dplyr::mutate(
+      dplyr::across(dplyr::where(is.character), \(x) dplyr::na_if(x, "NA")),
       age = as.numeric(.data$age),
       created_at = as.POSIXct(.data$created_at),
-      updated_at = as.POSIXct(.data$updated_at),
-      dplyr::across(dplyr::where(is.character), \(x) dplyr::na_if(x, "NA"))
+      updated_at = as.POSIXct(.data$updated_at)
     ) |>
     dplyr::relocate(scpca_sample_id = "scpca_id", scpca_project_id = "project")
 
