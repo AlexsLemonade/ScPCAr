@@ -10,6 +10,7 @@ download_project(
   destination = "scpca_data",
   format = "sce",
   merged = FALSE,
+  include_multiplexed = NULL,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -26,8 +27,12 @@ Default is "scpca_data".}
 "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
 Default is "sce".}
 
-\item{merged}{Whether to download merged data files, if available.
+\item{merged}{Download merged data files, if available.
 Default is FALSE.}
+
+\item{include_multiplexed}{Include multiplexed samples, if available.
+Default is TRUE for SingleCellExperiment and FALSE for AnnData and spatial samples,
+where multiplexed data are not available.}
 
 \item{overwrite}{Whether to overwrite existing directories if they already exist. Default is FALSE.}
 
