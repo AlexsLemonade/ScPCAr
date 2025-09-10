@@ -172,7 +172,7 @@ download_project <- function(
   stopifnot(
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
-    "merged must be a logical value" = is.logical(merged) && length(merged) == 1,
+    "merged must be a logical value" = is.logical(merged) && length(merged) == 1
   )
   # normalize format input to match API values
   format <- tolower(format)

@@ -7,11 +7,11 @@
 get_sample_info(sample_id, simplifyVector = FALSE)
 }
 \arguments{
+\item{sample_id}{The ScPCA sample ID (e.g. "SCPCS000001")}
+
 \item{simplifyVector}{Simplify the returned list structure,
 creating vectors and data frames instead of lists when possible.
 Default is FALSE.}
-
-\item{project_id}{The ScPCA sample ID (e.g. "SCPCS000001")}
 }
 \value{
 A nested list of sample metadata from the ScPCA API.
@@ -22,6 +22,6 @@ Get sample metadata by sample ID
 \examples{
 \dontrun{
 # Get metadata for a specific sample
-project_info <- get_project_info("SCPCS000001")
+sample_info <- get_sample_info("SCPCS000001")
 }
 }

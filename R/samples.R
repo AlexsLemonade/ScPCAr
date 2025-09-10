@@ -1,6 +1,6 @@
 #' Get sample metadata by sample ID
 #'
-#' @param project_id The ScPCA sample ID (e.g. "SCPCS000001")
+#' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
 #' @param simplifyVector Simplify the returned list structure,
 #'  creating vectors and data frames instead of lists when possible.
 #'  Default is FALSE.
@@ -13,7 +13,7 @@
 #' @examples
 #' \dontrun{
 #' # Get metadata for a specific sample
-#' project_info <- get_project_info("SCPCS000001")
+#' sample_info <- get_sample_info("SCPCS000001")
 #' }
 get_sample_info <- function(sample_id, simplifyVector = FALSE) {
   stopifnot(
