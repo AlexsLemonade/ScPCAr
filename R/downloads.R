@@ -207,10 +207,14 @@ download_project <- function(
   file_id <- get_computed_file_ids(project_info, filters = files_filter)
 
   if (length(file_id) == 0) {
-    stop(glue::glue("No computed files found for project {project_id} in format {format}."))
+    stop(glue::glue(
+      "No {if(merged) 'merged '}files found for project {project_id} in format {format}."
+    ))
   }
   if (length(file_id) > 1) {
-    stop("Multiple files found for {project_id} in format {format}; something is wrong?")
+    stop(glue::glue(
+      "Multiple {if(merged) 'merged '}files found for {project_id} in format {format}; something is wrong?"
+    ))
   }
   # get signed download URL
   download_url <- scpca_request(
