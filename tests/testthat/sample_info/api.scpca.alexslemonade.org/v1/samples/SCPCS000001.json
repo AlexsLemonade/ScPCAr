@@ -5,7 +5,7 @@
         "submitter_id": "NA",
         "participant_id": "NA",
         "organism_ontology_id": "NCBITaxon:9606",
-        "sex_ontology_term_id": "PATO:0000383",
+        "sex_ontology_term_id": "NA",
         "tissue_ontology_term_id": "NA",
         "disease_ontology_term_id": "NA",
         "molecular_characteristics": "NA",
@@ -74,7 +74,7 @@
 
     ],
     "project": {
-        "abstract": "project abstract",
+        "abstract": "Abstract text",
        "additional_metadata_keys": [
             "development_stage_ontology_term_id",
             "disease_ontology_term_id",
@@ -259,7 +259,7 @@
         "technologies": [
             "10Xv3"
         ],
-        "title": "Title text",
+        "title": "Project Title",
         "unavailable_samples_count": 0,
         "updated_at": "2025-08-26T08:05:32.770401Z"
     },
