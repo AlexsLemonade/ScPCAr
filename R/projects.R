@@ -141,3 +141,63 @@ get_project_samples <- function(project_id, simplify = TRUE) {
 
   sample_df
 }
+
+
+get_project_libraries <- function(project_id, auth_token) {
+  project_info <- get_project_info(project_id, simplifyVector = FALSE)
+  metadata_id <- project_info$computed_files |>
+    purrr::keep(\(file) file$metadata_only) |>
+    purrr::map_chr(\(f) as.character(f$id))
+
+  if (length(metadata_id) == 0) {
+    stop(glue::glue("No metadata file found for project `{project_id}`."))
+  }
+  if (length(metadata_id) > 1) {
+    warning(glue::glue(
+      "Multiple metadata files found for project `{project_id}`.",
+      " Using the first one."
+    ))
+    metadata_id <- metadata_id[1]
+  }
+
+  download_url <- scpca_request(
+    resource = paste0("computed-files/", metadata_id),
+    auth_token = auth_token
+  ) |>
+    req_perform() |>
+    resp_body_json() |>
+    purrr::pluck("download_url")
+
+  file_paths <- download_and_extract_file(download_url, tempfile(), overwrite = TRUE, quiet = TRUE)
+  on.exit(unlink(file_paths), add = TRUE)
+  metadata_file <- file_paths[basename(file_paths) == "metadata.tsv"]
+  if (length(metadata_file) == 0) {
+    stop("Metadata file not found in downloaded archive.")
+  }
+  library_metadata <- readr::read_tsv(
+    metadata_file,
+    col_types = readr::cols(
+      .default = "c",
+      age = "n",
+      total_reads = "d",
+      mapped_reads = "d",
+      unfiltered_cells = "d",
+      filtered_cell_count = "d",
+      processed_cells = "d",
+      has_cellhash = "l",
+      includes_anndata = "l",
+      is_cell_line = "l",
+      is_multiplexed = "l",
+      is_xenograft = "l",
+      prob_compromised_cutoff = "d",
+      min_gene_cutoff = "d",
+      date_processed = "T"
+    )
+  )
+
+  # convert any missed "is_" "has_" or "includes_" columns to logical
+  is_cols <- stringr::which(colnames(library_metadata), "^(is|has|includes)_")
+  library_metadata <- library_metadata |>
+    dplyr::mutate(dplyr::across(is_cols, as.logical))
+  library_metadata
+}
