@@ -23,19 +23,22 @@ get_computed_file_ids <- function(info_list, filters = list()) {
     }
   )
 
-  ids <- info_list$computed_files |>
+  filtered_files <- info_list$computed_files |>
     purrr::keep(\(cf) {
+      # check every key/value in the filter list
       all(purrr::imap_lgl(filters, \(val, key) {
-        (key %in% names(cf) && !is.null(cf[[key]])) &&
+        (key %in% names(cf) && !is.null(cf[[key]])) && # key is present
           if (is.character(val) && grepl("^!", val)) {
-            # negated filter
+            # key does not have negated value
             cf[[key]] != stringr::str_remove(val, "^!")
           } else {
-            # regular filter
+            # key has value
             cf[[key]] == val
           }
       }))
-    }) |>
+    })
+
+  ids <- filtered_files |>
     purrr::map_chr(\(x) as.character(x$id))
 
   ids
