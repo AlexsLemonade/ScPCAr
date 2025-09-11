@@ -178,7 +178,7 @@ download_project <- function(
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
     "merged must be a logical value" = is.logical(merged) && length(merged) == 1,
     "include_multiplexed must be NULL or a logical value" = is.null(include_multiplexed) ||
-      (is.logical(include_multiplexed) && length(include_multiplexed) == 1),
+      (is.logical(include_multiplexed) && length(include_multiplexed) == 1)
   )
   # normalize format input to match API values
   format <- tolower(format)
@@ -208,6 +208,10 @@ download_project <- function(
   }
 
   project_info <- get_project_info(project_id)
+  # if the project has no multiplexed data, set include_multiplexed to FALSE
+  if (!project_info$has_multiplexed_data) {
+    include_multiplexed <- FALSE
+  }
 
   files_filter <- computed_files_filter(format_str)
   # add filters for whether to get merged and/or multiplexed files
