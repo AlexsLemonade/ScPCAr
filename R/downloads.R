@@ -135,8 +135,11 @@ download_sample <- function(
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
 #'  "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
 #'  Default is "sce".
-#' @param merged Whether to download merged data files, if available.
+#' @param merged Download merged data files, if available.
 #'  Default is FALSE.
+#' @param include_multiplexed Include multiplexed samples, if available.
+#'  Default is TRUE for SingleCellExperiment and FALSE for AnnData and spatial samples,
+#'  where multiplexed data are not available.
 #' @param overwrite Whether to overwrite existing directories if they already exist. Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
@@ -166,22 +169,28 @@ download_project <- function(
   destination = "scpca_data",
   format = "sce",
   merged = FALSE,
+  include_multiplexed = NULL,
   overwrite = FALSE,
   quiet = FALSE
 ) {
   stopifnot(
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
-    "merged must be a logical value" = is.logical(merged) && length(merged) == 1
+    "merged must be a logical value" = is.logical(merged) && length(merged) == 1,
+    "include_multiplexed must be NULL or a logical value" = is.null(include_multiplexed) ||
+      (is.logical(include_multiplexed) && length(include_multiplexed) == 1)
   )
   # normalize format input to match API values
   format <- tolower(format)
   if (format %in% SCE_FORMATS) {
     format_str <- "SINGLE_CELL_EXPERIMENT"
+    include_multiplexed <- if (is.null(include_multiplexed)) TRUE else include_multiplexed
   } else if (format %in% ANNDATA_FORMATS) {
     format_str <- "ANN_DATA"
+    include_multiplexed <- if (is.null(include_multiplexed)) FALSE else include_multiplexed
   } else if (format %in% SPATIAL_FORMATS) {
     format_str <- "SPATIAL"
+    include_multiplexed <- if (is.null(include_multiplexed)) FALSE else include_multiplexed
   } else {
     stop(
       "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
@@ -199,18 +208,33 @@ download_project <- function(
   }
 
   project_info <- get_project_info(project_id)
+  # if the project has no multiplexed data, set include_multiplexed to FALSE
+  if (!project_info$has_multiplexed_data) {
+    include_multiplexed <- FALSE
+  }
 
   files_filter <- computed_files_filter(format_str)
-  # add filter for whether to get merged files
+  # add filters for whether to get merged and/or multiplexed files
   files_filter$includes_merged <- merged
+  files_filter$has_multiplexed_data <- include_multiplexed
 
   file_id <- get_computed_file_ids(project_info, filters = files_filter)
 
+  files_string <- dplyr::case_when(
+    merged & include_multiplexed ~ "merged, multiplexed files",
+    merged ~ "merged files",
+    include_multiplexed ~ "multiplexed files",
+    .default = "files"
+  )
   if (length(file_id) == 0) {
-    stop(glue::glue("No computed files found for project {project_id} in format {format}."))
+    stop(glue::glue(
+      "No {files_string} found for project {project_id} in format {format}."
+    ))
   }
   if (length(file_id) > 1) {
-    stop("Multiple files found for {project_id} in format {format}; something is wrong?")
+    stop(glue::glue(
+      "Multiple {files_string} found for {project_id} in format {format}; something is wrong?"
+    ))
   }
   # get signed download URL
   download_url <- scpca_request(

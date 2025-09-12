@@ -54,7 +54,7 @@ computed_files_filter <- function(
   format_str = c("SINGLE_CELL_EXPERIMENT", "ANN_DATA", "SPATIAL")
 ) {
   format_str <- match.arg(format_str)
-  filter_list = if (format_str == "SPATIAL") {
+  filter_list <- if (format_str == "SPATIAL") {
     list(modality = "SPATIAL")
   } else {
     list(format = format_str, modality = "!SPATIAL")
