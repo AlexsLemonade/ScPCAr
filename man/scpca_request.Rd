@@ -4,10 +4,10 @@
 \alias{scpca_request}
 \title{Base request object for ScPCA API}
 \usage{
-scpca_request(resource, body = list(), auth_token = "", ...)
+scpca_request(resource = "", body = list(), auth_token = "", ...)
 }
 \arguments{
-\item{resource}{API resource to query, e.g. "projects"}
+\item{resource}{API resource to query, e.g. "projects", default is "" (base URL)}
 
 \item{body}{optional named list to include as JSON body in the request}
 

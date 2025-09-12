@@ -7,13 +7,13 @@
 get_project_samples(project_id, simplify = TRUE)
 }
 \arguments{
-\item{project_id}{The project ID (e.g. "SCPCP000001")}
+\item{project_id}{The ScPCA project ID (e.g. "SCPCP000001")}
 
 \item{simplify}{A logical indicating whether to simplify the resulting data frame
 by removing list columns. Default is TRUE.}
 }
 \value{
-a data frame of sample information for the specified project from the ScPCA API.
+A data frame of sample information for the specified project from the ScPCA API.
 }
 \description{
 This function retrievs a data frame of all biological samples associated with a SCPCA project,

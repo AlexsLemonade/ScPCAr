@@ -54,3 +54,13 @@ test_that("scpca_request without authentication token behaves as expected", {
 
   expect_null(req_get_headers(req, "reveal")$`api-key`)
 })
+
+test_that("check_api works as expected", {
+  with_mock_dir("check_api", {
+    expect_true(check_api())
+  })
+
+  without_internet(
+    expect_error(check_api())
+  )
+})

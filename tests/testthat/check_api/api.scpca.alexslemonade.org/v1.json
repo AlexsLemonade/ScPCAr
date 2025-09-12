@@ -1,0 +1,8 @@
+{
+    "computed-files": "http://api.scpca.alexslemonade.org/v1/computed-files",
+    "projects": "http://api.scpca.alexslemonade.org/v1/projects",
+    "samples": "http://api.scpca.alexslemonade.org/v1/samples",
+    "tokens": "http://api.scpca.alexslemonade.org/v1/tokens",
+    "project-options": "http://api.scpca.alexslemonade.org/v1/project-options",
+    "stats": "http://api.scpca.alexslemonade.org/v1/stats"
+}

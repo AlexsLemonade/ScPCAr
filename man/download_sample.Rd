@@ -18,7 +18,8 @@ download_sample(
 
 \item{auth_token}{An authorization token obtained from \code{get_auth()}}
 
-\item{destination}{The path to the directory where the unzipped file directory should be saved. Default is "scpca_data".}
+\item{destination}{The path to the directory where the unzipped file directory should be saved.
+Default is "scpca_data".}
 
 \item{format}{The desired file format, either "sce" (SingleCellExperiment),
 "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).

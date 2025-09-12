@@ -1,3 +1,14 @@
+# Accepted format strings (case insensitive) for the `format` argument in download functions
+SCE_FORMATS <- c(
+  "sce",
+  "singlecellexperiment",
+  "single-cell-experiment",
+  "single_cell_experiment"
+)
+ANNDATA_FORMATS <- c("anndata", "h5ad")
+SPATIAL_FORMATS <- c("spatial", "spaceranger", "space ranger")
+
+
 #' Download a sample's data files from the ScPCA Portal
 #'
 #' This function downloads the data files for a specified sample from the ScPCA Portal.
@@ -20,7 +31,8 @@
 #'
 #' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
 #' @param auth_token An authorization token obtained from `get_auth()`
-#' @param destination The path to the directory where the unzipped file directory should be saved. Default is "scpca_data".
+#' @param destination The path to the directory where the unzipped file directory should be saved.
+#'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
 #'  "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
 #'  Default is "sce".
@@ -51,27 +63,16 @@ download_sample <- function(
   quiet = FALSE
 ) {
   stopifnot(
-    "Invalid sample_id" = grepl("^SCPCS\\d{6}$", sample_id),
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
-
-  sce_formats <- c(
-    "sce",
-    "singlecellexperiment",
-    "single-cell-experiment",
-    "single_cell_experiment"
-  )
-  anndata_formats <- c("anndata", "h5ad")
-  spatial_formats <- c("spatial", "spaceranger", "space ranger")
-
   # normalize format input to match API values
   format <- tolower(format)
-  if (format %in% sce_formats) {
+  if (format %in% SCE_FORMATS) {
     format_str <- "SINGLE_CELL_EXPERIMENT"
-  } else if (format %in% anndata_formats) {
+  } else if (format %in% ANNDATA_FORMATS) {
     format_str <- "ANN_DATA"
-  } else if (format %in% spatial_formats) {
+  } else if (format %in% SPATIAL_FORMATS) {
     format_str <- "SPATIAL"
   } else {
     stop(
@@ -84,19 +85,7 @@ download_sample <- function(
     dir.create(destination, recursive = TRUE)
   }
 
-  sample_info <- tryCatch(
-    {
-      scpca_request(paste0("samples/", sample_id)) |>
-        req_perform() |>
-        resp_body_json()
-    },
-    # return NULL if 404
-    httr2_http_404 = \(cnd) NULL
-  )
-
-  if (is.null(sample_info)) {
-    stop(glue::glue("Sample `{sample_id}` not found."))
-  }
+  sample_info <- get_sample_info(sample_id)
 
   # message if multiplexed
   if (sample_info$has_multiplexed_data) {
@@ -109,21 +98,15 @@ download_sample <- function(
     ))
   }
 
-  file_list <- sample_info$computed_files |>
-    # filter to requested format or modality (only applies to spatial data)
-    purrr::keep(\(cf) {
-      (cf$format == format_str && cf$modality != "SPATIAL") || cf$modality == format_str
-    })
-  if (length(file_list) == 0) {
-    warning(glue::glue("No files found for sample {sample_id} in format {format}."))
-    # return empty vector
-    return(invisible(c()))
+  file_ids <- get_computed_file_ids(sample_info, filters = computed_files_filter(format_str))
+
+  if (length(file_ids) == 0) {
+    stop(glue::glue("No computed files found for sample {sample_id} in format {format}."))
   }
 
   # build requests for each file
   # most samples will only have one file, but in some multiplexed cases there may be more
-  file_requests <- file_list |>
-    purrr::map_chr(\(x) as.character(x$id)) |>
+  file_requests <- file_ids |>
     purrr::map(\(id) {
       scpca_request(
         resource = paste0("computed-files/", id),
@@ -139,6 +122,130 @@ download_sample <- function(
     download_and_extract_file(url, destination, overwrite, quiet)
   }) |>
     purrr::list_c()
+  invisible(file_paths)
+}
+
+
+#' Download a project's data files from the ScPCA Portal
+#'
+#' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
+#' @param auth_token An authorization token obtained from `get_auth()`
+#' @param destination The path to the directory where the unzipped file directory should be saved.
+#'  Default is "scpca_data".
+#' @param format The desired file format, either "sce" (SingleCellExperiment),
+#'  "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
+#'  Default is "sce".
+#' @param merged Download merged data files, if available.
+#'  Default is FALSE.
+#' @param include_multiplexed Include multiplexed samples, if available.
+#'  Default is TRUE for SingleCellExperiment and FALSE for AnnData and spatial samples,
+#'  where multiplexed data are not available.
+#' @param overwrite Whether to overwrite existing directories if they already exist. Default is FALSE.
+#' @param quiet Whether to suppress download progress messages. Default is FALSE.
+#'
+#' @returns a vector of file paths for the downloaded files (invisibly)
+#'
+#' @export
+#' @examples
+#'
+#' \dontrun{
+#' # Get a token first
+#' auth_token <- get_auth("me@email.net", agree = TRUE)
+#' # Then ask for a sample download
+#' download_project("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
+#'
+#' # Downloading merged files in AnnData format
+#' download_project(
+#'   "SCPCS000001",
+#'   auth_token,
+#'   destination = "scpca_data",
+#'   format = "anndata",
+#'   merged = TRUE
+#' )
+#' }
+download_project <- function(
+  project_id,
+  auth_token,
+  destination = "scpca_data",
+  format = "sce",
+  merged = FALSE,
+  include_multiplexed = NULL,
+  overwrite = FALSE,
+  quiet = FALSE
+) {
+  stopifnot(
+    "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
+    "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
+    "merged must be a logical value" = is.logical(merged) && length(merged) == 1,
+    "include_multiplexed must be NULL or a logical value" = is.null(include_multiplexed) ||
+      (is.logical(include_multiplexed) && length(include_multiplexed) == 1)
+  )
+  # normalize format input to match API values
+  format <- tolower(format)
+  if (format %in% SCE_FORMATS) {
+    format_str <- "SINGLE_CELL_EXPERIMENT"
+    include_multiplexed <- if (is.null(include_multiplexed)) TRUE else include_multiplexed
+  } else if (format %in% ANNDATA_FORMATS) {
+    format_str <- "ANN_DATA"
+    include_multiplexed <- if (is.null(include_multiplexed)) FALSE else include_multiplexed
+  } else if (format %in% SPATIAL_FORMATS) {
+    format_str <- "SPATIAL"
+    include_multiplexed <- if (is.null(include_multiplexed)) FALSE else include_multiplexed
+  } else {
+    stop(
+      "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
+      " (with some additional variants accepted)."
+    )
+  }
+
+  if (format_str == "SPATIAL" && merged) {
+    stop("Merged spatial files are not available.")
+  }
+
+  # create destination directory if it doesn't exist
+  if (!dir.exists(destination)) {
+    dir.create(destination, recursive = TRUE)
+  }
+
+  project_info <- get_project_info(project_id)
+  # if the project has no multiplexed data, set include_multiplexed to FALSE
+  if (!project_info$has_multiplexed_data) {
+    include_multiplexed <- FALSE
+  }
+
+  files_filter <- computed_files_filter(format_str)
+  # add filters for whether to get merged and/or multiplexed files
+  files_filter$includes_merged <- merged
+  files_filter$has_multiplexed_data <- include_multiplexed
+
+  file_id <- get_computed_file_ids(project_info, filters = files_filter)
+
+  files_string <- dplyr::case_when(
+    merged & include_multiplexed ~ "merged, multiplexed files",
+    merged ~ "merged files",
+    include_multiplexed ~ "multiplexed files",
+    .default = "files"
+  )
+  if (length(file_id) == 0) {
+    stop(glue::glue(
+      "No {files_string} found for project {project_id} in format {format}."
+    ))
+  }
+  if (length(file_id) > 1) {
+    stop(glue::glue(
+      "Multiple {files_string} found for {project_id} in format {format}; something is wrong?"
+    ))
+  }
+  # get signed download URL
+  download_url <- scpca_request(
+    resource = paste0("computed-files/", file_id),
+    auth_token = auth_token
+  ) |>
+    req_perform() |>
+    resp_body_json() |>
+    purrr::pluck("download_url")
+
+  file_paths <- download_and_extract_file(download_url, destination, overwrite, quiet)
   invisible(file_paths)
 }
 
