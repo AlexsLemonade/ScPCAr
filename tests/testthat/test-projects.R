@@ -124,3 +124,61 @@ test_that("get_project_samples returns simplified data frame by default", {
     expect_s3_class(samples_df$updated_at, "POSIXct")
   })
 })
+
+
+test_that("get_project_metadata_url works as expected", {
+  with_mock_dir("project_info", {
+    token <- "mock-token-123"
+    download_url <- get_project_metadata_url("SCPCP000001", token)
+
+    # Verify the download URL format
+    expect_type(download_url, "character")
+    expect_true(grepl("^https://", download_url))
+    expect_true(grepl("SCPCP000001", download_url))
+  })
+})
+
+test_that("get_project_libraries reads data correctly", {
+  # Mock the network functions manually
+  local_mocked_bindings(
+    get_project_metadata_url = function(project_id, auth_token) {
+      "https://example.com/mock_metadata.zip"
+    },
+    download_and_extract_file = function(url, dest, overwrite = TRUE, quiet = TRUE) {
+      # return paths to files in the testthat/project_metadata/
+      list.files("project_metadata/SCPCP000001_ALL_METADATA", full.names = TRUE)
+    }
+  )
+  libraries_df <- get_project_libraries("SCPCP000001", "mock-token-123")
+
+  # Check that it returns a data frame
+  expect_s3_class(libraries_df, "data.frame")
+  # Check that we have rows and columns
+  expect_gt(nrow(libraries_df), 0)
+  expect_gt(ncol(libraries_df), 0)
+  # Check for expected columns
+  expect_contains(
+    colnames(libraries_df),
+    c("scpca_project_id", "scpca_sample_id", "scpca_library_id", "seq_unit", "technology")
+  )
+
+  # Check that logical columns are properly converted
+  is_cols <- stringr::str_subset(colnames(libraries_df), "^(is|has|includes)_")
+  expect_true(all(sapply(libraries_df[is_cols], is.logical)))
+
+  # Check that numeric columns are properly converted
+  numeric_cols <- c(
+    "age",
+    "total_reads",
+    "mapped_reads",
+    "unfiltered_cells",
+    "filtered_cell_count",
+    "processed_cells",
+    "prob_compromised_cutoff",
+    "min_gene_cutoff"
+  )
+  expect_true(all(sapply(libraries_df[numeric_cols], is.numeric)))
+
+  # Check that date columns are properly converted
+  expect_s3_class(libraries_df$date_processed, "POSIXct")
+})

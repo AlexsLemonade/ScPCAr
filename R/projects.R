@@ -141,3 +141,110 @@ get_project_samples <- function(project_id, simplify = TRUE) {
 
   sample_df
 }
+
+
+#' Get metadata for all libraries in a given project
+#'
+#' This function downloads and reads the library metadata file for a given ScPCA project.
+#' The data frame returned will be the same as the project metadata file available from the
+#' ScPCA Portal website for each project, including information about each library
+#' that is part of the project.
+#'
+#' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
+#' @param auth_token An authorization token obtained from `get_auth()`
+#'
+#' @returns A data frame (tibble) of library metadata for the specified project.
+#'
+#' @export
+#' @examples
+#' \dontrun{
+#' # First get an auth token
+#' token <- get_auth("me@email.net", agree = TRUE)
+#' # Get library metadata for a specific project
+#' libraries_df <- get_project_libraries("SCPCP000001", token)
+#' }
+#'
+get_project_libraries <- function(project_id, auth_token) {
+  download_url <- get_project_metadata_url(project_id, auth_token)
+
+  file_paths <- download_and_extract_file(download_url, tempfile(), overwrite = TRUE, quiet = TRUE)
+  if (!is_testing()) {
+    on.exit(unlink(file_paths), add = TRUE)
+  }
+  metadata_file <- file_paths[basename(file_paths) == "metadata.tsv"]
+  if (length(metadata_file) == 0) {
+    stop("Metadata file not found in downloaded archive.")
+  }
+  library_metadata <- readr::read_tsv(
+    metadata_file,
+    col_types = readr::cols(
+      .default = "c",
+      age = "d",
+      total_reads = "d",
+      mapped_reads = "d",
+      unfiltered_cells = "i",
+      filtered_cell_count = "i",
+      processed_cells = "i",
+      has_cellhash = "l",
+      includes_anndata = "l",
+      is_cell_line = "l",
+      is_multiplexed = "l",
+      is_xenograft = "l",
+      prob_compromised_cutoff = "d",
+      min_gene_cutoff = "d",
+      date_processed = "T"
+    )
+  )
+
+  # convert any missed "is_" "has_" or "includes_" columns to logical
+  is_cols <- stringr::str_subset(colnames(library_metadata), "^(is|has|includes)_")
+  library_metadata <- library_metadata |>
+    dplyr::mutate(dplyr::across(dplyr::all_of(is_cols), as.logical))
+  library_metadata
+}
+
+
+#' Get project metadata download URL
+#'
+#' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
+#' @param auth_token An authorization token obtained from `get_auth()`
+#'
+#' @returns A signed download URL for the project metadata file as would be found
+#'  from the ScPCA Portal.
+#'
+#' @import httr2
+#'
+#' @examples
+#' \dontrun{
+#' # First get an auth token
+#' token <- get_auth("me@email.net", agree = TRUE)
+#' # Get metadata for a specific project
+#' project_info <- get_project_metadata_url("SCPCP000001", token)
+#' }
+get_project_metadata_url <- function(project_id, auth_token) {
+  project_info <- get_project_info(project_id, simplifyVector = FALSE)
+  metadata_id <- project_info$computed_files |>
+    purrr::keep(\(file) file$metadata_only) |>
+    purrr::map_chr(\(f) as.character(f$id))
+
+  if (length(metadata_id) == 0) {
+    stop(glue::glue("No metadata file found for project `{project_id}`."))
+  }
+  if (length(metadata_id) > 1) {
+    warning(glue::glue(
+      "Multiple metadata files found for project `{project_id}`.",
+      " Using the first one."
+    ))
+    metadata_id <- metadata_id[1]
+  }
+
+  download_url <- scpca_request(
+    resource = paste0("computed-files/", metadata_id),
+    auth_token = auth_token
+  ) |>
+    req_perform() |>
+    resp_body_json() |>
+    purrr::pluck("download_url")
+
+  download_url
+}
