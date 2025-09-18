@@ -1,12 +1,7 @@
-#' Internal helper to validate and normalize format for the API
+#' Internal helper to validate and normalize formats for the ScPCA API
 #'
 #' @param format The input format string
 #' @returns The normalized format string for API use
-#'
-#' @examples
-#' validate_format("sce")
-#' validate_format("SingleCellExperiment")
-#' validate_format("anndata")
 validate_format <- function(format) {
   stopifnot(
     "format must be a single string" = is.character(format) && length(format) == 1

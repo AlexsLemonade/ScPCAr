@@ -2,7 +2,7 @@
 % Please edit documentation in R/downloads.R
 \name{validate_format}
 \alias{validate_format}
-\title{Internal helper to validate and normalize format for the API}
+\title{Internal helper to validate and normalize formats for the ScPCA API}
 \usage{
 validate_format(format)
 }
@@ -13,10 +13,5 @@ validate_format(format)
 The normalized format string for API use
 }
 \description{
-Internal helper to validate and normalize format for the API
-}
-\examples{
-validate_format("sce")
-validate_format("SingleCellExperiment")
-validate_format("anndata")
+Internal helper to validate and normalize formats for the ScPCA API
 }
