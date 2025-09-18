@@ -1,12 +1,39 @@
-# Accepted format strings (case insensitive) for the `format` argument in download functions
-SCE_FORMATS <- c(
-  "sce",
-  "singlecellexperiment",
-  "single-cell-experiment",
-  "single_cell_experiment"
-)
-ANNDATA_FORMATS <- c("anndata", "h5ad")
-SPATIAL_FORMATS <- c("spatial", "spaceranger", "space ranger")
+#' Internal helper to validate and normalize format for the API
+#'
+#' @param format The input format string
+#' @returns The normalized format string for API use
+#'
+#' @examples
+#' validate_format("sce")
+#' validate_format("SingleCellExperiment")
+#' validate_format("anndata")
+validate_format <- function(format) {
+  stopifnot(
+    "format must be a single string" = is.character(format) && length(format) == 1
+  )
+  # Accepted format strings (case insensitive) for the `format` argument in download functions
+  sce_formats <- c(
+    "sce",
+    "singlecellexperiment",
+    "single-cell-experiment",
+    "single_cell_experiment"
+  )
+  anndata_formats <- c("anndata", "h5ad")
+  spatial_formats <- c("spatial", "spaceranger", "space ranger")
+  format <- tolower(format)
+  if (format %in% sce_formats) {
+    return("SINGLE_CELL_EXPERIMENT")
+  } else if (format %in% anndata_formats) {
+    return("ANN_DATA")
+  } else if (format %in% spatial_formats) {
+    return("SPATIAL")
+  } else {
+    stop(
+      "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
+      " (with some additional variants accepted)."
+    )
+  }
+}
 
 
 #' Download a sample's data files from the ScPCA Portal
@@ -66,31 +93,17 @@ download_sample <- function(
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
-  # normalize format input to match API values
-  format <- tolower(format)
-  if (format %in% SCE_FORMATS) {
-    format_str <- "SINGLE_CELL_EXPERIMENT"
-  } else if (format %in% ANNDATA_FORMATS) {
-    format_str <- "ANN_DATA"
-  } else if (format %in% SPATIAL_FORMATS) {
-    format_str <- "SPATIAL"
-  } else {
-    stop(
-      "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
-      " (with some additional variants accepted)."
-    )
-  }
+
+  format_str <- validate_format(format)
+
   # create destination directory if it doesn't exist
   if (!dir.exists(destination)) {
     dir.create(destination, recursive = TRUE)
   }
-
   sample_info <- get_sample_info(sample_id)
 
   # message if multiplexed
   if (sample_info$has_multiplexed_data) {
-    multiplexed_ids <- sample_info$multiplex |>
-      paste(collapse = ", ")
     message(glue::glue(
       "Sample {sample_id} is multiplexed with other samples.",
       " Downloading all associated libraries.",
@@ -181,22 +194,7 @@ download_project <- function(
       (is.logical(include_multiplexed) && length(include_multiplexed) == 1)
   )
   # normalize format input to match API values
-  format <- tolower(format)
-  if (format %in% SCE_FORMATS) {
-    format_str <- "SINGLE_CELL_EXPERIMENT"
-    include_multiplexed <- if (is.null(include_multiplexed)) TRUE else include_multiplexed
-  } else if (format %in% ANNDATA_FORMATS) {
-    format_str <- "ANN_DATA"
-    include_multiplexed <- if (is.null(include_multiplexed)) FALSE else include_multiplexed
-  } else if (format %in% SPATIAL_FORMATS) {
-    format_str <- "SPATIAL"
-    include_multiplexed <- if (is.null(include_multiplexed)) FALSE else include_multiplexed
-  } else {
-    stop(
-      "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
-      " (with some additional variants accepted)."
-    )
-  }
+  format_str <- validate_format(format)
 
   if (format_str == "SPATIAL" && merged) {
     stop("Merged spatial files are not available.")
@@ -208,7 +206,11 @@ download_project <- function(
   }
 
   project_info <- get_project_info(project_id)
-  # if the project has no multiplexed data, set include_multiplexed to FALSE
+
+  if (is.null(include_multiplexed)) {
+    include_multiplexed <- format_str == "SINGLE_CELL_EXPERIMENT"
+  }
+  # if project has no multiplexed data, override include_multiplexed to FALSE
   if (!project_info$has_multiplexed_data) {
     include_multiplexed <- FALSE
   }
@@ -256,6 +258,8 @@ download_project <- function(
 #' @param overwrite Whether to overwrite existing directories
 #' @param quiet Whether to suppress progress messages
 #'
+#' @importFrom curl curl_download
+#'
 #' @returns A character vector of extracted file paths
 download_and_extract_file <- function(url, parent_dir, overwrite, quiet) {
   download_filename <- parse_download_file(url)
@@ -279,7 +283,7 @@ download_and_extract_file <- function(url, parent_dir, overwrite, quiet) {
   if (!quiet) {
     message(glue::glue("Downloading {download_filename} ..."))
   }
-  curl::curl_download(url, file_temp, quiet = quiet)
+  curl_download(url, file_temp, quiet = quiet)
 
   if (!quiet) {
     message(glue::glue("Unzipping to {destination_dir}..."))
@@ -293,9 +297,11 @@ download_and_extract_file <- function(url, parent_dir, overwrite, quiet) {
 #'
 #' @param scpca_url The ScPCA portal download URL
 #'
+#' @importFrom curl curl_parse_url
+#'
 #' @returns the download filename
 parse_download_file <- function(scpca_url) {
-  params <- curl::curl_parse_url(scpca_url)$params
+  params <- curl_parse_url(scpca_url)$params
   params["response-content-disposition"] |>
     stringr::str_extract("SCPC[^\\s]+\\.zip")
 }
