@@ -12,6 +12,7 @@ download_project(
   merged = FALSE,
   include_multiplexed = NULL,
   overwrite = FALSE,
+  redownload = FALSE,
   quiet = FALSE
 )
 }
@@ -34,7 +35,12 @@ Default is FALSE.}
 Default is TRUE for SingleCellExperiment and FALSE for AnnData and spatial samples,
 where multiplexed data are not available.}
 
-\item{overwrite}{Whether to overwrite existing directories if they already exist. Default is FALSE.}
+\item{overwrite}{Whether to overwrite existing directories if they already exist.
+Default is FALSE.}
+
+\item{redownload}{Whether to re-download if files from the same url already exist
+(if FALSE, existing files will be returned)
+Default is FALSE.}
 
 \item{quiet}{Whether to suppress download progress messages. Default is FALSE.}
 }

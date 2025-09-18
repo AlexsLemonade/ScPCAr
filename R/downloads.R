@@ -61,7 +61,8 @@ validate_format <- function(format) {
 #'  Default is "sce".
 #' @param overwrite Whether to overwrite existing directories if they already exist.
 #'  Default is FALSE.
-#' @param redownload Whether to re-download if files from the same url already exist (if FALSE, existing files will be returned)
+#' @param redownload Whether to re-download if files from the same url already exist
+#'  (if FALSE, existing files will be returned)
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
@@ -155,7 +156,8 @@ download_sample <- function(
 #'  where multiplexed data are not available.
 #' @param overwrite Whether to overwrite existing directories if they already exist.
 #'  Default is FALSE.
-#' @param redownload Whether to re-download if files from the same url already exist (if FALSE, existing files will be returned)
+#' @param redownload Whether to re-download if files from the same url already exist
+#'  (if FALSE, existing files will be returned)
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
@@ -300,8 +302,6 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
     # return existing file paths
     return(list.files(return_dir, full.names = TRUE, recursive = TRUE))
   }
-
-  # TODO: Do we want to warn if a directory exists that matches except for the date?
 
   file_temp <- file.path(tempdir(), download_filename)
   on.exit(unlink(file_temp), add = TRUE)
