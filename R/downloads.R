@@ -15,6 +15,7 @@ validate_format <- function(format) {
   )
   anndata_formats <- c("anndata", "h5ad")
   spatial_formats <- c("spatial", "spaceranger", "space ranger")
+
   format <- tolower(format)
   if (format %in% sce_formats) {
     return("SINGLE_CELL_EXPERIMENT")
@@ -202,6 +203,7 @@ download_project <- function(
 
   project_info <- get_project_info(project_id)
 
+  # default to include multiplexed for SCE, not for others (where they are not available)
   if (is.null(include_multiplexed)) {
     include_multiplexed <- format_str == "SINGLE_CELL_EXPERIMENT"
   }
