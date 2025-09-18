@@ -294,11 +294,9 @@ download_and_extract_file <- function(url, parent_dir, overwrite, quiet) {
 #'
 #' @param scpca_url The ScPCA portal download URL
 #'
-#' @importFrom curl curl_parse_url
-#'
 #' @returns the download filename
 parse_download_file <- function(scpca_url) {
-  params <- curl_parse_url(scpca_url)$params
+  params <- curl::curl_parse_url(scpca_url)$params
   params["response-content-disposition"] |>
     stringr::str_extract("SCPC[^\\s]+\\.zip")
 }
