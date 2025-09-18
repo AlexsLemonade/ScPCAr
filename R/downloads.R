@@ -59,7 +59,10 @@ validate_format <- function(format) {
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
 #'  "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
 #'  Default is "sce".
-#' @param overwrite Whether to overwrite existing directories if they already exist. Default is FALSE.
+#' @param overwrite Whether to overwrite existing directories if they already exist.
+#'  Default is FALSE.
+#' @param redownload Whether to re-download if files from the same url already exist (if FALSE, existing files will be returned)
+#'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
 #' @import httr2
@@ -83,6 +86,7 @@ download_sample <- function(
   destination = "scpca_data",
   format = "sce",
   overwrite = FALSE,
+  redownload = FALSE,
   quiet = FALSE
 ) {
   stopifnot(
@@ -128,7 +132,7 @@ download_sample <- function(
     resps_data(\(resp) resp_body_json(resp)$download_url)
 
   file_paths <- purrr::map(download_urls, \(url) {
-    download_and_extract_file(url, destination, overwrite, quiet)
+    download_and_extract_file(url, destination, overwrite, redownload, quiet)
   }) |>
     purrr::list_c()
   invisible(file_paths)
@@ -149,7 +153,10 @@ download_sample <- function(
 #' @param include_multiplexed Include multiplexed samples, if available.
 #'  Default is TRUE for SingleCellExperiment and FALSE for AnnData and spatial samples,
 #'  where multiplexed data are not available.
-#' @param overwrite Whether to overwrite existing directories if they already exist. Default is FALSE.
+#' @param overwrite Whether to overwrite existing directories if they already exist.
+#'  Default is FALSE.
+#' @param redownload Whether to re-download if files from the same url already exist (if FALSE, existing files will be returned)
+#'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
 #' @returns a vector of file paths for the downloaded files (invisibly)
@@ -180,6 +187,7 @@ download_project <- function(
   merged = FALSE,
   include_multiplexed = NULL,
   overwrite = FALSE,
+  redownload = FALSE,
   quiet = FALSE
 ) {
   stopifnot(
@@ -244,7 +252,7 @@ download_project <- function(
     resp_body_json() |>
     purrr::pluck("download_url")
 
-  file_paths <- download_and_extract_file(download_url, destination, overwrite, quiet)
+  file_paths <- download_and_extract_file(download_url, destination, overwrite, redownload, quiet)
   invisible(file_paths)
 }
 
@@ -253,12 +261,14 @@ download_project <- function(
 #' @param url The download URL
 #' @param parent_dir The parent directory where files should be extracted
 #' @param overwrite Whether to overwrite existing directories
+#' @param redownload Whether to re-download if files from the same url already exist
+#'  (if FALSE, existing files will be returned)
 #' @param quiet Whether to suppress progress messages
 #'
 #' @importFrom curl curl_download
 #'
 #' @returns A character vector of extracted file paths
-download_and_extract_file <- function(url, parent_dir, overwrite, quiet) {
+download_and_extract_file <- function(url, parent_dir, overwrite, redownload, quiet) {
   download_filename <- parse_download_file(url)
   destination_dir <- file.path(parent_dir, stringr::str_remove(download_filename, "\\.zip$"))
 
@@ -270,6 +280,25 @@ download_and_extract_file <- function(url, parent_dir, overwrite, quiet) {
     ))
     # no files downloaded, return empty vector
     return(c())
+  }
+
+  # check for existing directory with same base name (without date)
+  destination_basename <- stringr::str_remove(download_filename, "_\\d{4}-\\d{2}-\\d{2}\\.zip$")
+  existing_dirs <- list.dirs(parent_dir, full.names = TRUE, recursive = FALSE)
+  existing_basenames <- basename(existing_dirs) |>
+    stringr::str_remove("_\\d{4}-\\d{2}-\\d{2}$")
+  existing_dirs <- existing_dirs[which(existing_basenames == destination_basename)]
+
+  if (length(existing_dirs) > 0 && !redownload) {
+    # get the latest file (alphabetically, which works for dates in YYYY-MM-DD format)
+    return_dir <- max(existing_dirs)
+    message(glue::glue(
+      "A directory for {destination_basename} already exists.",
+      "\nSkipping download and using existing file paths from the latest download: {return_dir}.",
+      "\nUse 'redownload = TRUE' to download a new version of these files."
+    ))
+    # return existing file paths
+    return(list.files(return_dir, full.names = TRUE, recursive = TRUE))
   }
 
   # TODO: Do we want to warn if a directory exists that matches except for the date?
