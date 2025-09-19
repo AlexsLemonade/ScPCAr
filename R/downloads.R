@@ -105,15 +105,6 @@ download_sample <- function(
   }
   sample_info <- get_sample_info(sample_id)
 
-  # message if multiplexed
-  if (sample_info$has_multiplexed_data) {
-    message(glue::glue(
-      "Sample {sample_id} is multiplexed with other samples.",
-      " Downloading all associated libraries.",
-      " Note that directory names will include all multiplexed sample IDs."
-    ))
-  }
-
   file_ids <- get_computed_file_ids(sample_info, filters = computed_files_filter(format_str))
 
   if (length(file_ids) == 0) {
@@ -138,6 +129,16 @@ download_sample <- function(
     download_and_extract_file(url, destination, overwrite, redownload, quiet)
   }) |>
     purrr::list_c()
+
+  # message if multiplexed
+  if (sample_info$has_multiplexed_data) {
+    message(glue::glue(
+      "Sample {sample_id} is multiplexed with other samples.",
+      " Downloaded all associated libraries.",
+      " Note that directory names will include all multiplexed sample IDs."
+    ))
+  }
+
   invisible(file_paths)
 }
 
