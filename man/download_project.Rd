@@ -35,11 +35,13 @@ Default is FALSE.}
 Default is TRUE for SingleCellExperiment and FALSE for AnnData and spatial samples,
 where multiplexed data are not available.}
 
-\item{overwrite}{Whether to overwrite existing directories if they already exist.
+\item{overwrite}{Whether to overwrite files in existing directories if they already exist.
+Note that files in existing directories that do not have the same name
+as one of the downloaded files will not be deleted.
 Default is FALSE.}
 
-\item{redownload}{Whether to re-download if files from the same url already exist
-(if FALSE, existing files will be returned)
+\item{redownload}{Whether to re-download if files from the same project and format already exist.
+If FALSE, existing files will be returned.
 Default is FALSE.}
 
 \item{quiet}{Whether to suppress download progress messages. Default is FALSE.}

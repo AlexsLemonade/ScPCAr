@@ -328,3 +328,63 @@ test_that("download_and_extract_file proceeds with download when redownload = TR
   expect_true(dir.exists(existing_dir))
   expect_true(dir.exists(new_dir))
 })
+
+test_that("download_and_extract_file redownloads when exact directory exists, overwrite=TRUE and redownload=FALSE", {
+  # Create a temporary directory for testing
+  dir_name <- "SCPCS000001_2025-03-15"
+  temp_dir <- file.path(tempdir(), "test_overwrite_redownload")
+  zip_file <- file.path(tempdir(), glue::glue("{dir_name}.zip"))
+  on.exit(
+    {
+      unlink(temp_dir, recursive = TRUE)
+      unlink(zip_file)
+    },
+    add = TRUE
+  )
+  dir.create(temp_dir, showWarnings = FALSE)
+
+  # Create the EXACT destination directory that would be created by the download
+  existing_dir <- file.path(temp_dir, dir_name)
+  dir.create(existing_dir, showWarnings = FALSE)
+  writeLines(c("old", "existing", "content"), file.path(existing_dir, "old.txt"))
+
+  # Create a real zip file for testing with new content
+  test_content_dir <- file.path(tempdir(), "overwrite_zip_content")
+  dir.create(test_content_dir, showWarnings = FALSE)
+  writeLines(c("new", "overwritten", "content"), file.path(test_content_dir, "new.txt"))
+  withr::with_dir(test_content_dir, {
+    utils::zip(zip_file, ".", flags = "-rq")
+  })
+
+  # Mock functions
+  local_mocked_bindings(
+    parse_download_file = function(url) glue::glue("{dir_name}.zip"),
+    curl_download = function(url, destfile, quiet) {
+      file.copy(zip_file, destfile)
+    }
+  )
+
+  # Test with overwrite=TRUE and redownload=FALSE when exact destination exists
+  # This should proceed with download because the exact destination exists AND overwrite=TRUE
+  expect_no_message(
+    result <- download_and_extract_file(
+      "https://example.com/test.zip",
+      temp_dir,
+      overwrite = TRUE,
+      redownload = FALSE,
+      quiet = TRUE
+    )
+  )
+
+  # Should have overwritten the directory and extracted new files
+  expect_true(dir.exists(existing_dir))
+  expect_true(file.exists(file.path(existing_dir, "new.txt")))
+
+  # Should return files from the newly downloaded directory
+  expected_files <- file.path(existing_dir, "new.txt")
+  expect_setequal(result, expected_files)
+
+  # The old file should still exist
+  # (overwrite doesn't clear directory to prevent user error if they put additional files there)
+  expect_true(file.exists(file.path(existing_dir, "old.txt")))
+})

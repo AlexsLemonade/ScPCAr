@@ -59,10 +59,12 @@ validate_format <- function(format) {
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
 #'  "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
 #'  Default is "sce".
-#' @param overwrite Whether to overwrite existing directories if they already exist.
+#' @param overwrite Whether to overwrite files in existing directories if they already exist.
+#'  Note that files in existing directories that do not have the same name
+#'  as one of the downloaded files will not be deleted.
 #'  Default is FALSE.
-#' @param redownload Whether to re-download if files from the same url already exist
-#'  (if FALSE, existing files will be returned)
+#' @param redownload Whether to re-download if files from the same sample and format already exist.
+#'  If FALSE, existing files will be returned.
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
@@ -154,10 +156,12 @@ download_sample <- function(
 #' @param include_multiplexed Include multiplexed samples, if available.
 #'  Default is TRUE for SingleCellExperiment and FALSE for AnnData and spatial samples,
 #'  where multiplexed data are not available.
-#' @param overwrite Whether to overwrite existing directories if they already exist.
+#' @param overwrite Whether to overwrite files in existing directories if they already exist.
+#'  Note that files in existing directories that do not have the same name
+#'  as one of the downloaded files will not be deleted.
 #'  Default is FALSE.
-#' @param redownload Whether to re-download if files from the same url already exist
-#'  (if FALSE, existing files will be returned)
+#' @param redownload Whether to re-download if files from the same project and format already exist.
+#'  If FALSE, existing files will be returned.
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
@@ -291,7 +295,8 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
     stringr::str_remove("_\\d{4}-\\d{2}-\\d{2}$")
   existing_dirs <- existing_dirs[which(existing_basenames == destination_basename)]
 
-  if (length(existing_dirs) > 0 && !redownload) {
+  # if found and not overwriting or redownloading, return existing files
+  if (length(existing_dirs) > 0 && !redownload && !(dir.exists(destination_dir) && overwrite)) {
     # get the latest file (alphabetically, which works for dates in YYYY-MM-DD format)
     return_dir <- max(existing_dirs)
     message(glue::glue(

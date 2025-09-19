@@ -26,11 +26,13 @@ Default is "scpca_data".}
 "anndata" (AnnData/H5AD), or "spatial" (for spatial data in Space Ranger format).
 Default is "sce".}
 
-\item{overwrite}{Whether to overwrite existing directories if they already exist.
+\item{overwrite}{Whether to overwrite files in existing directories if they already exist.
+Note that files in existing directories that do not have the same name
+as one of the downloaded files will not be deleted.
 Default is FALSE.}
 
-\item{redownload}{Whether to re-download if files from the same url already exist
-(if FALSE, existing files will be returned)
+\item{redownload}{Whether to re-download if files from the same sample and format already exist.
+If FALSE, existing files will be returned.
 Default is FALSE.}
 
 \item{quiet}{Whether to suppress download progress messages. Default is FALSE.}
