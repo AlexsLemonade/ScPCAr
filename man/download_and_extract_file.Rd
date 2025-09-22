@@ -4,7 +4,7 @@
 \alias{download_and_extract_file}
 \title{Download and extract a single file from a URL}
 \usage{
-download_and_extract_file(url, parent_dir, overwrite, quiet)
+download_and_extract_file(url, parent_dir, overwrite, redownload, quiet)
 }
 \arguments{
 \item{url}{The download URL}
@@ -12,6 +12,9 @@ download_and_extract_file(url, parent_dir, overwrite, quiet)
 \item{parent_dir}{The parent directory where files should be extracted}
 
 \item{overwrite}{Whether to overwrite existing directories}
+
+\item{redownload}{Whether to re-download if files from the same url already exist
+(if FALSE, existing files will be returned)}
 
 \item{quiet}{Whether to suppress progress messages}
 }
