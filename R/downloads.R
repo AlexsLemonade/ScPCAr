@@ -121,12 +121,19 @@ download_sample <- function(
       )
     })
 
-  # get signed download URLs
-  download_urls <- req_perform_parallel(file_requests) |>
-    resps_data(\(resp) resp_body_json(resp)$download_url)
+  # get signed download info as list (in case more than one file)
+  download_info <- req_perform_parallel(file_requests) |>
+    resps_data(resp_body_json)
 
-  file_paths <- purrr::map(download_urls, \(url) {
-    download_and_extract_file(url, destination, overwrite, redownload, quiet)
+  file_paths <- purrr::map(download_info, \(info) {
+    download_and_extract_file(
+      info$download_url,
+      info$download_filename,
+      destination,
+      overwrite,
+      redownload,
+      quiet
+    )
   }) |>
     purrr::list_c()
 
@@ -251,21 +258,28 @@ download_project <- function(
     ))
   }
   # get signed download URL
-  download_url <- scpca_request(
+  download_info <- scpca_request(
     resource = paste0("computed-files/", file_id),
     auth_token = auth_token
   ) |>
     req_perform() |>
-    resp_body_json() |>
-    purrr::pluck("download_url")
+    resp_body_json()
 
-  file_paths <- download_and_extract_file(download_url, destination, overwrite, redownload, quiet)
+  file_paths <- download_and_extract_file(
+    download_info$download_url,
+    download_info$download_filename,
+    destination,
+    overwrite,
+    redownload,
+    quiet
+  )
   invisible(file_paths)
 }
 
 #' Download and extract a single file from a URL
 #'
 #' @param url The download URL
+#' @param filename The name of the file to be downloaded (if NULL, will be parsed from URL)
 #' @param parent_dir The parent directory where files should be extracted
 #' @param overwrite Whether to overwrite existing directories
 #' @param redownload Whether to re-download if files from the same url already exist
@@ -275,9 +289,11 @@ download_project <- function(
 #' @importFrom curl curl_download
 #'
 #' @returns A character vector of extracted file paths
-download_and_extract_file <- function(url, parent_dir, overwrite, redownload, quiet) {
-  download_filename <- parse_download_file(url)
-  destination_dir <- file.path(parent_dir, stringr::str_remove(download_filename, "\\.zip$"))
+download_and_extract_file <- function(url, filename, parent_dir, overwrite, redownload, quiet) {
+  if (is.null(filename)) {
+    filename <- parse_download_file(url)
+  }
+  destination_dir <- file.path(parent_dir, stringr::str_remove(filename, "\\.zip$"))
 
   # exit if directory already exists
   if (dir.exists(destination_dir) && !overwrite) {
@@ -290,7 +306,7 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
   }
 
   # check for existing directory with same base name (without date)
-  destination_basename <- stringr::str_remove(download_filename, "_\\d{4}-\\d{2}-\\d{2}\\.zip$")
+  destination_basename <- stringr::str_remove(filename, "_\\d{4}-\\d{2}-\\d{2}\\.zip$")
   existing_dirs <- list.dirs(parent_dir, full.names = TRUE, recursive = FALSE)
   existing_basenames <- basename(existing_dirs) |>
     stringr::str_remove("_\\d{4}-\\d{2}-\\d{2}$")
@@ -309,11 +325,11 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
     return(list.files(return_dir, full.names = TRUE, recursive = TRUE))
   }
 
-  file_temp <- file.path(tempdir(), download_filename)
+  file_temp <- file.path(tempdir(), filename)
   on.exit(unlink(file_temp), add = TRUE)
 
   if (!quiet) {
-    message(glue::glue("Downloading {download_filename} ..."))
+    message(glue::glue("Downloading {filename} ..."))
   }
   curl_download(url, file_temp, quiet = quiet)
 

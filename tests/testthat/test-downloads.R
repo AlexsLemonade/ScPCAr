@@ -135,15 +135,11 @@ test_that("download_and_extract_file respects overwrite parameter", {
   dir.create(test_dest_dir, recursive = TRUE, showWarnings = FALSE)
   on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
 
-  # Mock parse_download_file to return consistent filename
-  local_mocked_bindings(
-    parse_download_file = function(url) "test_file.zip"
-  )
-
   # Test with overwrite = FALSE (should skip and return empty)
   expect_message(
     result <- download_and_extract_file(
-      "https://example.com/test.zip",
+      "https://example.com/test_file.zip",
+      "test_file.zip",
       temp_dir,
       overwrite = FALSE,
       quiet = TRUE
@@ -176,7 +172,6 @@ test_that("download_and_extract_file handles file unzipping", {
   })
 
   local_mocked_bindings(
-    parse_download_file = function(url) basename(zip_file),
     curl_download = function(url, destfile, quiet) {
       file.copy(zip_file, destfile)
     }
@@ -184,6 +179,7 @@ test_that("download_and_extract_file handles file unzipping", {
 
   download_and_extract_file(
     "https://example.com/test.zip",
+    "test.zip",
     temp_dir,
     quiet = TRUE
   )
@@ -212,15 +208,14 @@ test_that("download_and_extract_file uses existing directory with same prefix wh
   writeLines(c("existing", "content"), file.path(existing_dir, "existing.txt"))
   writeLines(c("more", "data"), file.path(existing_dir, "data.csv"))
 
-  # Mock parse_download_file to return a filename with newer date but same prefix
-  local_mocked_bindings(
-    parse_download_file = function(url) "SCPCS000001_2024-02-20.zip"
-  )
+  # a filename with newer date but same prefix
+  new_file <- "SCPCS000001_2024-02-20.zip"
 
   # Test with redownload = FALSE (default behavior)
   expect_message(
     result <- download_and_extract_file(
       "https://example.com/test.zip",
+      new_file,
       temp_dir,
       overwrite = FALSE,
       redownload = FALSE,
@@ -252,15 +247,14 @@ test_that("download_and_extract_file chooses latest directory when multiple exis
   writeLines(c("old", "content"), file.path(older_dir, "old.txt"))
   writeLines(c("new", "content"), file.path(newer_dir, "new.txt"))
 
-  # Mock parse_download_file to return a filename with same prefix
-  local_mocked_bindings(
-    parse_download_file = function(url) "SCPCS000001_2025-04-01.zip"
-  )
+  # new filename with same prefix
+  new_file <- "SCPCS000001_2025-04-01.zip"
 
   # Test with redownload = FALSE
   expect_message(
     result <- download_and_extract_file(
       "https://example.com/test.zip",
+      new_file,
       temp_dir,
       overwrite = FALSE,
       redownload = FALSE,
@@ -302,16 +296,19 @@ test_that("download_and_extract_file proceeds with download when redownload = TR
 
   # Mock functions
   local_mocked_bindings(
-    parse_download_file = function(url) glue::glue("{new_name}.zip"),
     curl_download = function(url, destfile, quiet) {
       file.copy(zip_file, destfile)
     }
   )
 
+  # new filename with same prefix
+  new_file <- paste0(new_name, ".zip")
+
   # Test with redownload = TRUE - should proceed with download
   expect_no_message(
     result <- download_and_extract_file(
       "https://example.com/test.zip",
+      new_file,
       temp_dir,
       overwrite = FALSE,
       redownload = TRUE,
@@ -358,17 +355,19 @@ test_that("download_and_extract_file redownloads when exact directory exists, ov
 
   # Mock functions
   local_mocked_bindings(
-    parse_download_file = function(url) glue::glue("{dir_name}.zip"),
     curl_download = function(url, destfile, quiet) {
       file.copy(zip_file, destfile)
     }
   )
+  # new filename matching the existing directory
+  new_file <- paste0(dir_name, ".zip")
 
   # Test with overwrite=TRUE and redownload=FALSE when exact destination exists
   # This should proceed with download because the exact destination exists AND overwrite=TRUE
   expect_no_message(
     result <- download_and_extract_file(
       "https://example.com/test.zip",
+      new_file,
       temp_dir,
       overwrite = TRUE,
       redownload = FALSE,
