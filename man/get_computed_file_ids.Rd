@@ -22,3 +22,4 @@ a character vector of computed file ids matching the filtering criteria
 \description{
 Get computed file ids from a sample info list, optionally filtered by criteria
 }
+\keyword{internal}

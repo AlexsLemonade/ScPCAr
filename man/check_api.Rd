@@ -12,3 +12,4 @@ TRUE if the API is reachable, otherwise an error is raised.
 \description{
 This function performs a simple GET request to the ScPCA API to verify that it is reachable.
 }
+\keyword{internal}

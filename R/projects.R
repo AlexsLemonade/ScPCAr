@@ -214,6 +214,8 @@ get_project_libraries <- function(project_id, auth_token) {
 #'
 #' @import httr2
 #'
+#' @keywords internal
+#'
 #' @examples
 #' \dontrun{
 #' # First get an auth token

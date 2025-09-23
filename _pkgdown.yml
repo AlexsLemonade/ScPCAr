@@ -1,3 +1,21 @@
 url: https://alexslemonade.github.io/ScPCAr/
 template:
   bootstrap: 5
+  light-switch: true
+
+reference:
+  - title: Metadata
+    contents:
+      - get_sample_info
+      - get_project_info
+      - get_project_samples
+      - get_project_libraries
+      - scpca_projects
+  - title: Downloading data
+  - subtitle: Authentication
+    contents:
+      - get_auth
+  - subtitle: File downloads
+    contents:
+      - download_sample
+      - download_project

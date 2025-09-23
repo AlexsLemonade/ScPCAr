@@ -8,6 +8,8 @@
 #'  computed files in SingleCellExperiment format, use:
 #'  list(format = "SINGLE_CELL_EXPERIMENT", modality = "!SPATIAL").
 #'
+#' @keywords internal
+#'
 #' @returns a character vector of computed file ids matching the filtering criteria
 #'
 #'
@@ -48,6 +50,8 @@ get_computed_file_ids <- function(info_list, filters = list()) {
 #' Helper function to create a filtering list for computed files by format
 #'
 #' @param format_str a string indicating the desired format
+#'
+#' @keywords internal
 #'
 #' @returns a list suitable for passing as the `filters` argument to `get_computed_file_ids()`.
 computed_files_filter <- function(

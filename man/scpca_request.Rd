@@ -21,3 +21,4 @@ a httr2 request object
 \description{
 Base request object for ScPCA API
 }
+\keyword{internal}

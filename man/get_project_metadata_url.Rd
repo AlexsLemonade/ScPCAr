@@ -26,3 +26,4 @@ token <- get_auth("me@email.net", agree = TRUE)
 project_info <- get_project_metadata_url("SCPCP000001", token)
 }
 }
+\keyword{internal}

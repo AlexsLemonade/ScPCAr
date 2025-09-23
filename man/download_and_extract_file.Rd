@@ -24,3 +24,4 @@ A character vector of extracted file paths
 \description{
 Download and extract a single file from a URL
 }
+\keyword{internal}

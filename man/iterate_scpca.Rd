@@ -17,3 +17,4 @@ updated httr2 request object for the next page, or NULL if there are no more pag
 \description{
 Helper function for iterating through paginated ScPCA API results
 }
+\keyword{internal}
