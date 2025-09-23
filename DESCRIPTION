@@ -1,6 +1,6 @@
 Package: ScPCAr
 Title: Interact with the ScPCA Portal API
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R:
     person("Joshua", "Shapiro", , "josh.shapiro@ccdatalab.org", role = c("aut", "cre"))
 Description: An R package to interact with the Single-Cell Pediatric Cancer Atlas Portal API.
@@ -23,3 +23,4 @@ Imports:
     stringr,
     tidyr,
     utils
+URL: https://alexslemonade.github.io/ScPCAr/
