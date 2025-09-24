@@ -17,3 +17,4 @@ a list suitable for passing as the \code{filters} argument to \code{get_computed
 \description{
 Helper function to create a filtering list for computed files by format
 }
+\keyword{internal}

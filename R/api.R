@@ -1,13 +1,11 @@
-API_BASE <- "https://api.scpca.alexslemonade.org/v1" # nolint
-USER_AGENT <- "ScPCA R API Client" # nolint
-
-
 #' Base request object for ScPCA API
 #'
 #' @param resource API resource to query, e.g. "projects", default is "" (base URL)
 #' @param body optional named list to include as JSON body in the request
 #' @param auth_token optional API authentication token
 #' @param ... additional query parameters to include in the request
+#'
+#' @keywords internal
 #'
 #' @import httr2
 #'
@@ -16,9 +14,11 @@ scpca_request <- function(resource = "", body = list(), auth_token = "", ...) {
   stopifnot(
     "body must be a named list" = is.list(body) && (length(body) == 0 || !is.null(names(body)))
   )
+  api_base <- "https://api.scpca.alexslemonade.org/v1" # nolint
+  user_agent <- "ScPCA R API Client" # nolint
 
-  req <- httr2::request(API_BASE) |>
-    req_user_agent(USER_AGENT) |>
+  req <- httr2::request(api_base) |>
+    req_user_agent(user_agent) |>
     req_url_path_append(resource) |>
     req_throttle(capacity = 60) |> # No more than 60 calls per minute
     req_url_query(...)
@@ -41,6 +41,8 @@ scpca_request <- function(resource = "", body = list(), auth_token = "", ...) {
 #'
 #' @returns updated httr2 request object for the next page, or NULL if there are no more pages
 #'
+#' @keywords internal
+#'
 #' @import httr2
 iterate_scpca <- function(resp, req) {
   body <- resp_body_json(resp)
@@ -61,6 +63,8 @@ iterate_scpca <- function(resp, req) {
 #'
 #' @returns TRUE if the API is reachable, otherwise an error is raised.
 #' @import httr2
+#'
+#' @keywords internal
 #'
 check_api <- function() {
   status <- tryCatch(

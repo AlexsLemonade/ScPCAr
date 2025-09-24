@@ -15,3 +15,4 @@ The normalized format string for API use
 \description{
 Internal helper to validate and normalize formats for the ScPCA API
 }
+\keyword{internal}

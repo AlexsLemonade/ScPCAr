@@ -1,0 +1,26 @@
+bibentry(
+  bibtype  = "Article",
+author = c(
+  person(c("Allegra", "G."), "Hawkins"),
+  person(c("Joshua", "A."), "Shapiro"),
+  person(c("Stephanie", "J."), "Spielman"),
+  person(c("David", "S."), "Mejia"),
+  person("Deepashree", "Venkatesh Prasad"),
+  person("Nozomi", "Ichihara"),
+  person("Arkadii", "Yakovets"),
+  person(c("Avrohom", "M."), "Gottlieb"),
+  person(c("Kurt", "G."), "Wheeler"),
+  person(c("Chante", "J."), "Bethell"),
+  person(c("Steven", "M."), "Foltz"),
+  person("Jennifer", "O'Malley"),
+  person(c("Casey", "S."), "Greene"),
+  person(c("Jaclyn", "N."), "Taroni")
+),
+	title = "The Single-cell Pediatric Cancer Atlas: Data portal and open-source tools for single-cell transcriptomics of pediatric tumors",
+	year = "2025",
+	doi = "10.1101/2024.04.19.590243",
+	publisher = "Cold Spring Harbor Laboratory",
+	abstract = "The Single-cell Pediatric Cancer Atlas (ScPCA) Portal (https://scpca.alexslemonade.org/) is a data resource for uniformly processed single-cell and single-nuclei RNA sequencing (RNA-seq) data and de-identified metadata from pediatric tumor samples. Originally comprised of data from 10 projects funded by Alex{\textquoteright}s Lemonade Stand Foundation (ALSF), the Portal currently contains summarized gene expression data for over 700 samples across 55 cancer types from ALSF-funded and community-contributed datasets. Downloads include gene expression data as SinglecellExperiment or AnnData objects containing raw and normalized counts, PCA and UMAP coordinates, and automated cell type annotations, along with summary reports. Some samples have additional data from bulk RNA-seq, spatial transcriptomics, and/or feature barcoding (e.g., CITE-seq and cell hashing) included in the download. All data on the Portal were uniformly processed using scpca-nf, an efficient and open-source Nextflow workflow that uses alevin-fry to quantify gene expression. Comprehensive documentation, including descriptions of file contents and a guide to getting started, is available at https://scpca.readthedocs.io.",
+	URL = "https://www.biorxiv.org/content/early/2025/05/28/2024.04.19.590243",
+	journal = "bioRxiv"
+)

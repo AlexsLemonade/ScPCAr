@@ -1,5 +1,7 @@
 #' Internal helper to validate and normalize formats for the ScPCA API
 #'
+#' @keywords internal
+#'
 #' @param format The input format string
 #' @returns The normalized format string for API use
 validate_format <- function(format) {
@@ -275,6 +277,8 @@ download_project <- function(
 #' @importFrom curl curl_download
 #'
 #' @returns A character vector of extracted file paths
+#'
+#' @keywords internal
 download_and_extract_file <- function(url, parent_dir, overwrite, redownload, quiet) {
   download_filename <- parse_download_file(url)
   destination_dir <- file.path(parent_dir, stringr::str_remove(download_filename, "\\.zip$"))
@@ -330,6 +334,8 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
 #' @param scpca_url The ScPCA portal download URL
 #'
 #' @returns the download filename
+#'
+#' @keywords internal
 parse_download_file <- function(scpca_url) {
   params <- curl::curl_parse_url(scpca_url)$params
   params["response-content-disposition"] |>

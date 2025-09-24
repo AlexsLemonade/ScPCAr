@@ -3,7 +3,10 @@
 ^\.Rproj\.user$
 ^\.github$
 ^\.pre-commit-config\.yaml$
+^_pkgdown\.yml$
 ^air\.toml$
+^docs$
+^pkgdown$
 ^renv$
 ^renv\.lock$
 ^scpca_data$

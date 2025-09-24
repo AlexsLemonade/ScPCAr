@@ -1,2 +1,9 @@
 [files]
 extend-exclude = ["tests/testthat/**.json"]
+
+
+[type.description]
+extend-glob = ["DESCRIPTION"]
+
+[type.description.extend-identifiers]
+fnd = "fnd"
