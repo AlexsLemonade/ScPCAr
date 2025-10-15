@@ -16,9 +16,12 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Suggests:
     httptest2,
+    knitr,
+    rmarkdown,
     testthat (>= 3.2.0),
     withr
 Config/testthat/edition: 3
+VignetteBuilder: knitr
 Imports:
     curl,
     dplyr,
