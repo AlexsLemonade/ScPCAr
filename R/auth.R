@@ -27,3 +27,20 @@ get_auth <- function(email, agree = FALSE) {
 
   response$id
 }
+
+
+#' Open the ScPCA Terms of Use page in a browser
+#'
+#' This opens the ScPCA terms of use URL in the user's default web browser.
+#'
+#' @returns Invisibly returns the URL that was opened (character scalar).
+#' @export
+#' @examples
+#' \dontrun{
+#' view_terms()
+#' }
+view_terms <- function() {
+  url <- "https://scpca.alexslemonade.org/terms-of-use"
+  utils::browseURL(url)
+  invisible(url)
+}

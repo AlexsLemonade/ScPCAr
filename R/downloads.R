@@ -218,7 +218,7 @@ download_project <- function(
     dir.create(destination, recursive = TRUE)
   }
 
-  project_info <- get_project_info(project_id)
+  project_info <- get_project_info(project_id, simplifyVector = FALSE)
 
   # default to include multiplexed for SCE, not for others (where they are not available)
   if (is.null(include_multiplexed)) {
@@ -289,8 +289,8 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
       "Directory {destination_dir} already exists; skipping download.",
       "\nUse 'overwrite = TRUE' to replace existing files."
     ))
-    # no files downloaded, return empty vector
-    return(c())
+    # return contents of the existing directory
+    return(list.files(destination_dir, full.names = TRUE, recursive = TRUE))
   }
 
   # check for existing directory with same base name (without date)

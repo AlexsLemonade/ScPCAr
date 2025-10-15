@@ -47,7 +47,12 @@ scpca_projects <- function(simplify = TRUE) {
       created_at = as.POSIXct(.data$created_at),
       updated_at = as.POSIXct(.data$updated_at)
     ) |>
-    dplyr::relocate(scpca_project_id = "scpca_id")
+    dplyr::relocate(
+      scpca_project_id = "scpca_id",
+      sample_count,
+      title,
+      pi_name
+    )
 
   project_df
 }
@@ -57,7 +62,7 @@ scpca_projects <- function(simplify = TRUE) {
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
 #' @param simplifyVector Simplify the returned list structure,
 #'  creating vectors and data frames instead of lists when possible.
-#'  Default is FALSE.
+#'  Default is TRUE.
 #'
 #' @returns A nested list of project metadata from the ScPCA API.
 #'
@@ -69,7 +74,7 @@ scpca_projects <- function(simplify = TRUE) {
 #' # Get metadata for a specific project
 #' project_info <- get_project_info("SCPCP000001")
 #' }
-get_project_info <- function(project_id, simplifyVector = FALSE) {
+get_project_info <- function(project_id, simplifyVector = TRUE) {
   stopifnot(
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id)
   )
@@ -137,7 +142,10 @@ get_project_samples <- function(project_id, simplify = TRUE) {
       created_at = as.POSIXct(.data$created_at),
       updated_at = as.POSIXct(.data$updated_at)
     ) |>
-    dplyr::relocate(scpca_sample_id = "scpca_id", scpca_project_id = "project")
+    dplyr::relocate(
+      scpca_sample_id = "scpca_id",
+      scpca_project_id = "project"
+    )
 
   sample_df
 }

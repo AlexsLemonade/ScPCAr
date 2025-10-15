@@ -89,7 +89,7 @@ test_that("download_project validates input parameters", {
 test_that("download_project validates format and merged combinations", {
   # Mock dependencies to avoid network calls
   local_mocked_bindings(
-    get_project_info = function(id) list(has_multiplexed_data = FALSE),
+    get_project_info = function(id, simplifyVector) list(has_multiplexed_data = FALSE),
     get_computed_file_ids = function(...) character(0)
   )
 
@@ -103,7 +103,7 @@ test_that("download_project validates format and merged combinations", {
 test_that("download_project sets include_multiplexed defaults correctly", {
   # Mock dependencies to avoid network calls
   local_mocked_bindings(
-    get_project_info = function(id) list(has_multiplexed_data = TRUE),
+    get_project_info = function(id, simplifyVector) list(has_multiplexed_data = TRUE),
     get_computed_file_ids = function(...) character(0)
   )
 
@@ -133,6 +133,7 @@ test_that("download_and_extract_file respects overwrite parameter", {
 
   # Create the destination directory to simulate existing files
   dir.create(test_dest_dir, recursive = TRUE, showWarnings = FALSE)
+  file.create(file.path(test_dest_dir, "existing_file.txt"))
   on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
 
   # Mock parse_download_file to return consistent filename
@@ -140,7 +141,7 @@ test_that("download_and_extract_file respects overwrite parameter", {
     parse_download_file = function(url) "test_file.zip"
   )
 
-  # Test with overwrite = FALSE (should skip and return empty)
+  # Test with overwrite = FALSE (should skip and return existing directory contents)
   expect_message(
     result <- download_and_extract_file(
       "https://example.com/test.zip",
@@ -150,7 +151,7 @@ test_that("download_and_extract_file respects overwrite parameter", {
     )
   )
 
-  expect_equal(result, c())
+  expect_equal(result, file.path(test_dest_dir, c("existing_file.txt")))
   expect_true(dir.exists(test_dest_dir))
 })
 
