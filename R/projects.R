@@ -49,9 +49,9 @@ scpca_projects <- function(simplify = TRUE) {
     ) |>
     dplyr::relocate(
       scpca_project_id = "scpca_id",
-      sample_count,
-      title,
-      pi_name
+      "sample_count",
+      "title",
+      "pi_name"
     )
 
   tibble::as_tibble(project_df)
