@@ -62,7 +62,7 @@ using the \code{get_auth()} function.
 \examples{
 \dontrun{
 # Get a token first
-auth_token <- get_auth("me@email.net", agree = TRUE)
+auth_token <- get_auth("your.email@example.com", agree = TRUE)
 # Then ask for a sample download
 download_sample("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
 

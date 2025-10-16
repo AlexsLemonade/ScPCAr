@@ -4,14 +4,14 @@
 \alias{get_sample_info}
 \title{Get sample metadata by sample ID}
 \usage{
-get_sample_info(sample_id, simplifyVector = FALSE)
+get_sample_info(sample_id, simplifyVector = TRUE)
 }
 \arguments{
 \item{sample_id}{The ScPCA sample ID (e.g. "SCPCS000001")}
 
 \item{simplifyVector}{Simplify the returned list structure,
 creating vectors and data frames instead of lists when possible.
-Default is FALSE.}
+Default is TRUE.}
 }
 \value{
 A nested list of sample metadata from the ScPCA API.

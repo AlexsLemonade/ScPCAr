@@ -20,7 +20,7 @@ Get an authorization token from the ScPCA API
 \examples{
 \dontrun{
 # Get a token (make sure to agree to the terms of service)
-auth_token <- get_auth("me@email.net", agree = TRUE)
+auth_token <- get_auth("your.email@example.com", agree = TRUE)
 }
 
 }
