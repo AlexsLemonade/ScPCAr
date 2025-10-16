@@ -11,3 +11,4 @@
 ^renv\.lock$
 ^scpca_data$
 ^typos.toml$
+^vignettes/articles$
