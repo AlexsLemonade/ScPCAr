@@ -38,6 +38,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/AlexsLemonade/ScPCAr/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -59,8 +60,52 @@
 <p>An R package for interacting with the <a href="https://scpca.alexslemonade.org" class="external-link">Single-cell Pediatric Cancer Atlas (ScPCA) Portal</a> API.</p>
 <!-- badges: start -->
 
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>The <code>ScPCAr</code> package can be installed from the GitHub repository using the <code>remotes</code> package:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"AlexsLemonade/ScPCAr"</span><span class="op">)</span></span></code></pre></div>
 </div>
-  </main><aside class="col-md-3"><div class="license">
+<div class="section level2">
+<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+</h2>
+<p>The package provides functions to get metadata and download data from the ScPCA Portal from within R. The code chunk below shows an example of how to authenticate and download a single sample from the portal.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alexslemonade.github.io/ScPCAr">ScPCAr</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># First, look at the terms of use</span></span>
+<span><span class="fu"><a href="reference/get_auth.html">view_terms</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Get an authentication token for use with the ScPCA Portal</span></span>
+<span><span class="va">auth_token</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_auth.html">get_auth</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"your.email@example.com"</span>, agree <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Get the sample metadata for a project</span></span>
+<span><span class="va">sample_metadata</span> <span class="op">&lt;-</span> <span class="fu">get_sample_metadata</span><span class="op">(</span>project_id <span class="op">=</span> <span class="st">"SCPCP000001"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Download a data for a sample</span></span>
+<span><span class="co"># this function returns a vector of the downloaded file paths</span></span>
+<span><span class="va">file_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/download_sample.html">download_sample</a></span><span class="op">(</span></span>
+<span>  sample_id <span class="op">=</span> <span class="st">"SCPCS000001"</span>,</span>
+<span>  auth_token <span class="op">=</span> <span class="va">auth_token</span>,</span>
+<span>  destination <span class="op">=</span> <span class="st">"scpca_data"</span>,</span>
+<span>  format <span class="op">=</span> <span class="st">"sce"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>For detailed usage instructions, please refer to the <a href="https://alexslemonade.github.io/ScPCAr/">package documentation</a>.</p>
+</div>
+</div>
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
+<ul class="list-unstyled">
+<li><a href="https://github.com/AlexsLemonade/ScPCAr/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/AlexsLemonade/ScPCAr/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://scpca.alexslemonade.org/" class="external-link">The ScPCA Portal</a></li>
+<li><a href="https://alexslemonade.org/" class="external-link">Alex's Lemonade Stand Foundation</a></li>
+<li><a href="https://www.ccdatalab.org" class="external-link">The Childhood Cancer Data Lab</a></li>
+</ul>
+</div>
+
+<div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li><a href="LICENSE.html">Full license</a></li>
