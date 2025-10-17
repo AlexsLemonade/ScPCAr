@@ -127,13 +127,13 @@ sample_detail <- ScPCAr::get_sample_info(sample_id)
 str(sample_detail, max.level = 1)
 
 # Check which data modalities are available for this sample
-print(sample_detail$modalities)
+sample_detail$modalities
 ```
 
 # Authentication
 
 To download actual data files, you need an agree to the terms of service and obtain an authentication token.
-To view the terms of service in a web browser, run `ScPCAr::view_terms()`.
+To view the terms of service in a web browser, run `view_terms()`.
 Then you can use the `get_auth()` function, providing your email address and agreeing to the terms of service:
 
 ```{r auth}

@@ -37,7 +37,7 @@ remotes::install_github("Alexslemonade/ScPCAr")
 ```
 
 You can then load the `ScPCAr` package.
-Note that in this vignette we will use `ScPCAr::` to refer to functions from the package, both for clarity and to avoid any possible namespace conflicts.
+Note that in this vignette we will use `ScPCAr::` when calling functions from the package, both for clarity and to avoid any possible namespace conflicts.
 We will also load the `SingleCellExperiment` package for later analysis.
 
 
@@ -263,7 +263,7 @@ str(sample_detail, max.level = 1)
 
 ``` r
 # Check which data modalities are available for this sample
-print(sample_detail$modalities)
+sample_detail$modalities
 ```
 
 ```
@@ -273,7 +273,7 @@ print(sample_detail$modalities)
 # Authentication
 
 To download actual data files, you need an agree to the terms of service and obtain an authentication token.
-To view the terms of service in a web browser, run `ScPCAr::view_terms()`.
+To view the terms of service in a web browser, run `view_terms()`.
 Then you can use the `get_auth()` function, providing your email address and agreeing to the terms of service:
 
 
@@ -299,7 +299,7 @@ auth_token <- ScPCAr::get_auth(email = my_email, agree = TRUE)
 Now we can download data for our selected sample.
 We will use the `download_sample()` function, specifying the sample ID, authentication token, desired destination directory, and the file format.
 The function will download and unpack the files associated with that sample, and return a list of file paths for the downloaded files
-Let's start with `SingleCellExperiment` format:
+Let's start with SingleCellExperiment format:
 
 
 ``` r
