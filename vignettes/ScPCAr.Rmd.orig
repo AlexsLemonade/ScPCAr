@@ -168,6 +168,7 @@ The function will download and unpack the files associated with that sample, and
 Let's start with SingleCellExperiment format:
 
 ```{r download-sce}
+#| message: FALSE
 # Download SingleCellExperiment data for our sample
 # This will create a directory structure under "scpca_data/"
 file_paths <- ScPCAr::download_sample(
