@@ -11,9 +11,22 @@ Authors@R: c(
     )
 Description: An R package to interact with the Single-Cell Pediatric Cancer Atlas Portal API.
 License: BSD_3_clause + file LICENSE
+URL: https://alexslemonade.github.io/ScPCAr, https://github.com/AlexsLemonade/ScPCAr
+BugReports: https://github.com/AlexsLemonade/ScPCAr/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Imports:
+    curl,
+    dplyr,
+    glue,
+    httr2 (>= 1.2.0),
+    purrr,
+    readr,
+    stringr,
+    tibble,
+    tidyr,
+    utils
 Suggests:
     devtools,
     ggplot2,
@@ -27,15 +40,3 @@ Suggests:
     withr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
-Imports:
-    curl,
-    dplyr,
-    glue,
-    httr2 (>= 1.2.0),
-    purrr,
-    readr,
-    stringr,
-    tibble,
-    tidyr,
-    utils
-URL: https://alexslemonade.github.io/ScPCAr/

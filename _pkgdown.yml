@@ -3,6 +3,13 @@ template:
   bootstrap: 5
   light-switch: true
 
+home:
+  links:
+    - text: The ScPCA Portal
+      href: https://scpca.alexslemonade.org/
+    - text: Alex's Lemonade Stand Foundation
+      href: https://alexslemonade.org/
+
 reference:
   - title: Metadata
     contents:
