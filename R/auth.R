@@ -1,5 +1,10 @@
 #' Get an authorization token from the ScPCA API
 #'
+#' `get_auth()` allows obtaining an authorization token string from the ScPCA API,
+#'  after providing an email address and agreeing to the terms of use.
+#'
+#' To view the terms of use before agreeing to them, use `view_terms()`, which opens the terms of use page in a web browser.
+#'
 #' @param email The user's email address
 #' @param agree A logical indicating whether the user agrees to the terms of service
 #'
@@ -29,12 +34,9 @@ get_auth <- function(email, agree = FALSE) {
 }
 
 
-#' Open the ScPCA Terms of Use page in a browser
-#'
-#' This opens the ScPCA terms of use URL in the user's default web browser.
-#'
-#' @returns Invisibly returns the URL that was opened (character scalar).
+#' View Terms of Use
 #' @export
+#' @rdname get_auth
 #' @examples
 #' \dontrun{
 #' view_terms()
