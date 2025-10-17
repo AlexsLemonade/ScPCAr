@@ -4,14 +4,14 @@
 \alias{get_project_info}
 \title{Get project metadata by project ID}
 \usage{
-get_project_info(project_id, simplifyVector = FALSE)
+get_project_info(project_id, simplifyVector = TRUE)
 }
 \arguments{
 \item{project_id}{The ScPCA project ID (e.g. "SCPCP000001")}
 
 \item{simplifyVector}{Simplify the returned list structure,
 creating vectors and data frames instead of lists when possible.
-Default is FALSE.}
+Default is TRUE.}
 }
 \value{
 A nested list of project metadata from the ScPCA API.

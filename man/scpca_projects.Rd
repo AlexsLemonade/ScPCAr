@@ -11,7 +11,7 @@ scpca_projects(simplify = TRUE)
 by removing list columns. Default is TRUE.}
 }
 \value{
-a data frame of project information from the ScPCA API.
+a data frame (tibble) of project information from the ScPCA API.
 }
 \description{
 This retrieves the full list of projects from the ScPCA Portal and returns

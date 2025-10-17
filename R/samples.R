@@ -3,7 +3,7 @@
 #' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
 #' @param simplifyVector Simplify the returned list structure,
 #'  creating vectors and data frames instead of lists when possible.
-#'  Default is FALSE.
+#'  Default is TRUE.
 #'
 #' @returns A nested list of sample metadata from the ScPCA API.
 #'
@@ -15,7 +15,7 @@
 #' # Get metadata for a specific sample
 #' sample_info <- get_sample_info("SCPCS000001")
 #' }
-get_sample_info <- function(sample_id, simplifyVector = FALSE) {
+get_sample_info <- function(sample_id, simplifyVector = TRUE) {
   stopifnot(
     "Invalid sample_id" = grepl("^SCPCS\\d{6}$", sample_id)
   )

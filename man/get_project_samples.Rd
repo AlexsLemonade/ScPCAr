@@ -13,7 +13,7 @@ get_project_samples(project_id, simplify = TRUE)
 by removing list columns. Default is TRUE.}
 }
 \value{
-A data frame of sample information for the specified project from the ScPCA API.
+A data frame (tibble) of sample information for the specified project from the ScPCA API.
 }
 \description{
 This function retrievs a data frame of all biological samples associated with a SCPCA project,

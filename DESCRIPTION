@@ -15,10 +15,18 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Suggests:
+    devtools,
+    ggplot2,
+    here,
     httptest2,
+    knitr,
+    rmarkdown,
+    scater,
+    SingleCellExperiment,
     testthat (>= 3.2.0),
     withr
 Config/testthat/edition: 3
+VignetteBuilder: knitr
 Imports:
     curl,
     dplyr,
@@ -27,6 +35,7 @@ Imports:
     purrr,
     readr,
     stringr,
+    tibble,
     tidyr,
     utils
 URL: https://alexslemonade.github.io/ScPCAr/

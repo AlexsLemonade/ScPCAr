@@ -78,7 +78,7 @@ validate_format <- function(format) {
 #' @examples
 #' \dontrun{
 #' # Get a token first
-#' auth_token <- get_auth("me@email.net", agree = TRUE)
+#' auth_token <- get_auth("your.email@example.com", agree = TRUE)
 #' # Then ask for a sample download
 #' download_sample("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
 #'
@@ -105,7 +105,7 @@ download_sample <- function(
   if (!dir.exists(destination)) {
     dir.create(destination, recursive = TRUE)
   }
-  sample_info <- get_sample_info(sample_id)
+  sample_info <- get_sample_info(sample_id, simplifyVector = FALSE)
 
   file_ids <- get_computed_file_ids(sample_info, filters = computed_files_filter(format_str))
 
@@ -175,7 +175,7 @@ download_sample <- function(
 #'
 #' \dontrun{
 #' # Get a token first
-#' auth_token <- get_auth("me@email.net", agree = TRUE)
+#' auth_token <- get_auth("your.email@example.com", agree = TRUE)
 #' # Then ask for a sample download
 #' download_project("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
 #'
@@ -218,7 +218,7 @@ download_project <- function(
     dir.create(destination, recursive = TRUE)
   }
 
-  project_info <- get_project_info(project_id)
+  project_info <- get_project_info(project_id, simplifyVector = FALSE)
 
   # default to include multiplexed for SCE, not for others (where they are not available)
   if (is.null(include_multiplexed)) {
@@ -289,8 +289,8 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
       "Directory {destination_dir} already exists; skipping download.",
       "\nUse 'overwrite = TRUE' to replace existing files."
     ))
-    # no files downloaded, return empty vector
-    return(c())
+    # return contents of the existing directory
+    return(list.files(destination_dir, full.names = TRUE, recursive = TRUE))
   }
 
   # check for existing directory with same base name (without date)

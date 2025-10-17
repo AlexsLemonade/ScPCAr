@@ -1,3 +1,4 @@
+^.claude$
 ^LICENSE\.md$
 ^ScPCAr\.Rproj$
 ^\.Rproj\.user$
@@ -5,9 +6,12 @@
 ^\.pre-commit-config\.yaml$
 ^_pkgdown\.yml$
 ^air\.toml$
+^claude.md$
 ^docs$
 ^pkgdown$
 ^renv$
 ^renv\.lock$
 ^scpca_data$
 ^typos.toml$
+^vignettes/articles$
+^vignettes/scpca_data$

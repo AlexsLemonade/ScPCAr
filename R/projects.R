@@ -10,7 +10,7 @@
 #' @param simplify A logical indicating whether to simplify the resulting data frame
 #'  by removing list columns. Default is TRUE.
 #'
-#' @returns a data frame of project information from the ScPCA API.
+#' @returns a data frame (tibble) of project information from the ScPCA API.
 #'
 #' @import httr2
 #' @importFrom dplyr .data
@@ -47,9 +47,14 @@ scpca_projects <- function(simplify = TRUE) {
       created_at = as.POSIXct(.data$created_at),
       updated_at = as.POSIXct(.data$updated_at)
     ) |>
-    dplyr::relocate(scpca_project_id = "scpca_id")
+    dplyr::relocate(
+      scpca_project_id = "scpca_id",
+      "sample_count",
+      "title",
+      "pi_name"
+    )
 
-  project_df
+  tibble::as_tibble(project_df)
 }
 
 #' Get project metadata by project ID
@@ -57,7 +62,7 @@ scpca_projects <- function(simplify = TRUE) {
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
 #' @param simplifyVector Simplify the returned list structure,
 #'  creating vectors and data frames instead of lists when possible.
-#'  Default is FALSE.
+#'  Default is TRUE.
 #'
 #' @returns A nested list of project metadata from the ScPCA API.
 #'
@@ -69,7 +74,7 @@ scpca_projects <- function(simplify = TRUE) {
 #' # Get metadata for a specific project
 #' project_info <- get_project_info("SCPCP000001")
 #' }
-get_project_info <- function(project_id, simplifyVector = FALSE) {
+get_project_info <- function(project_id, simplifyVector = TRUE) {
   stopifnot(
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id)
   )
@@ -102,7 +107,7 @@ get_project_info <- function(project_id, simplifyVector = FALSE) {
 #' @param simplify A logical indicating whether to simplify the resulting data frame
 #'  by removing list columns. Default is TRUE.
 #'
-#' @returns A data frame of sample information for the specified project from the ScPCA API.
+#' @returns A data frame (tibble) of sample information for the specified project from the ScPCA API.
 #'
 #' @import httr2
 #' @importFrom dplyr .data
@@ -137,9 +142,12 @@ get_project_samples <- function(project_id, simplify = TRUE) {
       created_at = as.POSIXct(.data$created_at),
       updated_at = as.POSIXct(.data$updated_at)
     ) |>
-    dplyr::relocate(scpca_sample_id = "scpca_id", scpca_project_id = "project")
+    dplyr::relocate(
+      scpca_sample_id = "scpca_id",
+      scpca_project_id = "project"
+    )
 
-  sample_df
+  tibble::as_tibble(sample_df)
 }
 
 
@@ -200,7 +208,7 @@ get_project_libraries <- function(project_id, auth_token) {
   is_cols <- stringr::str_subset(colnames(library_metadata), "^(is|has|includes)_")
   library_metadata <- library_metadata |>
     dplyr::mutate(dplyr::across(dplyr::all_of(is_cols), as.logical))
-  library_metadata
+  tibble::as_tibble(library_metadata)
 }
 
 
