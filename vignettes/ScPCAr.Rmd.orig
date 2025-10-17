@@ -121,7 +121,7 @@ head(samples)
 We can also get detailed information for a specific sample:
 
 ```{r detailed-sample}
-sample_id = "SCPCS000001"
+sample_id <- "SCPCS000001"
 # Get detailed sample metadata
 sample_detail <- ScPCAr::get_sample_info(sample_id)
 str(sample_detail, max.level = 1)
@@ -208,10 +208,10 @@ First we will select the processed SingleCellExperiment file from the downloaded
 
 ```{r load-sce}
 # select the processed SCE file using a pattern match for the file name.
-processed_sce <- stringr::str_subset(file_paths, "_processed\\.rds$")
+processed_sce_files <- stringr::str_subset(file_paths, "_processed\\.rds$")
 
 # Load the first (in this case only) SingleCellExperiment object
-sce <- readRDS(processed_sce[1])
+sce <- readRDS(processed_sce_files[1])
 
 # View a summary of the object
 sce
@@ -268,7 +268,7 @@ file_paths_h5ad <- ScPCAr::download_sample(
 )
 ```
 
-For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](  https://scpca.readthedocs.io/en/stable/download_files.html#anndata-downloads).
+For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](https://scpca.readthedocs.io/en/stable/download_files.html#anndata-downloads).
 
 
 # Downloading projects
