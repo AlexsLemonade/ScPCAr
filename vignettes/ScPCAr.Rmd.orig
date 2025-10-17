@@ -37,7 +37,7 @@ remotes::install_github("Alexslemonade/ScPCAr")
 ```
 
 You can then load the `ScPCAr` package.
-Note that in this vignette we will use `ScPCAr::` to refer to functions from the package, both for clarity and to avoid any possible namespace conflicts.
+Note that in this vignette we will use `ScPCAr::` when calling functions from the package, both for clarity and to avoid any possible namespace conflicts.
 We will also load the `SingleCellExperiment` package for later analysis.
 
 ```{r setup}
@@ -165,7 +165,7 @@ auth_token <- ScPCAr::get_auth("scpca@alexslemonade.org", agree = TRUE)
 Now we can download data for our selected sample.
 We will use the `download_sample()` function, specifying the sample ID, authentication token, desired destination directory, and the file format.
 The function will download and unpack the files associated with that sample, and return a list of file paths for the downloaded files
-Let's start with `SingleCellExperiment` format:
+Let's start with SingleCellExperiment format:
 
 ```{r download-sce}
 # Download SingleCellExperiment data for our sample
