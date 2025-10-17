@@ -223,7 +223,7 @@ We can also get detailed information for a specific sample:
 
 
 ``` r
-sample_id = "SCPCS000001"
+sample_id <- "SCPCS000001"
 # Get detailed sample metadata
 sample_detail <- ScPCAr::get_sample_info(sample_id)
 str(sample_detail, max.level = 1)
@@ -292,9 +292,9 @@ auth_token <- ScPCAr::get_auth(email = my_email, agree = TRUE)
 - Replace `"your.email@example.com"` with your actual email address
 - Keep your token secure and don't share it publicly
 
-# Downloading and loading SingleCellExperiment data
+# Downloading data for an ScPCA sample
 
-## Downloading sample data
+## Downloading SingleCellExperiment objects
 
 Now we can download data for our selected sample.
 We will use the `download_sample()` function, specifying the sample ID, authentication token, desired destination directory, and the file format.
@@ -314,11 +314,11 @@ file_paths <- ScPCAr::download_sample(
 ```
 
 ```
-## Downloading SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16.zip ...
+## Downloading SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17.zip ...
 ```
 
 ```
-## Unzipping to scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16...
+## Unzipping to scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17...
 ```
 
 ``` r
@@ -327,13 +327,13 @@ file_paths
 ```
 
 ```
-## [1] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16/README.md"                       
-## [2] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16/single_cell_metadata.tsv"        
-## [3] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16/SCPCL000001_celltype-report.html"
-## [4] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16/SCPCL000001_filtered.rds"        
-## [5] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16/SCPCL000001_processed.rds"       
-## [6] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16/SCPCL000001_qc.html"             
-## [7] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-16/SCPCL000001_unfiltered.rds"
+## [1] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/README.md"                       
+## [2] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/single_cell_metadata.tsv"        
+## [3] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_celltype-report.html"
+## [4] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_filtered.rds"        
+## [5] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_processed.rds"       
+## [6] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_qc.html"             
+## [7] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_unfiltered.rds"
 ```
 
 ## Understanding the downloaded file structure
@@ -364,10 +364,10 @@ First we will select the processed SingleCellExperiment file from the downloaded
 
 ``` r
 # select the processed SCE file using a pattern match for the file name.
-processed_sce <- stringr::str_subset(file_paths, "_processed\\.rds$")
+processed_sce_files <- stringr::str_subset(file_paths, "_processed\\.rds$")
 
 # Load the first (in this case only) SingleCellExperiment object
-sce <- readRDS(processed_sce[1])
+sce <- readRDS(processed_sce_files[1])
 
 # View a summary of the object
 sce
@@ -393,7 +393,8 @@ sce
 
 ## Working with the SingleCellExperiment object
 
-Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools:
+Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools.
+For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/sce_file_contents.html#components-of-a-singlecellexperiment-object).
 
 
 ``` r
@@ -505,11 +506,11 @@ scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
   )
 ```
 
-![plot of chunk plot-umap](figure/plot-umap-1.png)
+![UMAP of sample SCPCS000001 colored by consensus cell type annotation.](figure/plot-umap-1.png)
 
 ## Downloading data in AnnData/H5AD format
 
-ScPCAr also supports downloading data in AnnData (H5AD) format, which is commonly used in Python-based single-cell analysis workflows:
+`ScPCAr` also supports downloading data in AnnData (H5AD) format, which is commonly used in Python-based single-cell analysis workflows:
 
 
 ``` r
@@ -522,7 +523,7 @@ file_paths_h5ad <- ScPCAr::download_sample(
 )
 ```
 
-For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](  https://scpca.readthedocs.io/en/stable/download_files.html#anndata-downloads).
+For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](https://scpca.readthedocs.io/en/stable/download_files.html#anndata-downloads).
 
 
 # Downloading projects

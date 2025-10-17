@@ -158,9 +158,9 @@ auth_token <- ScPCAr::get_auth("scpca@alexslemonade.org", agree = TRUE)
 - Replace `"your.email@example.com"` with your actual email address
 - Keep your token secure and don't share it publicly
 
-# Downloading and loading SingleCellExperiment data
+# Downloading data for an ScPCA sample
 
-## Downloading sample data
+## Downloading SingleCellExperiment objects
 
 Now we can download data for our selected sample.
 We will use the `download_sample()` function, specifying the sample ID, authentication token, desired destination directory, and the file format.
@@ -219,10 +219,10 @@ sce
 
 ## Working with the SingleCellExperiment object
 
-Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools:
+Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools.
+For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/sce_file_contents.html#components-of-a-singlecellexperiment-object).
 
 ```{r work-with-sce}
-
 # Access count data
 counts <- counts(sce)
 dim(counts)
@@ -242,6 +242,7 @@ And of course we can make some standard plots, here a UMAP colored by the consen
 #| fig.width: 6
 #| fig.height: 4
 #| dpi: 300
+#| fig.cap: "UMAP of sample SCPCS000001 colored by consensus cell type annotation."
 # View the UMAP, colored by consensus cell type
 scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
   ggplot2::guides(color = ggplot2::guide_legend(title="Cell type")) +
@@ -255,7 +256,7 @@ scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
 
 ## Downloading data in AnnData/H5AD format
 
-ScPCAr also supports downloading data in AnnData (H5AD) format, which is commonly used in Python-based single-cell analysis workflows:
+`ScPCAr` also supports downloading data in AnnData (H5AD) format, which is commonly used in Python-based single-cell analysis workflows:
 
 ```{r h5ad-discussion}
 #| eval: FALSE
