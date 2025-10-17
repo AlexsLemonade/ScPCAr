@@ -311,29 +311,19 @@ file_paths <- ScPCAr::download_sample(
   destination = "scpca_data",
   format = "sce"
 )
-```
 
-```
-## Downloading SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17.zip ...
-```
-
-```
-## Unzipping to scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17...
-```
-
-``` r
 # List the files that were downloaded
 file_paths
 ```
 
 ```
 ## [1] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/README.md"                       
-## [2] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/single_cell_metadata.tsv"        
-## [3] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_celltype-report.html"
-## [4] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_filtered.rds"        
-## [5] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_processed.rds"       
-## [6] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_qc.html"             
-## [7] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_unfiltered.rds"
+## [2] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_celltype-report.html"
+## [3] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_filtered.rds"        
+## [4] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_processed.rds"       
+## [5] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_qc.html"             
+## [6] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/SCPCL000001_unfiltered.rds"      
+## [7] "scpca_data/SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-10-17/single_cell_metadata.tsv"
 ```
 
 ## Understanding the downloaded file structure
