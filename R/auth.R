@@ -25,10 +25,21 @@ get_auth <- function(email, agree = FALSE) {
     "Invalid email address." = grepl("^[^@]+@[^@]+\\.[^@]+$", email)
   )
 
+
   req <- scpca_request("tokens", body = list(email = email, is_activated = agree))
 
-  response <- req_perform(req) |>
-    resp_body_json(simplifyVector = TRUE)
+
+  response <- withCallingHandlers(
+    req_perform(req) |> resp_body_json(simplifyVector = TRUE),
+    # if we get a 400 error, it is probably a fake email address
+    httr2_http_400 = \(cnd) {
+      resp <- last_response() |> resp_body_json(simplifyVector = TRUE)
+      if (!is.null(resp[["email"]])) {
+        stop("get_auth() failed to get token: ", paste(resp[["email"]], collapse = " "), call. = FALSE)
+      }
+      stop("get_auth() failed to get token: Please check the email address and try again.", call. = FALSE)
+    }
+  )
 
   response$id
 }

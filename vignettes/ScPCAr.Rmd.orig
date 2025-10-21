@@ -7,6 +7,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+```{r knitr-opts}
+#| include: FALSE
+knitr::opts_chunk$set(
+  fig.width = 6, 
+  fig.height = 4, 
+  dpi = 300, 
+  fig.path = "scpcar-"
+)
+```
+
+
 # Introduction
 
 The ScPCAr package provides an interface to interact with the Single-cell Pediatric Cancer Atlas (ScPCA) Portal API.
@@ -240,9 +251,6 @@ head(gene_metadata)
 And of course we can make some standard plots, here a UMAP colored by the consensus cell type annotation.
 
 ```{r plot-umap}
-#| fig.width: 6
-#| fig.height: 4
-#| dpi: 300
 #| fig.cap: "UMAP of sample SCPCS000001 colored by consensus cell type annotation."
 # View the UMAP, colored by consensus cell type
 scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +

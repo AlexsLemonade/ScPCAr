@@ -7,6 +7,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
+
+
 # Introduction
 
 The ScPCAr package provides an interface to interact with the Single-cell Pediatric Cancer Atlas (ScPCA) Portal API.
@@ -496,7 +499,7 @@ scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
   )
 ```
 
-![UMAP of sample SCPCS000001 colored by consensus cell type annotation.](figure/plot-umap-1.png)
+![UMAP of sample SCPCS000001 colored by consensus cell type annotation.](scpcar-plot-umap-1.png)
 
 ## Downloading data in AnnData/H5AD format
 
