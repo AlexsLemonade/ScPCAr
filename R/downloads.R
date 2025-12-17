@@ -123,11 +123,19 @@ download_sample <- function(
       )
     })
 
-  # get signed download URLs
+  # get signed download URLs, named by download filename
   download_urls <- req_perform_parallel(file_requests) |>
-    resps_data(\(resp) resp_body_json(resp)$download_url)
+    resps_data(\(resp) {
+      body <- resp_body_json(resp)
+      urls <- setNames(body$download_url, body$download_filename)
+      urls
+    })
 
-  file_paths <- purrr::map(download_urls, \(url) {
+  file_paths <- purrr::imap(download_urls, \(url, filename) {
+    # if the filename was provided, we will use it as the name of the url
+    if (is.character(filename)) {
+      names(url) <- filename
+    }
     download_and_extract_file(url, destination, overwrite, redownload, quiet)
   }) |>
     purrr::list_c()
@@ -253,13 +261,17 @@ download_project <- function(
     ))
   }
   # get signed download URL
-  download_url <- scpca_request(
+  download_info <- scpca_request(
     resource = paste0("computed-files/", file_id),
     auth_token = auth_token
   ) |>
     req_perform() |>
-    resp_body_json() |>
-    purrr::pluck("download_url")
+    resp_body_json()
+
+  download_url <- setNames(
+    download_info$download_url,
+    download_info$download_filename
+  )
 
   file_paths <- download_and_extract_file(download_url, destination, overwrite, redownload, quiet)
   invisible(file_paths)
@@ -267,7 +279,8 @@ download_project <- function(
 
 #' Download and extract a single file from a URL
 #'
-#' @param url The download URL
+#' @param url The download URL, optionally named with the desired download filename
+#'  (if not named, the filename will be parsed from the URL)
 #' @param parent_dir The parent directory where files should be extracted
 #' @param overwrite Whether to overwrite existing directories
 #' @param redownload Whether to re-download if files from the same url already exist
@@ -280,7 +293,10 @@ download_project <- function(
 #'
 #' @keywords internal
 download_and_extract_file <- function(url, parent_dir, overwrite, redownload, quiet) {
-  download_filename <- parse_download_file(url)
+  download_filename <- names(url)
+  if (is.null(download_filename) || nchar(download_filename) == 0) {
+    download_filename <- parse_download_file(url)
+  }
   destination_dir <- file.path(parent_dir, stringr::str_remove(download_filename, "\\.zip$"))
 
   # exit if directory already exists
@@ -329,7 +345,7 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
 
 #' Get the base filename from a ScPCA portal download URL
 #'
-#' (this may become obsolete if we get download filenames in the API response)
+#' (this is largely obsolete as the download filename is now provided in the API response)
 #'
 #' @param scpca_url The ScPCA portal download URL
 #'
