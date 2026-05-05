@@ -1,0 +1,5 @@
+# License
+
+    YEAR: 2025
+    COPYRIGHT HOLDER: Alex's Lemonade Stand Foundation
+    ORGANIZATION: Alex's Lemonade Stand Foundation
