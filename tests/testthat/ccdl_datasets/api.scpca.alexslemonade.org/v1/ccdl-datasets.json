@@ -1,0 +1,25 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "ccdl_name": "SCPCP000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT",
+      "ccdl_project_id": "SCPCP000001",
+      "ccdl_modality": "SINGLE_CELL",
+      "ccdl_format": "SINGLE_CELL_EXPERIMENT",
+      "ccdl_is_merged": false,
+      "download_url": "https://example.com/SCPCP000001_SCE.zip"
+    },
+    {
+      "id": 2,
+      "ccdl_name": "SCPCP000001_SINGLE-CELL_ANN-DATA",
+      "ccdl_project_id": "SCPCP000001",
+      "ccdl_modality": "SINGLE_CELL",
+      "ccdl_format": "ANN_DATA",
+      "ccdl_is_merged": false,
+      "download_url": "https://example.com/SCPCP000001_ANN.zip"
+    }
+  ]
+}
