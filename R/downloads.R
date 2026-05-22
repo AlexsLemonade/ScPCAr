@@ -278,8 +278,6 @@ download_project <- function(
 #'  (if FALSE, existing files will be returned)
 #' @param quiet Whether to suppress progress messages
 #'
-#' @importFrom curl curl_download
-#'
 #' @returns A character vector of extracted file paths
 #'
 #' @keywords internal
@@ -320,10 +318,12 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
   file_temp <- file.path(tempdir(), download_filename)
   on.exit(unlink(file_temp), add = TRUE)
 
+  req <- httr2::request(unname(url))
   if (!quiet) {
-    message(glue::glue("Downloading {download_filename} ..."))
+    message(glue::glue("Downloading {download_filename}..."))
+    req <- httr2::req_progress(req, type = "down")
   }
-  curl_download(url, file_temp, quiet = quiet)
+  req |> httr2::req_perform(path = file_temp)
 
   if (!quiet) {
     message(glue::glue("Unzipping to {destination_dir}..."))

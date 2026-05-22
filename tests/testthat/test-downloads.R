@@ -244,8 +244,9 @@ test_that("download_and_extract_file handles file unzipping", {
 
   local_mocked_bindings(
     parse_download_file = function(url) basename(zip_file),
-    curl_download = function(url, destfile, quiet) {
-      file.copy(zip_file, destfile)
+    req_perform = function(req, path = NULL, ...) {
+      file.copy(zip_file, path)
+      invisible(NULL)
     }
   )
 
@@ -370,8 +371,9 @@ test_that("download_and_extract_file proceeds with download when redownload = TR
   # Mock functions
   local_mocked_bindings(
     parse_download_file = function(url) glue::glue("{new_name}.zip"),
-    curl_download = function(url, destfile, quiet) {
-      file.copy(zip_file, destfile)
+    req_perform = function(req, path = NULL, ...) {
+      file.copy(zip_file, path)
+      invisible(NULL)
     }
   )
 
@@ -426,8 +428,9 @@ test_that("download_and_extract_file redownloads when exact directory exists, ov
   # Mock functions
   local_mocked_bindings(
     parse_download_file = function(url) glue::glue("{dir_name}.zip"),
-    curl_download = function(url, destfile, quiet) {
-      file.copy(zip_file, destfile)
+    req_perform = function(req, path = NULL, ...) {
+      file.copy(zip_file, path)
+      invisible(NULL)
     }
   )
 
