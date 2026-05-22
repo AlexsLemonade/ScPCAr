@@ -45,3 +45,22 @@ get_ccdl_datasets <- function(
   purrr::map(responses, \(resp) resp_body_json(resp)$results) |>
     purrr::list_flatten()
 }
+
+
+#' Fetch a single CCDL dataset by ID
+#'
+#' @param id CCDL dataset ID
+#' @param auth_token API authentication token
+#'
+#' @keywords internal
+#' @import httr2
+#'
+#' @returns the dataset detail as a list
+get_ccdl_dataset_detail <- function(id, auth_token) {
+  scpca_request(
+    resource   = paste0("ccdl-datasets/", id),
+    auth_token = auth_token
+  ) |>
+    req_perform() |>
+    resp_body_json()
+}
