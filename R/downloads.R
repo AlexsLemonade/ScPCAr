@@ -323,7 +323,7 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
     message(glue::glue("Downloading {download_filename}..."))
     req <- httr2::req_progress(req, type = "down")
   }
-  req |> httr2::req_perform(path = file_temp)
+  req |> req_perform(path = file_temp)
 
   if (!quiet) {
     message(glue::glue("Unzipping to {destination_dir}..."))
