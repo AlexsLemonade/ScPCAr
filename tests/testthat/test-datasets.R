@@ -119,3 +119,14 @@ test_that("get_ccdl_datasets does not include api-key header when auth_token is 
   get_ccdl_datasets()
   expect_null(httr2::req_get_headers(captured_req, "reveal")$`api-key`)
 })
+
+test_that("get_ccdl_dataset_detail returns dataset fields including download_url", {
+  with_mock_dir("ccdl_dataset_detail", {
+    result <- get_ccdl_dataset_detail("abc123", auth_token = "test-token")
+
+    expect_type(result, "list")
+    expect_equal(result$id, "abc123")
+    expect_equal(result$download_url, "https://example.com/SCPCP000001_SCE.zip")
+    expect_equal(result$download_filename, "SCPCP000001_SCE.zip")
+  })
+})

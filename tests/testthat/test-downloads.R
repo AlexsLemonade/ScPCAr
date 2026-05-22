@@ -11,6 +11,7 @@ test_that("validate_format works correctly", {
   expect_equal(validate_format("spatial"), "SPATIAL")
   expect_equal(validate_format("SpaceRanger"), "SPATIAL")
   expect_equal(validate_format("space ranger"), "SPATIAL")
+  expect_equal(validate_format("spatial_spaceranger"), "SPATIAL")
 
   expect_error(validate_format("invalid"), "Invalid format")
   expect_error(validate_format(123), "format must be a single string")
@@ -61,6 +62,16 @@ test_that("download_sample validates input parameters", {
 })
 
 test_that("download_project validates input parameters", {
+  # Test invalid project_id format
+  expect_error(
+    download_project("invalid", "valid-token"),
+    "Invalid project_id"
+  )
+  expect_error(
+    download_project("SCPCS000001", "valid-token"),
+    "Invalid project_id"
+  )
+
   # Test missing auth token
   expect_error(
     download_project("SCPCP000001", ""),
@@ -87,44 +98,99 @@ test_that("download_project validates input parameters", {
 })
 
 test_that("download_project validates format and merged combinations", {
-  # Mock dependencies to avoid network calls
-  local_mocked_bindings(
-    get_project_info = function(id, simplifyVector) list(has_multiplexed_data = FALSE),
-    get_computed_file_ids = function(...) character(0)
-  )
-
-  # Test that spatial + merged fails
   expect_error(
     download_project("SCPCP000001", "valid-token", format = "spatial", merged = TRUE),
     "Merged spatial files are not available"
   )
 })
 
-test_that("download_project sets include_multiplexed defaults correctly", {
-  # Mock dependencies to avoid network calls
+test_that("download_project prefers multiplexed when include_multiplexed = NULL", {
   local_mocked_bindings(
-    get_project_info = function(id, simplifyVector) list(has_multiplexed_data = TRUE),
-    get_computed_file_ids = function(...) character(0)
+    get_ccdl_datasets = function(...) list(
+      list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id"),
+      list(is_succeeded = TRUE, includes_files_multiplexed = TRUE, id = "multi-id")
+    ),
+    get_ccdl_dataset_detail = function(id, ...) list(
+      download_url      = paste0("https://example.com/", id, ".zip"),
+      download_filename = paste0(id, ".zip")
+    ),
+    download_and_extract_file = function(url, ...) unname(url)
   )
+  result <- download_project("SCPCP000001", "valid-token", format = "sce")
+  expect_match(result, "multi-id")
+  expect_no_match(result, "no-multi-id")
+})
 
-  # For SCE format, include_multiplexed should default to TRUE
-  expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce"),
-    "No.*multiplexed.*files found"
+test_that("download_project falls back to non-multiplexed when none available and include_multiplexed = NULL", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(...) list(
+      list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id")
+    ),
+    get_ccdl_dataset_detail = function(id, ...) list(
+      download_url      = "https://example.com/no-multi-id.zip",
+      download_filename = "no-multi-id.zip"
+    ),
+    download_and_extract_file = function(url, ...) unname(url)
   )
+  result <- download_project("SCPCP000001", "valid-token", format = "sce")
+  expect_match(result, "no-multi-id")
+})
 
-  # For AnnData format, include_multiplexed should default to FALSE
-  expect_error(
-    download_project("SCPCP000001", "valid-token", format = "anndata"),
-    "No files found for project.*in format anndata"
+test_that("download_project errors when include_multiplexed = TRUE and none available", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(...) list(
+      list(is_succeeded = TRUE, includes_files_multiplexed = FALSE,
+           download_url = "https://example.com/no_multi.zip")
+    )
   )
-
-  # For spatial format, include_multiplexed should default to FALSE
   expect_error(
-    download_project("SCPCP000001", "valid-token", format = "spatial"),
-    "No files found for project.*in format spatial"
+    download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
+    "No pre-built dataset found"
   )
 })
+
+test_that("download_project downloads when a matching CCDL dataset exists", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(...) list(
+      list(is_succeeded = TRUE, includes_files_multiplexed = TRUE, id = "abc123")
+    ),
+    get_ccdl_dataset_detail = function(id, ...) list(
+      download_url      = "https://example.com/SCPCP000001_SCE.zip",
+      download_filename = "SCPCP000001_SCE.zip"
+    ),
+    download_and_extract_file = function(url, ...) c("path/to/file1.rds", "path/to/file2.rds")
+  )
+  result <- download_project("SCPCP000001", "valid-token", format = "sce")
+  expect_equal(result, c("path/to/file1.rds", "path/to/file2.rds"))
+})
+
+test_that("download_project errors when no CCDL dataset is found", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(...) list()
+  )
+  expect_error(
+    download_project("SCPCP000001", "valid-token", format = "sce"),
+    "SCPCP000001"
+  )
+  expect_error(
+    download_project("SCPCP000001", "valid-token", format = "sce"),
+    "create_dataset"
+  )
+})
+
+test_that("download_project errors when no dataset has is_succeeded = TRUE", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(...) list(
+      list(is_succeeded = FALSE, includes_files_multiplexed = TRUE,
+           download_url = "https://example.com/x.zip")
+    )
+  )
+  expect_error(
+    download_project("SCPCP000001", "valid-token", format = "sce"),
+    "No pre-built dataset found"
+  )
+})
+
 
 test_that("download_and_extract_file respects overwrite parameter", {
   # Create a temporary directory for testing
