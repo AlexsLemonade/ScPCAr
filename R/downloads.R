@@ -239,6 +239,7 @@ download_project <- function(
     )
   }
 
+  # check that the dataset was successfully processed
   candidates <- datasets |>
     purrr::keep(\(d) isTRUE(d$is_succeeded))
 
@@ -251,7 +252,7 @@ download_project <- function(
         purrr::pluck(1)
     }
   } else {
-    # user specified explicitly — honour strictly
+    # user specified explicitly — honor strictly
     dataset <- purrr::keep(candidates, \(d) isTRUE(d$includes_files_multiplexed) == include_multiplexed) |>
       purrr::pluck(1)
   }
