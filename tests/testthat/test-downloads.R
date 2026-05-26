@@ -183,6 +183,20 @@ test_that("download_project errors when no CCDL dataset is found", {
   )
 })
 
+test_that("download_project error mentions relevant options when none found", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(...) list()
+  )
+  expect_error(
+    download_project("SCPCP000001", "valid-token", format = "sce", merged = TRUE),
+    "merged = TRUE"
+  )
+  expect_error(
+    download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = FALSE),
+    "include_multiplexed = FALSE"
+  )
+})
+
 test_that("download_project errors when no dataset has is_succeeded = TRUE", {
   local_mocked_bindings(
     get_ccdl_datasets = function(...) list(

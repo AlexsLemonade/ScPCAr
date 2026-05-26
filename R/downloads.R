@@ -264,8 +264,16 @@ download_project <- function(
   }
 
   if (is.null(dataset)) {
+    conditions <- character(0)
+    if (merged) conditions <- c(conditions, "merged = TRUE")
+    if (identical(include_multiplexed, FALSE)) conditions <- c(conditions, "include_multiplexed = FALSE")
+    conditions_str <- if (length(conditions) > 0) {
+      glue::glue("(with {paste(conditions, collapse = ' and ')})")
+    } else {
+      ""
+    }
     stop(glue::glue(
-      "No pre-built dataset found for project {project_id} in format {format}.",
+      "No pre-built dataset found for project {project_id} in format {format} {conditions_str}.",
       "\nUse create_dataset() to request a custom dataset."
     ))
   }
