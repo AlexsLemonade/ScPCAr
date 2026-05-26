@@ -19,7 +19,7 @@ test_that("get_ccdl_datasets returns empty list when API returns no results", {
 })
 
 test_that("get_ccdl_datasets combines results across pages", {
-  with_mock_dir("ccdl_datasets_paginated", {
+  with_mock_dir("ccdl_paged", {
     result <- get_ccdl_datasets()
 
     expect_type(result, "list")

@@ -168,6 +168,8 @@ download_sample <- function(
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
+#' @importFrom stats setNames
+#'
 #' @returns a vector of file paths for the downloaded files (invisibly)
 #'
 #' @export
