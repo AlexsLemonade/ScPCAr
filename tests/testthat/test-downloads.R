@@ -136,17 +136,22 @@ test_that("download_project falls back to non-multiplexed when none available an
   expect_match(result, "no-multi-id")
 })
 
-test_that("download_project errors when include_multiplexed = TRUE and none available", {
+test_that("download_project warns and falls back when include_multiplexed = TRUE and none available", {
   local_mocked_bindings(
     get_ccdl_datasets = function(...) list(
-      list(is_succeeded = TRUE, includes_files_multiplexed = FALSE,
-           download_url = "https://example.com/no_multi.zip")
-    )
+      list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id")
+    ),
+    get_ccdl_dataset_detail = function(id, ...) list(
+      download_url      = "https://example.com/no-multi-id.zip",
+      download_filename = "no-multi-id.zip"
+    ),
+    download_and_extract_file = function(url, ...) unname(url)
   )
-  expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
-    "No pre-built dataset found"
+  expect_warning(
+    result <- download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
+    "Multiplexed data not available"
   )
+  expect_match(result, "no-multi-id")
 })
 
 test_that("download_project downloads when a matching CCDL dataset exists", {

@@ -243,17 +243,23 @@ download_project <- function(
   candidates <- datasets |>
     purrr::keep(\(d) isTRUE(d$is_succeeded))
 
-  if (is.null(include_multiplexed)) {
-    # prefer multiplexed when available; silently fall back to non-multiplexed
+  if (is.null(include_multiplexed) || isTRUE(include_multiplexed)) {
+    # prefer multiplexed when available; fall back to non-multiplexed
     dataset <- purrr::keep(candidates, \(d) isTRUE(d$includes_files_multiplexed)) |>
       purrr::pluck(1)
     if (is.null(dataset)) {
+      if (isTRUE(include_multiplexed)) {
+        warning(glue::glue(
+          "Multiplexed data not available for project {project_id}.",
+          " Downloading non-multiplexed data instead."
+        ))
+      }
       dataset <- purrr::keep(candidates, \(d) !isTRUE(d$includes_files_multiplexed)) |>
         purrr::pluck(1)
     }
   } else {
-    # user specified explicitly — honor strictly
-    dataset <- purrr::keep(candidates, \(d) isTRUE(d$includes_files_multiplexed) == include_multiplexed) |>
+    # include_multiplexed = FALSE: non-multiplexed only
+    dataset <- purrr::keep(candidates, \(d) !isTRUE(d$includes_files_multiplexed)) |>
       purrr::pluck(1)
   }
 
