@@ -86,7 +86,7 @@ create_dataset <- function(
     "include_bulk must be a logical value" = is.logical(include_bulk) && length(include_bulk) == 1
   )
 
-  format_str <- validate_format(format)
+  format_str <- normalize_format(format)
   if (format_str == "SPATIAL") {
     stop(
       "'spatial' is not a valid format for datasets. Spatial data is always returned in Space Ranger format."

@@ -75,7 +75,7 @@ check_api <- function() {
     },
     httr2_http_404 = \(cnd) NULL
   )
-  if (is.null(response) || status != 200) {
+  if (is.null(status) || status != 200) {
     stop(
       "The API may be down or unreachable. Please check your internet connection or try again later."
     )
