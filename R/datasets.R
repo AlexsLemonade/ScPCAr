@@ -96,6 +96,7 @@ create_dataset <- function(
 
   data <- build_dataset_data(samples = samples, projects = projects, include_bulk = include_bulk)
 
+  # create the request body
   body <- list(format = format_str, data = data, start = FALSE)
   if (!is.null(email)) {
     body$email <- email
