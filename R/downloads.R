@@ -4,7 +4,7 @@
 #'
 #' @param format The input format string
 #' @returns The normalized format string for API use
-validate_format <- function(format) {
+normalize_format <- function(format) {
   stopifnot(
     "format must be a single string" = is.character(format) && length(format) == 1
   )
@@ -99,7 +99,7 @@ download_sample <- function(
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
 
-  format_str <- validate_format(format)
+  format_str <- normalize_format(format)
 
   # create destination directory if it doesn't exist
   if (!dir.exists(destination)) {
@@ -210,7 +210,7 @@ download_project <- function(
       (is.logical(include_multiplexed) && length(include_multiplexed) == 1)
   )
 
-  format_str <- validate_format(format)
+  format_str <- normalize_format(format)
 
   if (format_str == "SPATIAL" && merged) {
     stop("Merged spatial files are not available.")

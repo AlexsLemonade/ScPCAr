@@ -1,21 +1,21 @@
-test_that("validate_format works correctly", {
-  expect_equal(validate_format("sce"), "SINGLE_CELL_EXPERIMENT")
-  expect_equal(validate_format("SCE"), "SINGLE_CELL_EXPERIMENT")
-  expect_equal(validate_format("SingleCellExperiment"), "SINGLE_CELL_EXPERIMENT")
-  expect_equal(validate_format("single-cell-experiment"), "SINGLE_CELL_EXPERIMENT")
-  expect_equal(validate_format("single_cell_experiment"), "SINGLE_CELL_EXPERIMENT")
+test_that("normalize_format works correctly", {
+  expect_equal(normalize_format("sce"), "SINGLE_CELL_EXPERIMENT")
+  expect_equal(normalize_format("SCE"), "SINGLE_CELL_EXPERIMENT")
+  expect_equal(normalize_format("SingleCellExperiment"), "SINGLE_CELL_EXPERIMENT")
+  expect_equal(normalize_format("single-cell-experiment"), "SINGLE_CELL_EXPERIMENT")
+  expect_equal(normalize_format("single_cell_experiment"), "SINGLE_CELL_EXPERIMENT")
 
-  expect_equal(validate_format("anndata"), "ANN_DATA")
-  expect_equal(validate_format("H5AD"), "ANN_DATA")
+  expect_equal(normalize_format("anndata"), "ANN_DATA")
+  expect_equal(normalize_format("H5AD"), "ANN_DATA")
 
-  expect_equal(validate_format("spatial"), "SPATIAL")
-  expect_equal(validate_format("SpaceRanger"), "SPATIAL")
-  expect_equal(validate_format("space ranger"), "SPATIAL")
-  expect_equal(validate_format("spatial_spaceranger"), "SPATIAL")
+  expect_equal(normalize_format("spatial"), "SPATIAL")
+  expect_equal(normalize_format("SpaceRanger"), "SPATIAL")
+  expect_equal(normalize_format("space ranger"), "SPATIAL")
+  expect_equal(normalize_format("spatial_spaceranger"), "SPATIAL")
 
-  expect_error(validate_format("invalid"), "Invalid format")
-  expect_error(validate_format(123), "format must be a single string")
-  expect_error(validate_format(c("sce", "anndata")), "format must be a single string")
+  expect_error(normalize_format("invalid"), "Invalid format")
+  expect_error(normalize_format(123), "format must be a single string")
+  expect_error(normalize_format(c("sce", "anndata")), "format must be a single string")
 })
 
 test_that("parse_download_file extracts filename correctly", {
