@@ -28,3 +28,7 @@ reference:
     contents:
       - download_sample
       - download_project
+  - subtitle: Custom datasets
+    contents:
+      - create_dataset
+      - get_dataset_info
