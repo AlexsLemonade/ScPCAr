@@ -264,6 +264,8 @@ update_dataset <- function(
 #' @param modality Optional modality string to filter by (mapped to `ccdl_modality`)
 #' @param format Optional format string to filter by (mapped to `ccdl_format`)
 #' @param merged Optional logical to filter merged datasets (mapped to `ccdl_is_merged`)
+#' @param include_multiplexed Optional logical to filter by whether the dataset
+#'   includes multiplexed files (mapped to `includes_files_multiplexed`)
 #' @param metadata_only Logical; if TRUE maps to `ccdl_name = "ALL_METADATA"`
 #' @param auth_token Optional API authentication token; when non-empty adds `api-key` header
 #'
@@ -279,11 +281,13 @@ get_ccdl_datasets <- function(
   modality = NULL,
   format = NULL,
   merged = NULL,
+  include_multiplexed = NULL,
   metadata_only = FALSE,
   auth_token = ""
 ) {
   req <- scpca_request("ccdl-datasets", auth_token = auth_token)
 
+  # append query parameters for any non-NULL arguments
   if (!is.null(project_id)) {
     req <- httr2::req_url_query(req, ccdl_project_id = project_id)
   }
@@ -291,19 +295,23 @@ get_ccdl_datasets <- function(
     req <- httr2::req_url_query(req, ccdl_modality = modality)
   }
   if (!is.null(format)) {
-    req <- httr2::req_url_query(req, ccdl_format = format)
+    req <- httr2::req_url_query(req, format = format)
   }
   if (!is.null(merged)) {
     req <- httr2::req_url_query(req, ccdl_is_merged = merged)
+  }
+  if (!is.null(include_multiplexed)) {
+    req <- httr2::req_url_query(req, includes_files_multiplexed = include_multiplexed)
   }
   if (metadata_only) {
     req <- httr2::req_url_query(req, ccdl_name = "ALL_METADATA")
   }
 
-  responses <- req |> req_perform_iterative(iterate_scpca)
-
-  purrr::map(responses, \(resp) resp_body_json(resp)$results) |>
+  datasets <- req |>
+    req_perform_iterative(iterate_scpca) |> # no httr2 prefix to allow mocking in tests
+    purrr::map(\(resp) resp_body_json(resp)$results) |>
     purrr::list_flatten()
+  return(datasets)
 }
 
 

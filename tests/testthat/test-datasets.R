@@ -55,7 +55,7 @@ test_that("get_ccdl_datasets passes modality as ccdl_modality query parameter", 
   expect_match(captured_req$url, "ccdl_modality=SINGLE_CELL")
 })
 
-test_that("get_ccdl_datasets passes format as ccdl_format query parameter", {
+test_that("get_ccdl_datasets passes format as format query parameter", {
   captured_req <- NULL
   local_mocked_bindings(
     req_perform_iterative = function(req, ...) {
@@ -65,7 +65,7 @@ test_that("get_ccdl_datasets passes format as ccdl_format query parameter", {
   )
 
   get_ccdl_datasets(format = "ANN_DATA")
-  expect_match(captured_req$url, "ccdl_format=ANN_DATA")
+  expect_match(captured_req$url, "format=ANN_DATA")
 })
 
 test_that("get_ccdl_datasets passes merged as ccdl_is_merged query parameter", {
@@ -79,6 +79,22 @@ test_that("get_ccdl_datasets passes merged as ccdl_is_merged query parameter", {
 
   get_ccdl_datasets(merged = TRUE)
   expect_match(captured_req$url, "ccdl_is_merged=TRUE")
+})
+
+test_that("get_ccdl_datasets passes include_multiplexed as includes_files_multiplexed query parameter", {
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform_iterative = function(req, ...) {
+      captured_req <<- req
+      list()
+    }
+  )
+
+  get_ccdl_datasets(include_multiplexed = TRUE)
+  expect_match(captured_req$url, "includes_files_multiplexed=TRUE")
+
+  get_ccdl_datasets(include_multiplexed = FALSE)
+  expect_match(captured_req$url, "includes_files_multiplexed=FALSE")
 })
 
 test_that("get_ccdl_datasets passes metadata_only as ccdl_name=ALL_METADATA query parameter", {
@@ -104,7 +120,10 @@ test_that("get_ccdl_datasets includes api-key header when auth_token is provided
   )
 
   get_ccdl_datasets(auth_token = "test-token-abc")
-  expect_equal(httr2::req_get_headers(captured_req, "reveal")$`api-key`, "test-token-abc")
+  expect_equal(
+    httr2::req_get_headers(captured_req, "reveal")$`api-key`,
+    "test-token-abc"
+  )
 })
 
 test_that("get_ccdl_datasets does not include api-key header when auth_token is empty", {
@@ -124,12 +143,14 @@ test_that("get_ccdl_datasets does not include api-key header when auth_token is 
 
 test_that("build_dataset_data builds correct structure for single-cell samples", {
   local_mocked_bindings(
-    get_sample_info = \(sample_id, ...) list(
-      scpca_id = sample_id,
-      project = list(scpca_id = "SCPCP000001"),
-      has_single_cell_data = TRUE,
-      has_spatial_data = FALSE
-    )
+    get_sample_info = \(sample_id, ...) {
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = "SCPCP000001"),
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE
+      )
+    }
   )
   result <- build_dataset_data(samples = c("SCPCS000001", "SCPCS000002"))
 
@@ -141,12 +162,14 @@ test_that("build_dataset_data builds correct structure for single-cell samples",
 
 test_that("build_dataset_data places spatial samples in SPATIAL list", {
   local_mocked_bindings(
-    get_sample_info = \(sample_id, ...) list(
-      scpca_id = sample_id,
-      project = list(scpca_id = "SCPCP000001"),
-      has_single_cell_data = FALSE,
-      has_spatial_data = TRUE
-    )
+    get_sample_info = \(sample_id, ...) {
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = "SCPCP000001"),
+        has_single_cell_data = FALSE,
+        has_spatial_data = TRUE
+      )
+    }
   )
   result <- build_dataset_data(samples = "SCPCS000003")
 
@@ -173,12 +196,14 @@ test_that("build_dataset_data groups samples by project", {
 
 test_that("build_dataset_data respects include_bulk parameter", {
   local_mocked_bindings(
-    get_sample_info = \(sample_id, ...) list(
-      scpca_id = sample_id,
-      project = list(scpca_id = "SCPCP000001"),
-      has_single_cell_data = TRUE,
-      has_spatial_data = FALSE
-    )
+    get_sample_info = \(sample_id, ...) {
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = "SCPCP000001"),
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE
+      )
+    }
   )
   result <- build_dataset_data(samples = "SCPCS000001", include_bulk = TRUE)
 
@@ -217,9 +242,15 @@ test_that("create_dataset errors when spatial format is requested", {
 
 test_that("create_dataset POSTs with start = FALSE", {
   local_mocked_bindings(
-    build_dataset_data = \(...) list(
-      SCPCP000001 = list(SINGLE_CELL = list("SCPCS000001"), SPATIAL = list(), includes_bulk = FALSE)
-    ),
+    build_dataset_data = \(...) {
+      list(
+        SCPCP000001 = list(
+          SINGLE_CELL = list("SCPCS000001"),
+          SPATIAL = list(),
+          includes_bulk = FALSE
+        )
+      )
+    },
     req_perform = \(req, ...) {
       body <- req$body$data
       json_response(c(body, list(id = "new-dataset-uuid")))
@@ -228,7 +259,9 @@ test_that("create_dataset POSTs with start = FALSE", {
 
   result <- NULL
   expect_message(
-    {result <- create_dataset(samples = "SCPCS000001", format = "sce", auth_token = "token")},
+    {
+      result <- create_dataset(samples = "SCPCS000001", format = "sce", auth_token = "token")
+    },
     "new-dataset-uuid"
   )
   expect_false(result$start)
@@ -236,18 +269,28 @@ test_that("create_dataset POSTs with start = FALSE", {
 
 test_that("create_dataset returns response invisibly and messages with dataset id", {
   local_mocked_bindings(
-    build_dataset_data = \(...) list(
-      SCPCP000001 = list(SINGLE_CELL = list("SCPCS000001"), SPATIAL = list(), includes_bulk = FALSE)
-    ),
+    build_dataset_data = \(...) {
+      list(
+        SCPCP000001 = list(
+          SINGLE_CELL = list("SCPCS000001"),
+          SPATIAL = list(),
+          includes_bulk = FALSE
+        )
+      )
+    },
     scpca_request = \(...) httr2::request("https://api.scpca.alexslemonade.org"),
-    req_perform = \(req, ...) json_response(
-      list(id = "new-dataset-uuid", format = "ANN_DATA", data = list(), start = FALSE)
-    )
+    req_perform = \(req, ...) {
+      json_response(
+        list(id = "new-dataset-uuid", format = "ANN_DATA", data = list(), start = FALSE)
+      )
+    }
   )
 
   result <- NULL
   expect_message(
-    {result <- create_dataset(samples = "SCPCS000001", format = "anndata", auth_token = "token")},
+    {
+      result <- create_dataset(samples = "SCPCS000001", format = "anndata", auth_token = "token")
+    },
     "new-dataset-uuid"
   )
   expect_equal(result$id, "new-dataset-uuid")
@@ -322,9 +365,15 @@ test_that("update_dataset merges new samples into existing data", {
 
   local_mocked_bindings(
     get_dataset_status = \(...) list(data = current_data),
-    build_dataset_data = \(...) list(
-      SCPCP000001 = list(SINGLE_CELL = list("SCPCS000002"), SPATIAL = list(), includes_bulk = FALSE)
-    ),
+    build_dataset_data = \(...) {
+      list(
+        SCPCP000001 = list(
+          SINGLE_CELL = list("SCPCS000002"),
+          SPATIAL = list(),
+          includes_bulk = FALSE
+        )
+      )
+    },
     req_perform = \(req, ...) {
       json_response(req$body$data)
     }
@@ -424,9 +473,17 @@ test_that("update_dataset updates include_bulk for all projects", {
 
 test_that("update_dataset uses PATCH method", {
   local_mocked_bindings(
-    get_dataset_status = \(...) list(data = list(
-      SCPCP000001 = list(SINGLE_CELL = list("SCPCS000001"), SPATIAL = list(), includes_bulk = FALSE)
-    )),
+    get_dataset_status = \(...) {
+      list(
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          )
+        )
+      )
+    },
     req_perform = \(req, ...) json_response(list(method = req$method))
   )
 

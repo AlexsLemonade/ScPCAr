@@ -9,6 +9,7 @@ get_ccdl_datasets(
   modality = NULL,
   format = NULL,
   merged = NULL,
+  include_multiplexed = NULL,
   metadata_only = FALSE,
   auth_token = ""
 )
@@ -21,6 +22,9 @@ get_ccdl_datasets(
 \item{format}{Optional format string to filter by (mapped to \code{ccdl_format})}
 
 \item{merged}{Optional logical to filter merged datasets (mapped to \code{ccdl_is_merged})}
+
+\item{include_multiplexed}{Optional logical to filter by whether the dataset
+includes multiplexed files (mapped to \code{includes_files_multiplexed})}
 
 \item{metadata_only}{Logical; if TRUE maps to \code{ccdl_name = "ALL_METADATA"}}
 
