@@ -15,15 +15,16 @@
 #'
 #' @returns a list of CCDL dataset objects
 get_ccdl_datasets <- function(
-  project_id    = NULL,
-  modality      = NULL,
-  format        = NULL,
-  merged        = NULL,
+  project_id = NULL,
+  modality = NULL,
+  format = NULL,
+  merged = NULL,
   metadata_only = FALSE,
-  auth_token    = ""
+  auth_token = ""
 ) {
   req <- scpca_request("ccdl-datasets", auth_token = auth_token)
 
+  # append query parameters for any non-NULL arguments
   if (!is.null(project_id)) {
     req <- httr2::req_url_query(req, ccdl_project_id = project_id)
   }
@@ -40,10 +41,11 @@ get_ccdl_datasets <- function(
     req <- httr2::req_url_query(req, ccdl_name = "ALL_METADATA")
   }
 
-  responses <- req |> req_perform_iterative(iterate_scpca)
-
-  purrr::map(responses, \(resp) resp_body_json(resp)$results) |>
+  datasets <- req |>
+    req_perform_iterative(iterate_scpca) |> # no httr2 prefix to allow mocking in tests
+    purrr::map(\(resp) resp_body_json(resp)$results) |>
     purrr::list_flatten()
+  return(datasets)
 }
 
 
@@ -58,7 +60,7 @@ get_ccdl_datasets <- function(
 #' @returns the dataset detail as a list
 get_ccdl_dataset_detail <- function(id, auth_token) {
   scpca_request(
-    resource   = paste0("ccdl-datasets/", id),
+    resource = paste0("ccdl-datasets/", id),
     auth_token = auth_token
   ) |>
     req_perform() |>
