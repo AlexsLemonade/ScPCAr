@@ -245,7 +245,7 @@ download_project <- function(
   candidates <- datasets |>
     purrr::keep(\(d) isTRUE(d$is_succeeded))
 
-  if (is.null(include_multiplexed) || isTRUE(include_multiplexed)) {
+  if (is.null(include_multiplexed) || include_multiplexed) {
     # prefer multiplexed when available; fall back to non-multiplexed
     dataset <- purrr::keep(candidates, \(d) isTRUE(d$includes_files_multiplexed)) |>
       purrr::pluck(1)
