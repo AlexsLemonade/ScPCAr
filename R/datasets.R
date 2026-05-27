@@ -8,27 +8,29 @@
 #'
 #' @returns a nested list suitable for the `data` field of the datasets API
 build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = FALSE) {
+  # get sample ids for each project
   project_sample_ids <- if (!is.null(projects)) {
-    purrr::map(projects, \(project_id) get_project_samples(project_id)$scpca_id) |>
-      purrr::list_c()
+    purrr::map_chr(projects, \(project_id) get_project_samples(project_id)$scpca_id) |>
+      c()
   } else {
     character(0)
   }
+  all_samples <- unique(c(project_sample_ids, samples))
 
-  all_samples <- unique(c(project_sample_ids, samples)) |>
-    purrr::map(\(sample_id) {
-      tryCatch(
-        get_sample_info(sample_id, simplifyVector = FALSE),
-        error = \(e) e
-      )
-    })
-
-  failed <- purrr::keep(all_samples, inherits, "error")
+  sample_info <- purrr::map(all_samples, \(sample_id) {
+    tryCatch(
+      get_sample_info(sample_id, simplifyVector = FALSE),
+      error = \(e) e
+    )
+  })
+  # report samples with errors
+  failed <- purrr::keep(sample_info, inherits, "error")
   if (length(failed) > 0) {
     stop(paste(purrr::map_chr(failed, conditionMessage), collapse = "\n"), call. = FALSE)
   }
 
-  by_project <- split(all_samples, purrr::map_chr(all_samples, \(s) s$project$scpca_id))
+  # organize by project and modality for the API
+  by_project <- split(sample_info, purrr::map_chr(sample_info, \(s) s$project$scpca_id))
 
   purrr::map(by_project, \(project_samples) {
     single_cell <- purrr::keep(project_samples, \(s) isTRUE(s$has_single_cell_data)) |>
@@ -113,7 +115,7 @@ create_dataset <- function(
 }
 
 
-#' Get the status and contents of a user dataset
+#' Get the status and contents of a custom dataset
 #'
 #' Returns the full dataset detail, including the `$data` field showing which
 #' samples are included and processing status fields such as `$is_started`,
@@ -132,7 +134,7 @@ create_dataset <- function(
 #' token <- get_auth("user@example.com", agree = TRUE)
 #' status <- get_dataset_status("your-dataset-uuid", token)
 #' status$data         # nested list of projects and samples
-#' status$is_succeeded # TRUE when the dataset file is ready
+#' status$is_succeeded # TRUE when the dataset file is ready for download
 #' }
 get_dataset_status <- function(dataset_id, auth_token) {
   scpca_request(

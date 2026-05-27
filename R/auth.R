@@ -3,7 +3,8 @@
 #' `get_auth()` allows obtaining an authorization token string from the ScPCA API,
 #'  after providing an email address and agreeing to the terms of use.
 #'
-#' To view the terms of use before agreeing to them, use `view_terms()`, which opens the terms of use page in a web browser.
+#' To view the terms of use before agreeing to them, use [view_terms()],
+#' which opens the terms of use page in a web browser.
 #'
 #' @param email The user's email address
 #' @param agree A logical indicating whether the user agrees to the terms of service
@@ -25,9 +26,7 @@ get_auth <- function(email, agree = FALSE) {
     "Invalid email address." = grepl("^[^@]+@[^@]+\\.[^@]+$", email)
   )
 
-
   req <- scpca_request("tokens", body = list(email = email, is_activated = agree))
-
 
   response <- withCallingHandlers(
     req_perform(req) |> resp_body_json(simplifyVector = TRUE),
@@ -35,9 +34,16 @@ get_auth <- function(email, agree = FALSE) {
     httr2_http_400 = \(cnd) {
       resp <- last_response() |> resp_body_json(simplifyVector = TRUE)
       if (!is.null(resp[["email"]])) {
-        stop("get_auth() failed to get token: ", paste(resp[["email"]], collapse = " "), call. = FALSE)
+        stop(
+          "get_auth() failed to get token: ",
+          paste(resp[["email"]], collapse = " "),
+          call. = FALSE
+        )
       }
-      stop("get_auth() failed to get token: Please check the email address and try again.", call. = FALSE)
+      stop(
+        "get_auth() failed to get token: Please check the email address and try again.",
+        call. = FALSE
+      )
     }
   )
 

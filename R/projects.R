@@ -159,7 +159,7 @@ get_project_samples <- function(project_id, simplify = TRUE) {
 #' that is part of the project.
 #'
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
-#' @param auth_token An authorization token obtained from `get_auth()`
+#' @param auth_token An authorization token obtained from [get_auth()]
 #'
 #' @returns A data frame (tibble) of library metadata for the specified project.
 #'
@@ -215,7 +215,7 @@ get_project_libraries <- function(project_id, auth_token) {
 #' Get project metadata download URL
 #'
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
-#' @param auth_token An authorization token obtained from `get_auth()`
+#' @param auth_token An authorization token obtained from [get_auth()]
 #'
 #' @returns A signed download URL for the project metadata file as would be found
 #'  from the ScPCA Portal.

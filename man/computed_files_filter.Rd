@@ -12,7 +12,7 @@ computed_files_filter(
 \item{format_str}{a string indicating the desired format}
 }
 \value{
-a list suitable for passing as the \code{filters} argument to \code{get_computed_file_ids()}.
+a list suitable for passing as the \code{filters} argument to \code{\link[=get_computed_file_ids]{get_computed_file_ids()}}.
 }
 \description{
 Helper function to create a filtering list for computed files by format

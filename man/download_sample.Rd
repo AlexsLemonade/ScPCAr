@@ -17,7 +17,7 @@ download_sample(
 \arguments{
 \item{sample_id}{The ScPCA sample ID (e.g. "SCPCS000001")}
 
-\item{auth_token}{An authorization token obtained from \code{get_auth()}}
+\item{auth_token}{An authorization token obtained from \code{\link[=get_auth]{get_auth()}}}
 
 \item{destination}{The path to the directory where the unzipped file directory should be saved.
 Default is "scpca_data".}
@@ -57,7 +57,7 @@ Spatial data, if present, can be downloaded in Space Ranger format using the "sp
 The function returns a vector of file paths for the downloaded files (invisibly).
 
 Note that downloading data requires an authorization token, which can be obtained
-using the \code{get_auth()} function.
+using the \code{\link[=get_auth]{get_auth()}} function.
 }
 \examples{
 \dontrun{

@@ -57,11 +57,11 @@ normalize_format <- function(format) {
 #' The function returns a vector of file paths for the downloaded files (invisibly).
 #'
 #' Note that downloading data requires an authorization token, which can be obtained
-#' using the `get_auth()` function.
+#' using the [get_auth()] function.
 #'
 #'
 #' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
-#' @param auth_token An authorization token obtained from `get_auth()`
+#' @param auth_token An authorization token obtained from [get_auth()]
 #' @param destination The path to the directory where the unzipped file directory should be saved.
 #'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
@@ -154,7 +154,7 @@ download_sample <- function(
 #' Download a project's data files from the ScPCA Portal
 #'
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
-#' @param auth_token An authorization token obtained from `get_auth()`
+#' @param auth_token An authorization token obtained from [get_auth()]
 #' @param destination The path to the directory where the unzipped file directory should be saved.
 #'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),

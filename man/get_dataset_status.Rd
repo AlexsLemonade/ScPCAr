@@ -2,7 +2,7 @@
 % Please edit documentation in R/datasets.R
 \name{get_dataset_status}
 \alias{get_dataset_status}
-\title{Get the status and contents of a user dataset}
+\title{Get the status and contents of a custom dataset}
 \usage{
 get_dataset_status(dataset_id, auth_token)
 }
@@ -24,6 +24,6 @@ samples are included and processing status fields such as \verb{$is_started},
 token <- get_auth("user@example.com", agree = TRUE)
 status <- get_dataset_status("your-dataset-uuid", token)
 status$data         # nested list of projects and samples
-status$is_succeeded # TRUE when the dataset file is ready
+status$is_succeeded # TRUE when the dataset file is ready for download
 }
 }

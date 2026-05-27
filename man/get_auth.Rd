@@ -22,7 +22,8 @@ A string containing the authorization token
 after providing an email address and agreeing to the terms of use.
 }
 \details{
-To view the terms of use before agreeing to them, use \code{view_terms()}, which opens the terms of use page in a web browser.
+To view the terms of use before agreeing to them, use \code{\link[=view_terms]{view_terms()}},
+which opens the terms of use page in a web browser.
 }
 \examples{
 \dontrun{

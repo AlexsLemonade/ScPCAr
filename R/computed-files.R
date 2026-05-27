@@ -1,7 +1,7 @@
 #' Get computed file ids from a sample info list, optionally filtered by criteria
 #'
 #' @param info_list A list object that includes a "computed_files" element,
-#'  such as returned by get_sample_info() or get_project_info()
+#'  such as returned by [get_sample_info()] or [get_project_info()]
 #' @param filters A named list of filtering criteria, where names are fields in
 #'  the computed_files objects, and values are the desired values to match.
 #'  Values can be negated by prefixing with "!". For example, to get all non-spatial
@@ -53,7 +53,7 @@ get_computed_file_ids <- function(info_list, filters = list()) {
 #'
 #' @keywords internal
 #'
-#' @returns a list suitable for passing as the `filters` argument to `get_computed_file_ids()`.
+#' @returns a list suitable for passing as the `filters` argument to [get_computed_file_ids()].
 computed_files_filter <- function(
   format_str = c("SINGLE_CELL_EXPERIMENT", "ANN_DATA", "SPATIAL")
 ) {
