@@ -55,7 +55,7 @@ test_that("get_ccdl_datasets passes modality as ccdl_modality query parameter", 
   expect_match(captured_req$url, "ccdl_modality=SINGLE_CELL")
 })
 
-test_that("get_ccdl_datasets passes format as ccdl_format query parameter", {
+test_that("get_ccdl_datasets passes format as format query parameter", {
   captured_req <- NULL
   local_mocked_bindings(
     req_perform_iterative = function(req, ...) {
@@ -65,7 +65,7 @@ test_that("get_ccdl_datasets passes format as ccdl_format query parameter", {
   )
 
   get_ccdl_datasets(format = "ANN_DATA")
-  expect_match(captured_req$url, "ccdl_format=ANN_DATA")
+  expect_match(captured_req$url, "format=ANN_DATA")
 })
 
 test_that("get_ccdl_datasets passes merged as ccdl_is_merged query parameter", {

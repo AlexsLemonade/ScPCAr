@@ -32,7 +32,7 @@ get_ccdl_datasets <- function(
     req <- httr2::req_url_query(req, ccdl_modality = modality)
   }
   if (!is.null(format)) {
-    req <- httr2::req_url_query(req, ccdl_format = format)
+    req <- httr2::req_url_query(req, format = format)
   }
   if (!is.null(merged)) {
     req <- httr2::req_url_query(req, ccdl_is_merged = merged)
