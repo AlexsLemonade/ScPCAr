@@ -221,6 +221,21 @@ download_project <- function(
     stop("Merged spatial files are not available.")
   }
 
+  # look up project info to validate the project exists and check for multiplexed data
+  project_info <- get_project_info(project_id)
+  has_multiplexed <- isTRUE(project_info$has_multiplexed_data)
+
+  # warn if multiplexed was explicitly requested but the project has no multiplexed data
+  if (isTRUE(include_multiplexed) && !has_multiplexed) {
+    warning(glue::glue(
+      "Multiplexed data not available for project {project_id}.",
+      " Downloading non-multiplexed data instead."
+    ))
+  }
+
+  # NULL or TRUE when multiplexed data is available → include multiplexed; otherwise exclude
+  multiplexed_query <- has_multiplexed && !identical(include_multiplexed, FALSE)
+
   if (!dir.exists(destination)) {
     dir.create(destination, recursive = TRUE)
   }
@@ -234,6 +249,7 @@ download_project <- function(
       project_id = project_id,
       modality = "SPATIAL",
       merged = merged,
+      include_multiplexed = multiplexed_query,
       auth_token = auth_token
     )
   } else {
@@ -242,32 +258,25 @@ download_project <- function(
       format = format_str,
       modality = "SINGLE_CELL",
       merged = merged,
+      include_multiplexed = multiplexed_query,
       auth_token = auth_token
     )
   }
 
-  # check that the dataset was successfully processed
-  candidates <- datasets |>
-    purrr::keep(\(d) isTRUE(d$is_succeeded))
+  # each query should return at most one pre-built dataset
+  if (length(datasets) > 1) {
+    stop(glue::glue(
+      "Multiple pre-built datasets found for project {project_id} in format {format}",
+      " (merged = {merged}, include_multiplexed = {deparse(include_multiplexed)}).",
+      " This is unexpected; please report this as a bug."
+    ))
+  }
 
-  if (is.null(include_multiplexed) || include_multiplexed) {
-    # prefer multiplexed when available; fall back to non-multiplexed
-    dataset <- purrr::keep(candidates, \(d) isTRUE(d$includes_files_multiplexed)) |>
-      purrr::pluck(1)
-    if (is.null(dataset)) {
-      if (isTRUE(include_multiplexed)) {
-        warning(glue::glue(
-          "Multiplexed data not available for project {project_id}.",
-          " Downloading non-multiplexed data instead."
-        ))
-      }
-      dataset <- purrr::keep(candidates, \(d) !isTRUE(d$includes_files_multiplexed)) |>
-        purrr::pluck(1)
-    }
-  } else {
-    # include_multiplexed = FALSE: non-multiplexed only
-    dataset <- purrr::keep(candidates, \(d) !isTRUE(d$includes_files_multiplexed)) |>
-      purrr::pluck(1)
+  dataset <- purrr::pluck(datasets, 1)
+
+  # check that the dataset was successfully processed
+  if (!is.null(dataset) && !isTRUE(dataset$is_succeeded)) {
+    dataset <- NULL
   }
 
   if (is.null(dataset)) {
@@ -279,12 +288,12 @@ download_project <- function(
       conditions <- c(conditions, glue::glue("include_multiplexed = {include_multiplexed}"))
     }
     conditions_str <- if (length(conditions) > 0) {
-      glue::glue("(with {paste(conditions, collapse = ' and ')})")
+      glue::glue(" (with {paste(conditions, collapse = ' and ')})")
     } else {
       ""
     }
     error_msg <- glue::glue(
-      "No pre-built dataset found for project {project_id} in format {format} {conditions_str}."
+      "No pre-built dataset found for project {project_id} in format {format}{conditions_str}."
     )
     stop(error_msg)
   }

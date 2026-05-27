@@ -104,65 +104,129 @@ test_that("download_project validates format and merged combinations", {
   )
 })
 
-test_that("download_project prefers multiplexed when include_multiplexed = NULL", {
+test_that("download_project uses the available dataset when include_multiplexed = NULL and no multiplexed data", {
   local_mocked_bindings(
-    get_ccdl_datasets = function(...) list(
-      list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id"),
-      list(is_succeeded = TRUE, includes_files_multiplexed = TRUE, id = "multi-id")
-    ),
-    get_ccdl_dataset_detail = function(id, ...) list(
-      download_url      = paste0("https://example.com/", id, ".zip"),
-      download_filename = paste0(id, ".zip")
-    ),
-    download_and_extract_file = function(url, ...) unname(url)
-  )
-  result <- download_project("SCPCP000001", "valid-token", format = "sce")
-  expect_match(result, "multi-id")
-  expect_no_match(result, "no-multi-id")
-})
-
-test_that("download_project falls back to non-multiplexed when none available and include_multiplexed = NULL", {
-  local_mocked_bindings(
-    get_ccdl_datasets = function(...) list(
-      list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id")
-    ),
-    get_ccdl_dataset_detail = function(id, ...) list(
-      download_url      = "https://example.com/no-multi-id.zip",
-      download_filename = "no-multi-id.zip"
-    ),
+    get_project_info = function(...) list(has_multiplexed_data = FALSE),
+    get_ccdl_datasets = function(...) {
+      list(
+        list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id")
+      )
+    },
+    get_ccdl_dataset_detail = function(id, ...) {
+      list(
+        download_url = "https://example.com/no-multi-id.zip",
+        download_filename = "no-multi-id.zip"
+      )
+    },
     download_and_extract_file = function(url, ...) unname(url)
   )
   result <- download_project("SCPCP000001", "valid-token", format = "sce")
   expect_match(result, "no-multi-id")
 })
 
-test_that("download_project warns and falls back when include_multiplexed = TRUE and none available", {
+test_that("download_project warns when include_multiplexed = TRUE but project has no multiplexed data", {
   local_mocked_bindings(
-    get_ccdl_datasets = function(...) list(
-      list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id")
-    ),
-    get_ccdl_dataset_detail = function(id, ...) list(
-      download_url      = "https://example.com/no-multi-id.zip",
-      download_filename = "no-multi-id.zip"
-    ),
+    get_project_info = function(...) list(has_multiplexed_data = FALSE),
+    get_ccdl_datasets = function(...) {
+      list(
+        list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id")
+      )
+    },
+    get_ccdl_dataset_detail = function(id, ...) {
+      list(
+        download_url = "https://example.com/no-multi-id.zip",
+        download_filename = "no-multi-id.zip"
+      )
+    },
     download_and_extract_file = function(url, ...) unname(url)
   )
   expect_warning(
-    result <- download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
+    result <- download_project(
+      "SCPCP000001",
+      "valid-token",
+      format = "sce",
+      include_multiplexed = TRUE
+    ),
     "Multiplexed data not available"
   )
   expect_match(result, "no-multi-id")
 })
 
+test_that("download_project uses multiplexed dataset when include_multiplexed = NULL and project has multiplexed data", {
+  local_mocked_bindings(
+    get_project_info = function(...) list(has_multiplexed_data = TRUE),
+    get_ccdl_datasets = function(...) {
+      list(
+        list(is_succeeded = TRUE, includes_files_multiplexed = TRUE, id = "multi-id")
+      )
+    },
+    get_ccdl_dataset_detail = function(id, ...) {
+      list(
+        download_url = "https://example.com/multi-id.zip",
+        download_filename = "multi-id.zip"
+      )
+    },
+    download_and_extract_file = function(url, ...) unname(url)
+  )
+  result <- download_project("SCPCP000001", "valid-token", format = "sce")
+  expect_match(result, "multi-id")
+})
+
+test_that("download_project uses non-multiplexed dataset when include_multiplexed = FALSE and project has multiplexed data", {
+  local_mocked_bindings(
+    get_project_info = function(...) list(has_multiplexed_data = TRUE),
+    get_ccdl_datasets = function(...) {
+      list(
+        list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "no-multi-id")
+      )
+    },
+    get_ccdl_dataset_detail = function(id, ...) {
+      list(
+        download_url = "https://example.com/no-multi-id.zip",
+        download_filename = "no-multi-id.zip"
+      )
+    },
+    download_and_extract_file = function(url, ...) unname(url)
+  )
+  result <- download_project(
+    "SCPCP000001",
+    "valid-token",
+    format = "sce",
+    include_multiplexed = FALSE
+  )
+  expect_match(result, "no-multi-id")
+})
+
+test_that("download_project errors when unexpected number of datasets returned", {
+  local_mocked_bindings(
+    get_project_info = function(...) list(has_multiplexed_data = FALSE),
+    get_ccdl_datasets = function(...) {
+      list(
+        list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "id-1"),
+        list(is_succeeded = TRUE, includes_files_multiplexed = FALSE, id = "id-2")
+      )
+    }
+  )
+  expect_error(
+    download_project("SCPCP000001", "valid-token", format = "sce"),
+    "Multiple pre-built datasets found"
+  )
+})
+
 test_that("download_project downloads when a matching CCDL dataset exists", {
   local_mocked_bindings(
-    get_ccdl_datasets = function(...) list(
-      list(is_succeeded = TRUE, includes_files_multiplexed = TRUE, id = "abc123")
-    ),
-    get_ccdl_dataset_detail = function(id, ...) list(
-      download_url      = "https://example.com/SCPCP000001_SCE.zip",
-      download_filename = "SCPCP000001_SCE.zip"
-    ),
+    get_project_info = function(...) list(has_multiplexed_data = TRUE),
+    get_ccdl_datasets = function(...) {
+      list(
+        list(is_succeeded = TRUE, includes_files_multiplexed = TRUE, id = "abc123")
+      )
+    },
+    get_ccdl_dataset_detail = function(id, ...) {
+      list(
+        download_url = "https://example.com/SCPCP000001_SCE.zip",
+        download_filename = "SCPCP000001_SCE.zip"
+      )
+    },
     download_and_extract_file = function(url, ...) c("path/to/file1.rds", "path/to/file2.rds")
   )
   result <- download_project("SCPCP000001", "valid-token", format = "sce")
@@ -171,6 +235,7 @@ test_that("download_project downloads when a matching CCDL dataset exists", {
 
 test_that("download_project errors when no CCDL dataset is found", {
   local_mocked_bindings(
+    get_project_info = function(...) list(has_multiplexed_data = FALSE),
     get_ccdl_datasets = function(...) list()
   )
   expect_error(
@@ -181,6 +246,7 @@ test_that("download_project errors when no CCDL dataset is found", {
 
 test_that("download_project error mentions relevant options when none found", {
   local_mocked_bindings(
+    get_project_info = function(...) list(has_multiplexed_data = TRUE),
     get_ccdl_datasets = function(...) list()
   )
   expect_error(
@@ -191,22 +257,24 @@ test_that("download_project error mentions relevant options when none found", {
     download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = FALSE),
     "include_multiplexed = FALSE"
   )
-  expect_warning(
-    expect_error(
-      download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
-      "include_multiplexed = TRUE"
-    ),
-    "Multiplexed data not available"
+  expect_error(
+    download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
+    "include_multiplexed = TRUE"
   )
 })
 
-
 test_that("download_project errors when no dataset has is_succeeded = TRUE", {
   local_mocked_bindings(
-    get_ccdl_datasets = function(...) list(
-      list(is_succeeded = FALSE, includes_files_multiplexed = TRUE,
-           download_url = "https://example.com/x.zip")
-    )
+    get_project_info = function(...) list(has_multiplexed_data = FALSE),
+    get_ccdl_datasets = function(...) {
+      list(
+        list(
+          is_succeeded = FALSE,
+          includes_files_multiplexed = FALSE,
+          download_url = "https://example.com/x.zip"
+        )
+      )
+    }
   )
   expect_error(
     download_project("SCPCP000001", "valid-token", format = "sce"),

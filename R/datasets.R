@@ -4,6 +4,8 @@
 #' @param modality Optional modality string to filter by (mapped to `ccdl_modality`)
 #' @param format Optional format string to filter by (mapped to `ccdl_format`)
 #' @param merged Optional logical to filter merged datasets (mapped to `ccdl_is_merged`)
+#' @param include_multiplexed Optional logical to filter by whether the dataset
+#'   includes multiplexed files (mapped to `includes_files_multiplexed`)
 #' @param metadata_only Logical; if TRUE maps to `ccdl_name = "ALL_METADATA"`
 #' @param auth_token Optional API authentication token; when non-empty adds `api-key` header
 #'
@@ -19,6 +21,7 @@ get_ccdl_datasets <- function(
   modality = NULL,
   format = NULL,
   merged = NULL,
+  include_multiplexed = NULL,
   metadata_only = FALSE,
   auth_token = ""
 ) {
@@ -36,6 +39,9 @@ get_ccdl_datasets <- function(
   }
   if (!is.null(merged)) {
     req <- httr2::req_url_query(req, ccdl_is_merged = merged)
+  }
+  if (!is.null(include_multiplexed)) {
+    req <- httr2::req_url_query(req, includes_files_multiplexed = include_multiplexed)
   }
   if (metadata_only) {
     req <- httr2::req_url_query(req, ccdl_name = "ALL_METADATA")

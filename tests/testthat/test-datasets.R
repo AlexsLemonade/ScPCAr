@@ -81,6 +81,22 @@ test_that("get_ccdl_datasets passes merged as ccdl_is_merged query parameter", {
   expect_match(captured_req$url, "ccdl_is_merged=TRUE")
 })
 
+test_that("get_ccdl_datasets passes include_multiplexed as includes_files_multiplexed query parameter", {
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform_iterative = function(req, ...) {
+      captured_req <<- req
+      list()
+    }
+  )
+
+  get_ccdl_datasets(include_multiplexed = TRUE)
+  expect_match(captured_req$url, "includes_files_multiplexed=TRUE")
+
+  get_ccdl_datasets(include_multiplexed = FALSE)
+  expect_match(captured_req$url, "includes_files_multiplexed=FALSE")
+})
+
 test_that("get_ccdl_datasets passes metadata_only as ccdl_name=ALL_METADATA query parameter", {
   captured_req <- NULL
   local_mocked_bindings(
@@ -105,7 +121,7 @@ test_that("get_ccdl_datasets includes api-key header when auth_token is provided
 
   get_ccdl_datasets(auth_token = "test-token-abc")
   expect_equal(
-    httr2::req_get_headers(captured_req, "reveal")$`api-key`, 
+    httr2::req_get_headers(captured_req, "reveal")$`api-key`,
     "test-token-abc"
   )
 })
