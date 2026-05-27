@@ -104,7 +104,10 @@ test_that("get_ccdl_datasets includes api-key header when auth_token is provided
   )
 
   get_ccdl_datasets(auth_token = "test-token-abc")
-  expect_equal(httr2::req_get_headers(captured_req, "reveal")$`api-key`, "test-token-abc")
+  expect_equal(
+    httr2::req_get_headers(captured_req, "reveal")$`api-key`, 
+    "test-token-abc"
+  )
 })
 
 test_that("get_ccdl_datasets does not include api-key header when auth_token is empty", {
