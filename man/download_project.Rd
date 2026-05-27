@@ -53,7 +53,6 @@ a vector of file paths for the downloaded files (invisibly)
 Download a project's data files from the ScPCA Portal
 }
 \examples{
-
 \dontrun{
 # Get a token first
 auth_token <- get_auth("your.email@example.com", agree = TRUE)

@@ -1,0 +1,12 @@
+{
+  "id": "abc123",
+  "ccdl_name": "SCPCP000001_SCE",
+  "ccdl_project_id": "SCPCP000001",
+  "ccdl_modality": "SINGLE_CELL",
+  "ccdl_format": "SINGLE_CELL_EXPERIMENT",
+  "ccdl_is_merged": false,
+  "is_succeeded": true,
+  "includes_files_multiplexed": true,
+  "download_url": "https://example.com/SCPCP000001_SCE.zip",
+  "download_filename": "SCPCP000001_SCE.zip"
+}

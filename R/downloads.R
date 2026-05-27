@@ -4,7 +4,7 @@
 #'
 #' @param format The input format string
 #' @returns The normalized format string for API use
-validate_format <- function(format) {
+normalize_format <- function(format) {
   stopifnot(
     "format must be a single string" = is.character(format) && length(format) == 1
   )
@@ -15,8 +15,14 @@ validate_format <- function(format) {
     "single-cell-experiment",
     "single_cell_experiment"
   )
-  anndata_formats <- c("anndata", "h5ad")
-  spatial_formats <- c("spatial", "spaceranger", "space ranger")
+  anndata_formats <- c("anndata", "h5ad", "ann-data")
+  spatial_formats <- c(
+    "spatial",
+    "spaceranger",
+    "space ranger",
+    "spatial_spaceranger",
+    "spatial-spaceranger"
+  )
 
   format <- tolower(format)
   if (format %in% sce_formats) {
@@ -99,7 +105,7 @@ download_sample <- function(
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
 
-  format_str <- validate_format(format)
+  format_str <- normalize_format(format)
 
   # create destination directory if it doesn't exist
   if (!dir.exists(destination)) {
@@ -168,11 +174,12 @@ download_sample <- function(
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #'
+#' @importFrom stats setNames
+#'
 #' @returns a vector of file paths for the downloaded files (invisibly)
 #'
 #' @export
 #' @examples
-#'
 #' \dontrun{
 #' # Get a token first
 #' auth_token <- get_auth("your.email@example.com", agree = TRUE)
@@ -200,67 +207,99 @@ download_project <- function(
   quiet = FALSE
 ) {
   stopifnot(
+    "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id),
     "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
     "merged must be a logical value" = is.logical(merged) && length(merged) == 1,
     "include_multiplexed must be NULL or a logical value" = is.null(include_multiplexed) ||
       (is.logical(include_multiplexed) && length(include_multiplexed) == 1)
   )
-  # normalize format input to match API values
-  format_str <- validate_format(format)
+
+  format_str <- normalize_format(format)
 
   if (format_str == "SPATIAL" && merged) {
     stop("Merged spatial files are not available.")
   }
 
-  # create destination directory if it doesn't exist
+  # look up project info to validate the project exists and check for multiplexed data
+  project_info <- get_project_info(project_id)
+  has_multiplexed <- isTRUE(project_info$has_multiplexed_data)
+
+  # warn if multiplexed was explicitly requested but the project has no multiplexed data
+  if (isTRUE(include_multiplexed) && !has_multiplexed) {
+    warning(glue::glue(
+      "Multiplexed data not available for project {project_id}.",
+      " Downloading non-multiplexed data instead."
+    ))
+  }
+
+  # NULL or TRUE when multiplexed data is available → include multiplexed; otherwise exclude
+  multiplexed_query <- has_multiplexed && !identical(include_multiplexed, FALSE)
+
   if (!dir.exists(destination)) {
     dir.create(destination, recursive = TRUE)
   }
 
-  project_info <- get_project_info(project_id, simplifyVector = FALSE)
-
-  # default to include multiplexed for SCE, not for others (where they are not available)
-  if (is.null(include_multiplexed)) {
-    include_multiplexed <- format_str == "SINGLE_CELL_EXPERIMENT"
+  # Spatial datasets incorrectly report format = "SINGLE_CELL_EXPERIMENT" in the API;
+  # the correct identifier is ccdl_modality = "SPATIAL". Filter by modality as a workaround
+  # until the API data is corrected. For non-spatial, also pass modality = "SINGLE_CELL" to
+  # exclude spatial datasets on projects that have both (e.g. SCPCP000006).
+  if (format_str == "SPATIAL") {
+    datasets <- get_ccdl_datasets(
+      project_id = project_id,
+      modality = "SPATIAL",
+      merged = merged,
+      include_multiplexed = multiplexed_query,
+      auth_token = auth_token
+    )
+  } else {
+    datasets <- get_ccdl_datasets(
+      project_id = project_id,
+      format = format_str,
+      modality = "SINGLE_CELL",
+      merged = merged,
+      include_multiplexed = multiplexed_query,
+      auth_token = auth_token
+    )
   }
-  # if project has no multiplexed data, override include_multiplexed to FALSE
-  if (!project_info$has_multiplexed_data) {
-    include_multiplexed <- FALSE
-  }
 
-  files_filter <- computed_files_filter(format_str)
-  # add filters for whether to get merged and/or multiplexed files
-  files_filter$includes_merged <- merged
-  files_filter$has_multiplexed_data <- include_multiplexed
-
-  file_id <- get_computed_file_ids(project_info, filters = files_filter)
-
-  files_string <- dplyr::case_when(
-    merged & include_multiplexed ~ "merged, multiplexed files",
-    merged ~ "merged files",
-    include_multiplexed ~ "multiplexed files",
-    .default = "files"
-  )
-  if (length(file_id) == 0) {
+  # each query should return at most one pre-built dataset
+  if (length(datasets) > 1) {
     stop(glue::glue(
-      "No {files_string} found for project {project_id} in format {format}."
+      "Multiple pre-built datasets found for project {project_id} in format {format}",
+      " (merged = {merged}, include_multiplexed = {deparse(include_multiplexed)}).",
+      " This is unexpected; please report this as a bug."
     ))
   }
-  if (length(file_id) > 1) {
-    stop(glue::glue(
-      "Multiple {files_string} found for {project_id} in format {format}; something is wrong?"
-    ))
-  }
-  # get signed download URL
-  download_url <- scpca_request(
-    resource = paste0("computed-files/", file_id),
-    auth_token = auth_token
-  ) |>
-    req_perform() |>
-    resp_body_json() |>
-    purrr::pluck("download_url")
 
+  dataset <- purrr::pluck(datasets, 1)
+
+  # check that the dataset was successfully processed
+  if (!is.null(dataset) && !isTRUE(dataset$is_succeeded)) {
+    dataset <- NULL
+  }
+
+  if (is.null(dataset)) {
+    conditions <- character(0)
+    if (merged) {
+      conditions <- c(conditions, "merged = TRUE")
+    }
+    if (!is.null(include_multiplexed)) {
+      conditions <- c(conditions, glue::glue("include_multiplexed = {include_multiplexed}"))
+    }
+    conditions_str <- if (length(conditions) > 0) {
+      glue::glue(" (with {paste(conditions, collapse = ' and ')})")
+    } else {
+      ""
+    }
+    error_msg <- glue::glue(
+      "No pre-built dataset found for project {project_id} in format {format}{conditions_str}."
+    )
+    stop(error_msg)
+  }
+
+  detail <- get_ccdl_dataset_detail(dataset$id, auth_token)
+  download_url <- setNames(detail$download_url, detail$download_filename)
   file_paths <- download_and_extract_file(download_url, destination, overwrite, redownload, quiet)
   invisible(file_paths)
 }
@@ -274,13 +313,11 @@ download_project <- function(
 #'  (if FALSE, existing files will be returned)
 #' @param quiet Whether to suppress progress messages
 #'
-#' @importFrom curl curl_download
-#'
 #' @returns A character vector of extracted file paths
 #'
 #' @keywords internal
 download_and_extract_file <- function(url, parent_dir, overwrite, redownload, quiet) {
-  download_filename <- parse_download_file(url)
+  download_filename <- if (!is.null(names(url))) names(url) else parse_download_file(url)
   destination_dir <- file.path(parent_dir, stringr::str_remove(download_filename, "\\.zip$"))
 
   # exit if directory already exists
@@ -316,10 +353,12 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
   file_temp <- file.path(tempdir(), download_filename)
   on.exit(unlink(file_temp), add = TRUE)
 
+  req <- httr2::request(unname(url))
   if (!quiet) {
-    message(glue::glue("Downloading {download_filename} ..."))
+    message(glue::glue("Downloading {download_filename}..."))
+    req <- httr2::req_progress(req, type = "down")
   }
-  curl_download(url, file_temp, quiet = quiet)
+  req |> req_perform(path = file_temp)
 
   if (!quiet) {
     message(glue::glue("Unzipping to {destination_dir}..."))
@@ -339,5 +378,6 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
 parse_download_file <- function(scpca_url) {
   params <- curl::curl_parse_url(scpca_url)$params
   params["response-content-disposition"] |>
-    stringr::str_extract("SCPC[^\\s]+\\.zip")
+    stringr::str_extract("SCPC[^\\s]+\\.zip") |>
+    unname()
 }
