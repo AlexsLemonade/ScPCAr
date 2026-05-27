@@ -14,7 +14,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/AlexsLemonade/ScPCAr/blob/v0.1.0/inst/CITATION)
+[`inst/CITATION`](https://github.com/AlexsLemonade/ScPCAr/blob/main/inst/CITATION)
 
 Hawkins AG, Shapiro JA, Spielman SJ, Mejia DS, Venkatesh Prasad D,
 Ichihara N, Yakovets A, Gottlieb AM, Wheeler KG, Bethell CJ, Foltz SM,

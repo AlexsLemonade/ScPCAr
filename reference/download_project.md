@@ -74,7 +74,6 @@ a vector of file paths for the downloaded files (invisibly)
 ## Examples
 
 ``` r
-
 if (FALSE) { # \dontrun{
 # Get a token first
 auth_token <- get_auth("your.email@example.com", agree = TRUE)
