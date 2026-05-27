@@ -45,7 +45,7 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 #' Create a custom dataset on the ScPCA Portal
 #'
 #' Creates a new user dataset without starting processing.
-#' After creation, use [get_dataset_status()] to inspect the dataset contents and status.
+#' After creation, use [get_dataset_info()] to inspect the dataset contents and status.
 #'
 #' @param auth_token an authorization token obtained from [get_auth()]
 #' @param format the desired file format: "sce" (SingleCellExperiment) or
@@ -108,7 +108,7 @@ create_dataset <- function(
 
   message(glue::glue(
     "Dataset {response$id} created.",
-    " Use get_dataset_status() to inspect the dataset."
+    " Use get_dataset_info() to inspect the dataset."
   ))
   invisible(response)
 }
@@ -121,7 +121,7 @@ create_dataset <- function(
 #' `$is_processing`, `$is_succeeded`, and `$is_failed`.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element
-#'   such as the return value of [create_dataset()] or [get_dataset_status()].
+#'   such as the return value of [create_dataset()] or [get_dataset_info()].
 #' @param auth_token an authorization token obtained from [get_auth()];
 #'  must match the token used to create the dataset.
 #'
@@ -132,14 +132,14 @@ create_dataset <- function(
 #'
 #' @examples
 #' \dontrun{
-#' status <- get_dataset_status("your-dataset-uuid", auth_token = token)
+#' status <- get_dataset_info("your-dataset-uuid", auth_token = token)
 #' status$data         # nested list of projects and samples
 #' status$is_succeeded # TRUE when the dataset file is ready for download
 #'
-#' # You can also pass the result of a previous get_dataset_status() call:
-#' status <- get_dataset_status(status, auth_token = token)
+#' # You can also pass the result of a previous get_dataset_info() call:
+#' status <- get_dataset_info(status, auth_token = token)
 #' }
-get_dataset_status <- function(dataset, auth_token) {
+get_dataset_info <- function(dataset, auth_token) {
   if (is.list(dataset)) {
     stopifnot("dataset must be an id string or contain an $id element" = !is.null(dataset$id))
     dataset_id <- dataset$id
