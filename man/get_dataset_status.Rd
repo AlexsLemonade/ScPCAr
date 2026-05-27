@@ -4,12 +4,14 @@
 \alias{get_dataset_status}
 \title{Get the status and contents of a custom dataset}
 \usage{
-get_dataset_status(dataset_id, auth_token)
+get_dataset_status(dataset, auth_token)
 }
 \arguments{
-\item{dataset_id}{the dataset UUID returned by \code{\link[=create_dataset]{create_dataset()}}}
+\item{dataset}{the dataset UUID string, or a list with an \verb{$id} element
+such as the return value of \code{\link[=create_dataset]{create_dataset()}} or \code{\link[=get_dataset_status]{get_dataset_status()}}.}
 
-\item{auth_token}{an authorization token obtained from \code{\link[=get_auth]{get_auth()}}}
+\item{auth_token}{an authorization token obtained from \code{\link[=get_auth]{get_auth()}};
+must match the token used to create the dataset.}
 }
 \value{
 the dataset detail as a list
@@ -21,9 +23,11 @@ samples are included and processing status fields such as \verb{$is_started},
 }
 \examples{
 \dontrun{
-token <- get_auth("user@example.com", agree = TRUE)
-status <- get_dataset_status("your-dataset-uuid", token)
+status <- get_dataset_status("your-dataset-uuid", auth_token = token)
 status$data         # nested list of projects and samples
 status$is_succeeded # TRUE when the dataset file is ready for download
+
+# You can also pass the result of a previous get_dataset_status() call:
+status <- get_dataset_status(status, auth_token = token)
 }
 }

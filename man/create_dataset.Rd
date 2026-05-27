@@ -30,12 +30,11 @@ all samples from each project are included}
 \item{email}{optional email address for download notification}
 }
 \value{
-the API response as a list (invisibly), including the dataset \code{id}
+the API response as a list (invisibly), including the dataset \verb{$id}
 }
 \description{
 Creates a new user dataset without starting processing.
-After creation, use \code{\link[=update_dataset]{update_dataset()}} to add or remove samples,
-and \code{\link[=get_dataset_status]{get_dataset_status()}} to inspect the dataset contents and status.
+After creation, use \code{\link[=get_dataset_status]{get_dataset_status()}} to inspect the dataset contents and status.
 }
 \examples{
 \dontrun{

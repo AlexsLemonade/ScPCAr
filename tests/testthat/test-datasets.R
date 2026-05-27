@@ -299,11 +299,11 @@ test_that("create_dataset returns response invisibly and messages with dataset i
 # get_dataset_status tests
 
 test_that("get_dataset_status returns dataset with data and status fields", {
-  with_mock_dir("get_dataset_status", {
-    result <- get_dataset_status("test-dataset-uuid", auth_token = "test-token")
+  with_mock_dir("ds_status", {
+    result <- get_dataset_status("ds-uuid", auth_token = "test-token")
 
     expect_type(result, "list")
-    expect_equal(result$id, "test-dataset-uuid")
+    expect_equal(result$id, "ds-uuid")
     expect_equal(result$format, "SINGLE_CELL_EXPERIMENT")
     expect_false(result$is_started)
     expect_false(result$is_succeeded)
@@ -311,8 +311,8 @@ test_that("get_dataset_status returns dataset with data and status fields", {
 })
 
 test_that("get_dataset_status returns data field with project and sample structure", {
-  with_mock_dir("get_dataset_status", {
-    result <- get_dataset_status("test-dataset-uuid", auth_token = "test-token")
+  with_mock_dir("ds_status", {
+    result <- get_dataset_status("ds-uuid", auth_token = "test-token")
 
     expect_type(result$data, "list")
     expect_true("SCPCP000001" %in% names(result$data))
@@ -338,158 +338,43 @@ test_that("get_dataset_status includes api-key header when auth_token is provide
   expect_equal(result$api_key, "my-token")
 })
 
-# update_dataset tests
+test_that("get_dataset_status handles 404 errors correctly", {
+  local_mocked_bindings(
+    check_api = function() TRUE
+  )
 
-test_that("update_dataset errors when no add/remove params provided", {
+  with_mock_dir("ds_status_404", {
+    expect_error(
+      get_dataset_status("no-uuid", auth_token = "test-token"),
+      "Dataset `no-uuid` not found."
+    )
+  })
+})
+
+test_that("get_dataset_status accepts a list with $id in place of a string", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) json_response(list(id = "ds-uuid", data = list()))
+  )
+
+  dataset_list <- list(id = "ds-uuid", data = list())
+  result <- get_dataset_status(dataset_list, auth_token = "test-token")
+  expect_equal(result$id, "ds-uuid")
+})
+
+test_that("get_dataset_status errors when list has no $id element", {
   expect_error(
-    update_dataset("uuid", auth_token = "token"),
-    "At least one of"
+    get_dataset_status(list(data = list()), auth_token = "test-token"),
+    "dataset must be an id string or contain an \\$id element"
   )
 })
 
-test_that("update_dataset errors when auth_token is empty", {
+test_that("get_dataset_status errors when dataset is not a string or list", {
   expect_error(
-    update_dataset("uuid", add_samples = "SCPCS000001", auth_token = ""),
-    "Authorization token must be provided"
+    get_dataset_status(123, auth_token = "test-token"),
+    "dataset must be an id string or contain an \\$id element"
   )
 })
 
-test_that("update_dataset merges new samples into existing data", {
-  current_data <- list(
-    SCPCP000001 = list(
-      SINGLE_CELL = list("SCPCS000001"),
-      SPATIAL = list(),
-      includes_bulk = FALSE
-    )
-  )
-
-  local_mocked_bindings(
-    get_dataset_status = \(...) list(data = current_data),
-    build_dataset_data = \(...) {
-      list(
-        SCPCP000001 = list(
-          SINGLE_CELL = list("SCPCS000002"),
-          SPATIAL = list(),
-          includes_bulk = FALSE
-        )
-      )
-    },
-    req_perform = \(req, ...) {
-      json_response(req$body$data)
-    }
-  )
-
-  result <- update_dataset("uuid", add_samples = "SCPCS000002", auth_token = "token")
-  merged_sc <- as.character(unlist(result$data$SCPCP000001$SINGLE_CELL))
-  expect_setequal(merged_sc, c("SCPCS000001", "SCPCS000002"))
-})
-
-test_that("update_dataset removes specified samples", {
-  current_data <- list(
-    SCPCP000001 = list(
-      SINGLE_CELL = list("SCPCS000001", "SCPCS000002"),
-      SPATIAL = list(),
-      includes_bulk = FALSE
-    )
-  )
-
-  local_mocked_bindings(
-    get_dataset_status = \(...) list(data = current_data),
-    req_perform = \(req, ...) {
-      json_response(req$body$data)
-    }
-  )
-
-  result <- update_dataset("uuid", remove_samples = "SCPCS000001", auth_token = "token")
-  remaining_sc <- as.character(unlist(result$data$SCPCP000001$SINGLE_CELL))
-  expect_equal(remaining_sc, "SCPCS000002")
-})
-
-test_that("update_dataset drops projects with no remaining samples after removal", {
-  current_data <- list(
-    SCPCP000001 = list(
-      SINGLE_CELL = list("SCPCS000001"),
-      SPATIAL = list(),
-      includes_bulk = FALSE
-    )
-  )
-
-  local_mocked_bindings(
-    get_dataset_status = \(...) list(data = current_data),
-    req_perform = \(req, ...) {
-      json_response(req$body$data)
-    }
-  )
-
-  result <- update_dataset("uuid", remove_samples = "SCPCS000001", auth_token = "token")
-  expect_null(result$data$SCPCP000001)
-})
-
-test_that("update_dataset removes entire project when remove_projects is specified", {
-  current_data <- list(
-    SCPCP000001 = list(
-      SINGLE_CELL = list("SCPCS000001"),
-      SPATIAL = list(),
-      includes_bulk = FALSE
-    ),
-    SCPCP000002 = list(
-      SINGLE_CELL = list("SCPCS000004"),
-      SPATIAL = list(),
-      includes_bulk = FALSE
-    )
-  )
-
-  local_mocked_bindings(
-    get_dataset_status = \(...) list(data = current_data),
-    req_perform = \(req, ...) {
-      json_response(req$body$data)
-    }
-  )
-
-  result <- update_dataset("uuid", remove_projects = "SCPCP000001", auth_token = "token")
-  expect_null(result$data$SCPCP000001)
-  expect_false(is.null(result$data$SCPCP000002))
-})
-
-test_that("update_dataset updates include_bulk for all projects", {
-  current_data <- list(
-    SCPCP000001 = list(
-      SINGLE_CELL = list("SCPCS000001"),
-      SPATIAL = list(),
-      includes_bulk = FALSE
-    )
-  )
-
-  local_mocked_bindings(
-    get_dataset_status = \(...) list(data = current_data),
-    req_perform = \(req, ...) {
-      json_response(req$body$data)
-    }
-  )
-
-  result <- update_dataset("uuid", include_bulk = TRUE, auth_token = "token")
-  expect_true(result$data$SCPCP000001$includes_bulk)
-})
-
-test_that("update_dataset uses PATCH method", {
-  local_mocked_bindings(
-    get_dataset_status = \(...) {
-      list(
-        data = list(
-          SCPCP000001 = list(
-            SINGLE_CELL = list("SCPCS000001"),
-            SPATIAL = list(),
-            includes_bulk = FALSE
-          )
-        )
-      )
-    },
-    req_perform = \(req, ...) json_response(list(method = req$method))
-  )
-
-  result <- update_dataset("uuid", remove_samples = "SCPCS000001", auth_token = "token")
-  expect_equal(result$method, "PATCH")
-})
 
 test_that("get_ccdl_dataset_detail returns dataset fields including download_url", {
   with_mock_dir("ccdl_dataset_detail", {

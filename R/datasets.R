@@ -45,8 +45,7 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 #' Create a custom dataset on the ScPCA Portal
 #'
 #' Creates a new user dataset without starting processing.
-#' After creation, use [update_dataset()] to add or remove samples,
-#' and [get_dataset_status()] to inspect the dataset contents and status.
+#' After creation, use [get_dataset_status()] to inspect the dataset contents and status.
 #'
 #' @param auth_token an authorization token obtained from [get_auth()]
 #' @param format the desired file format: "sce" (SingleCellExperiment) or
@@ -58,7 +57,7 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 #' @param email optional email address for download notification
 #' @param include_bulk logical; whether to include bulk RNA-seq files. Default is FALSE.
 #'
-#' @returns the API response as a list (invisibly), including the dataset `id`
+#' @returns the API response as a list (invisibly), including the dataset `$id`
 #'
 #' @import httr2
 #' @export
@@ -108,8 +107,7 @@ create_dataset <- function(
 
   message(glue::glue(
     "Dataset {response$id} created.",
-    " Use update_dataset() to add or remove samples,",
-    " or get_dataset_status() to inspect the dataset."
+    " Use get_dataset_status() to inspect the dataset."
   ))
   invisible(response)
 }
@@ -121,8 +119,10 @@ create_dataset <- function(
 #' samples are included and processing status fields such as `$is_started`,
 #' `$is_processing`, `$is_succeeded`, and `$is_failed`.
 #'
-#' @param dataset_id the dataset UUID returned by [create_dataset()]
-#' @param auth_token an authorization token obtained from [get_auth()]
+#' @param dataset the dataset UUID string, or a list with an `$id` element
+#'   such as the return value of [create_dataset()] or [get_dataset_status()].
+#' @param auth_token an authorization token obtained from [get_auth()];
+#'  must match the token used to create the dataset.
 #'
 #' @returns the dataset detail as a list
 #'
@@ -131,132 +131,43 @@ create_dataset <- function(
 #'
 #' @examples
 #' \dontrun{
-#' token <- get_auth("user@example.com", agree = TRUE)
-#' status <- get_dataset_status("your-dataset-uuid", token)
+#' status <- get_dataset_status("your-dataset-uuid", auth_token = token)
 #' status$data         # nested list of projects and samples
 #' status$is_succeeded # TRUE when the dataset file is ready for download
+#'
+#' # You can also pass the result of a previous get_dataset_status() call:
+#' status <- get_dataset_status(status, auth_token = token)
 #' }
-get_dataset_status <- function(dataset_id, auth_token) {
-  scpca_request(
-    resource = paste0("datasets/", dataset_id),
-    auth_token = auth_token
-  ) |>
-    req_perform() |>
-    resp_body_json()
-}
-
-
-#' Update the samples in a user dataset
-#'
-#' Adds or removes samples and projects from an existing dataset using a
-#' partial update (PATCH). At least one of the add/remove parameters must
-#' be provided.
-#'
-#' @param dataset_id the dataset UUID returned by [create_dataset()]
-#' @param auth_token an authorization token obtained from [get_auth()]
-#' @param add_samples optional character vector of sample IDs to add
-#' @param add_projects optional character vector of project IDs whose samples
-#'   should be added
-#' @param remove_samples optional character vector of sample IDs to remove
-#' @param remove_projects optional character vector of project IDs to remove
-#'   (removes all samples from those projects)
-#' @param include_bulk optional logical; if provided, updates `includes_bulk`
-#'   for all projects in the dataset
-#'
-#' @returns the updated dataset detail as a list (invisibly)
-#'
-#' @import httr2
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' token <- get_auth("user@example.com", agree = TRUE)
-#' update_dataset(
-#'   "your-dataset-uuid",
-#'   auth_token = token,
-#'   add_samples = "SCPCS000003"
-#' )
-#' update_dataset(
-#'   "your-dataset-uuid",
-#'   auth_token = token,
-#'   remove_samples = c("SCPCS000001", "SCPCS000002")
-#' )
-#' }
-update_dataset <- function(
-  dataset_id,
-  auth_token,
-  add_samples = NULL,
-  add_projects = NULL,
-  remove_samples = NULL,
-  remove_projects = NULL,
-  include_bulk = NULL
-) {
-  has_additions <- !is.null(add_samples) || !is.null(add_projects)
-  has_removals <- !is.null(remove_samples) || !is.null(remove_projects)
-
-  stopifnot(
-    "At least one of add_samples, add_projects, remove_samples, remove_projects, or include_bulk must be provided" = has_additions ||
-      has_removals ||
-      !is.null(include_bulk),
-    "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0
+get_dataset_status <- function(dataset, auth_token) {
+  if (is.list(dataset)) {
+    stopifnot("dataset must be an id string or contain an $id element" = !is.null(dataset$id))
+    dataset_id <- dataset$id
+  } else {
+    stopifnot(
+      "dataset must be an id string or contain an $id element" = is.character(dataset) &&
+        length(dataset) == 1
+    )
+    dataset_id <- dataset
+  }
+  response <- tryCatch(
+    {
+      scpca_request(
+        resource = paste0("datasets/", dataset_id),
+        auth_token = auth_token
+      ) |>
+        req_perform()
+    },
+    # return NULL if 404 and the API is reachable (check_api will raise error if not)
+    httr2_http_404 = \(cnd) if (check_api()) NULL
   )
-
-  current <- get_dataset_status(dataset_id, auth_token)
-  data <- current$data
-
-  # Apply additions: merge new samples into existing data
-  if (has_additions) {
-    new_data <- build_dataset_data(samples = add_samples, projects = add_projects)
-
-    for (project_id in names(new_data)) {
-      if (is.null(data[[project_id]])) {
-        data[[project_id]] <- new_data[[project_id]]
-      } else {
-        existing_sc <- unlist(data[[project_id]]$SINGLE_CELL)
-        existing_sp <- unlist(data[[project_id]]$SPATIAL)
-        new_sc <- unlist(new_data[[project_id]]$SINGLE_CELL)
-        new_sp <- unlist(new_data[[project_id]]$SPATIAL)
-        data[[project_id]]$SINGLE_CELL <- as.list(union(existing_sc, new_sc))
-        data[[project_id]]$SPATIAL <- as.list(union(existing_sp, new_sp))
-      }
-    }
+  if (is.null(response)) {
+    stop(glue::glue(
+      "Dataset `{dataset_id}` not found.",
+      " Please check the dataset ID and your auth_token.",
+      " The token must match the one used to create the dataset."
+    ))
   }
-
-  # Remove entire projects
-  if (!is.null(remove_projects)) {
-    data[remove_projects] <- NULL
-  }
-
-  # Remove individual samples from all projects; drop projects with no remaining samples
-  if (!is.null(remove_samples)) {
-    for (project_id in names(data)) {
-      existing_sc <- unlist(data[[project_id]]$SINGLE_CELL)
-      existing_sp <- unlist(data[[project_id]]$SPATIAL)
-      data[[project_id]]$SINGLE_CELL <- as.list(setdiff(existing_sc, remove_samples))
-      data[[project_id]]$SPATIAL <- as.list(setdiff(existing_sp, remove_samples))
-    }
-    data <- purrr::keep(data, \(proj) {
-      length(proj$SINGLE_CELL) > 0 || length(proj$SPATIAL) > 0
-    })
-  }
-
-  # Update includes_bulk for all remaining projects
-  if (!is.null(include_bulk)) {
-    for (project_id in names(data)) {
-      data[[project_id]]$includes_bulk <- include_bulk
-    }
-  }
-
-  response <- scpca_request(
-    resource = paste0("datasets/", dataset_id),
-    auth_token = auth_token,
-    body = list(data = data)
-  ) |>
-    httr2::req_method("PATCH") |>
-    req_perform() |>
-    resp_body_json()
-
-  invisible(response)
+  resp_body_json(response)
 }
 
 
