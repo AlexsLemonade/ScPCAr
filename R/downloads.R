@@ -15,8 +15,14 @@ normalize_format <- function(format) {
     "single-cell-experiment",
     "single_cell_experiment"
   )
-  anndata_formats <- c("anndata", "h5ad")
-  spatial_formats <- c("spatial", "spaceranger", "space ranger", "spatial_spaceranger")
+  anndata_formats <- c("anndata", "h5ad", "ann-data")
+  spatial_formats <- c(
+    "spatial",
+    "spaceranger",
+    "space ranger",
+    "spatial_spaceranger",
+    "spatial-spaceranger"
+  )
 
   format <- tolower(format)
   if (format %in% sce_formats) {
@@ -174,7 +180,6 @@ download_sample <- function(
 #'
 #' @export
 #' @examples
-#'
 #' \dontrun{
 #' # Get a token first
 #' auth_token <- get_auth("your.email@example.com", agree = TRUE)
@@ -227,16 +232,16 @@ download_project <- function(
   if (format_str == "SPATIAL") {
     datasets <- get_ccdl_datasets(
       project_id = project_id,
-      modality   = "SPATIAL",
-      merged     = merged,
+      modality = "SPATIAL",
+      merged = merged,
       auth_token = auth_token
     )
   } else {
     datasets <- get_ccdl_datasets(
       project_id = project_id,
-      format     = format_str,
-      modality   = "SINGLE_CELL",
-      merged     = merged,
+      format = format_str,
+      modality = "SINGLE_CELL",
+      merged = merged,
       auth_token = auth_token
     )
   }
@@ -267,7 +272,9 @@ download_project <- function(
 
   if (is.null(dataset)) {
     conditions <- character(0)
-    if (merged) conditions <- c(conditions, "merged = TRUE")
+    if (merged) {
+      conditions <- c(conditions, "merged = TRUE")
+    }
     if (!is.null(include_multiplexed)) {
       conditions <- c(conditions, glue::glue("include_multiplexed = {include_multiplexed}"))
     }
@@ -279,9 +286,6 @@ download_project <- function(
     error_msg <- glue::glue(
       "No pre-built dataset found for project {project_id} in format {format} {conditions_str}."
     )
-    if (!merged) {
-      error_msg <- paste0(error_msg, "\nUse create_dataset() to request a custom dataset.")
-    }
     stop(error_msg)
   }
 

@@ -177,10 +177,6 @@ test_that("download_project errors when no CCDL dataset is found", {
     download_project("SCPCP000001", "valid-token", format = "sce"),
     "SCPCP000001"
   )
-  expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce"),
-    "create_dataset"
-  )
 })
 
 test_that("download_project error mentions relevant options when none found", {
@@ -204,22 +200,6 @@ test_that("download_project error mentions relevant options when none found", {
   )
 })
 
-test_that("download_project error does not suggest create_dataset for merged requests", {
-  local_mocked_bindings(
-    get_ccdl_datasets = function(...) list()
-  )
-  merged_msg <- tryCatch(
-    download_project("SCPCP000001", "valid-token", format = "sce", merged = TRUE),
-    error = \(e) conditionMessage(e)
-  )
-  expect_no_match(merged_msg, "create_dataset")
-
-  nonmerged_msg <- tryCatch(
-    download_project("SCPCP000001", "valid-token", format = "sce"),
-    error = \(e) conditionMessage(e)
-  )
-  expect_match(nonmerged_msg, "create_dataset")
-})
 
 test_that("download_project errors when no dataset has is_succeeded = TRUE", {
   local_mocked_bindings(
