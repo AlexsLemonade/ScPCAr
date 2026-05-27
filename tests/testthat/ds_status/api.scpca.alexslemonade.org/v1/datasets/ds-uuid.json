@@ -1,5 +1,5 @@
 {
-  "id": "test-dataset-uuid",
+  "id": "ds-uuid",
   "format": "SINGLE_CELL_EXPERIMENT",
   "data": {
     "SCPCP000001": {
