@@ -1,74 +1,42 @@
-#' Build the data object for the ScPCA datasets API from a list of sample info
+#' Build the data object for the ScPCA datasets API from sample and project IDs
 #'
-#' @param sample_info_list a list of lists, each with: scpca_id, project_id,
-#'   has_single_cell_data, has_spatial_data
+#' @param samples optional character vector of sample IDs (SCPCS format)
+#' @param projects optional character vector of project IDs (SCPCP format)
 #' @param include_bulk logical; whether to include bulk RNA-seq files per project
 #'
 #' @keywords internal
 #'
 #' @returns a nested list suitable for the `data` field of the datasets API
-build_dataset_data <- function(sample_info_list, include_bulk = FALSE) {
-  data <- list()
-  for (info in sample_info_list) {
-    pid <- info$project_id
-    if (is.null(data[[pid]])) {
-      data[[pid]] <- list(SINGLE_CELL = list(), SPATIAL = list(), includes_bulk = include_bulk)
-    }
-    if (isTRUE(info$has_single_cell_data)) {
-      data[[pid]]$SINGLE_CELL <- c(data[[pid]]$SINGLE_CELL, list(info$scpca_id))
-    }
-    if (isTRUE(info$has_spatial_data)) {
-      data[[pid]]$SPATIAL <- c(data[[pid]]$SPATIAL, list(info$scpca_id))
-    }
-  }
-  data
-}
-
-
-#' Resolve sample and project IDs to a normalized sample info list
-#'
-#' @param samples optional character vector of sample IDs (SCPCS format)
-#' @param projects optional character vector of project IDs (SCPCP format)
-#'
-#' @keywords internal
-#'
-#' @returns a deduplicated list of lists, each with: scpca_id, project_id,
-#'   has_single_cell_data, has_spatial_data
-resolve_sample_info <- function(samples = NULL, projects = NULL) {
-  info_list <- list()
-
-  if (!is.null(projects)) {
-    project_samples <- purrr::map(projects, \(project_id) {
-      project_info <- get_project_info(project_id, simplifyVector = FALSE)
-      purrr::map(project_info$samples, \(s) {
-        list(
-          scpca_id = s$scpca_id,
-          project_id = project_id,
-          has_single_cell_data = isTRUE(s$has_single_cell_data),
-          has_spatial_data = isTRUE(s$has_spatial_data)
-        )
-      })
-    }) |>
-      purrr::list_flatten()
-    info_list <- c(info_list, project_samples)
+build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = FALSE) {
+  project_sample_ids <- if (!is.null(projects)) {
+    purrr::map(projects, \(project_id) get_project_samples(project_id)$scpca_id) |>
+      purrr::list_c()
+  } else {
+    character(0)
   }
 
-  if (!is.null(samples)) {
-    sample_infos <- purrr::map(samples, \(sample_id) {
-      info <- get_sample_info(sample_id, simplifyVector = FALSE)
-      list(
-        scpca_id = info$scpca_id,
-        project_id = info$project$scpca_id,
-        has_single_cell_data = isTRUE(info$has_single_cell_data),
-        has_spatial_data = isTRUE(info$has_spatial_data)
+  all_samples <- unique(c(project_sample_ids, samples)) |>
+    purrr::map(\(sample_id) {
+      tryCatch(
+        get_sample_info(sample_id, simplifyVector = FALSE),
+        error = \(e) e
       )
     })
-    info_list <- c(info_list, sample_infos)
+
+  failed <- purrr::keep(all_samples, inherits, "error")
+  if (length(failed) > 0) {
+    stop(paste(purrr::map_chr(failed, conditionMessage), collapse = "\n"), call. = FALSE)
   }
 
-  # deduplicate, keeping first occurrence of each sample ID
-  ids <- purrr::map_chr(info_list, "scpca_id")
-  info_list[!duplicated(ids)]
+  by_project <- split(all_samples, purrr::map_chr(all_samples, \(s) s$project$scpca_id))
+
+  purrr::map(by_project, \(project_samples) {
+    single_cell <- purrr::keep(project_samples, \(s) isTRUE(s$has_single_cell_data)) |>
+      purrr::map("scpca_id")
+    spatial <- purrr::keep(project_samples, \(s) isTRUE(s$has_spatial_data)) |>
+      purrr::map("scpca_id")
+    list(SINGLE_CELL = single_cell, SPATIAL = spatial, includes_bulk = include_bulk)
+  })
 }
 
 
@@ -125,8 +93,7 @@ create_dataset <- function(
     )
   }
 
-  sample_info <- resolve_sample_info(samples = samples, projects = projects)
-  data <- build_dataset_data(sample_info, include_bulk = include_bulk)
+  data <- build_dataset_data(samples = samples, projects = projects, include_bulk = include_bulk)
 
   body <- list(format = format_str, data = data, start = FALSE)
   if (!is.null(email)) {
@@ -237,8 +204,7 @@ update_dataset <- function(
 
   # Apply additions: merge new samples into existing data
   if (has_additions) {
-    new_info <- resolve_sample_info(samples = add_samples, projects = add_projects)
-    new_data <- build_dataset_data(new_info)
+    new_data <- build_dataset_data(samples = add_samples, projects = add_projects)
 
     for (project_id in names(new_data)) {
       if (is.null(data[[project_id]])) {
