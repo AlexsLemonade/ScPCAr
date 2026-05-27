@@ -195,9 +195,12 @@ test_that("download_project error mentions relevant options when none found", {
     download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = FALSE),
     "include_multiplexed = FALSE"
   )
-  expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
-    "include_multiplexed = TRUE"
+  expect_warning(
+    expect_error(
+      download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
+      "include_multiplexed = TRUE"
+    ),
+    "Multiplexed data not available"
   )
 })
 
