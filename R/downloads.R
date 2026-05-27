@@ -268,16 +268,21 @@ download_project <- function(
   if (is.null(dataset)) {
     conditions <- character(0)
     if (merged) conditions <- c(conditions, "merged = TRUE")
-    if (identical(include_multiplexed, FALSE)) conditions <- c(conditions, "include_multiplexed = FALSE")
+    if (!is.null(include_multiplexed)) {
+      conditions <- c(conditions, glue::glue("include_multiplexed = {include_multiplexed}"))
+    }
     conditions_str <- if (length(conditions) > 0) {
       glue::glue("(with {paste(conditions, collapse = ' and ')})")
     } else {
       ""
     }
-    stop(glue::glue(
-      "No pre-built dataset found for project {project_id} in format {format} {conditions_str}.",
-      "\nUse create_dataset() to request a custom dataset."
-    ))
+    error_msg <- glue::glue(
+      "No pre-built dataset found for project {project_id} in format {format} {conditions_str}."
+    )
+    if (!merged) {
+      error_msg <- paste0(error_msg, "\nUse create_dataset() to request a custom dataset.")
+    }
+    stop(error_msg)
   }
 
   detail <- get_ccdl_dataset_detail(dataset$id, auth_token)
