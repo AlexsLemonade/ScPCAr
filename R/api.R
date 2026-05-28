@@ -82,3 +82,49 @@ check_api <- function() {
   }
   TRUE
 }
+
+
+#' Internal helper to validate and normalize formats for the ScPCA API
+#'
+#' Note that while spatial format strings are included here, the API does not
+#' currently accommodate a format code for spatial data; that is designated in the
+#' modality field for individual samples or precomputed datasets.
+#'
+#' @keywords internal
+#'
+#' @param format The input format string
+#' @returns The normalized format string for API use
+normalize_format <- function(format) {
+  stopifnot(
+    "format must be a single string" = is.character(format) && length(format) == 1
+  )
+  # Accepted format strings (case insensitive) for the `format` argument in download functions
+  sce_formats <- c(
+    "sce",
+    "singlecellexperiment",
+    "single-cell-experiment",
+    "single_cell_experiment"
+  )
+  anndata_formats <- c("anndata", "h5ad", "ann-data")
+  spatial_formats <- c(
+    "spatial",
+    "spaceranger",
+    "space ranger",
+    "spatial_spaceranger",
+    "spatial-spaceranger"
+  )
+
+  format <- tolower(format)
+  if (format %in% sce_formats) {
+    return("SINGLE_CELL_EXPERIMENT")
+  } else if (format %in% anndata_formats) {
+    return("ANN_DATA")
+  } else if (format %in% spatial_formats) {
+    return("SPATIAL")
+  } else {
+    stop(
+      "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
+      " (with some additional variants accepted)."
+    )
+  }
+}
