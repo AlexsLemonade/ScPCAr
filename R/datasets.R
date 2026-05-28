@@ -12,7 +12,8 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
   project_sample_ids <- character(0)
   if (!is.null(projects)) {
     project_sample_ids <- projects |>
-      purrr::map_chr(\(project_id) get_project_samples(project_id)$scpca_id)
+      purrr::map(\(project_id) get_project_samples(project_id)$scpca_sample_id) |>
+      purrr::list_c()
   }
   all_samples <- unique(c(project_sample_ids, samples))
 

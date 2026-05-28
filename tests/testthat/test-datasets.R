@@ -194,6 +194,29 @@ test_that("build_dataset_data groups samples by project", {
   expect_setequal(names(result), c("SCPCP000001", "SCPCP000002"))
 })
 
+test_that("build_dataset_data expands project IDs to sample IDs", {
+  local_mocked_bindings(
+    get_project_samples = \(project_id, ...) {
+      tibble::tibble(scpca_sample_id = c("SCPCS000001", "SCPCS000002"))
+    },
+    get_sample_info = \(sample_id, ...) {
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = "SCPCP000001"),
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE
+      )
+    }
+  )
+  result <- build_dataset_data(projects = "SCPCP000001")
+
+  expect_equal(names(result), "SCPCP000001")
+  expect_setequal(
+    as.character(result$SCPCP000001$SINGLE_CELL),
+    c("SCPCS000001", "SCPCS000002")
+  )
+})
+
 test_that("build_dataset_data respects include_bulk parameter", {
   local_mocked_bindings(
     get_sample_info = \(sample_id, ...) {
