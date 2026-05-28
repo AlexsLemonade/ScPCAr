@@ -9,12 +9,12 @@
 #' @returns a nested list suitable for the `data` field of the datasets API
 build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = FALSE) {
   # get sample ids for each project
-  project_sample_ids <- if (!is.null(projects)) {
-    purrr::map_chr(projects, \(project_id) get_project_samples(project_id)$scpca_id) |>
-      c()
-  } else {
-    character(0)
-  }
+project_sample_ids <- character(0)
+if (!is.null(projects)) {
+    project_sample_ids  <- projects |>
+      purrr::map_chr(\(project_id) get_project_samples(project_id)$scpca_id) |>
+      c() 
+  } 
   all_samples <- unique(c(project_sample_ids, samples))
 
   sample_info <- purrr::map(all_samples, \(sample_id) {
@@ -26,7 +26,10 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
   # report samples with errors
   failed <- purrr::keep(sample_info, inherits, "error")
   if (length(failed) > 0) {
-    stop(paste(purrr::map_chr(failed, conditionMessage), collapse = "\n"), call. = FALSE)
+    stop(
+      paste(purrr::map_chr(failed, conditionMessage), collapse = "\n"), 
+      call. = FALSE
+    )
   }
 
   # organize by project and modality for the API
