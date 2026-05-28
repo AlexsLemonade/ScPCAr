@@ -117,15 +117,15 @@ normalize_format <- function(format, allow_spatial = TRUE) {
     "spatial-spaceranger"
   )
 
-  format_str <- tolower(format) |>
-    dplyr::case_when(
-      format %in% sce_formats ~ "SINGLE_CELL_EXPERIMENT",
-      format %in% anndata_formats ~ "ANN_DATA",
-      format %in% spatial_formats && allow_spatial ~ "SPATIAL",
-      .default = NA_character_
-    )
+  format_lower <- tolower(format)
+  format_str <- dplyr::case_when(
+    format_lower %in% sce_formats ~ "SINGLE_CELL_EXPERIMENT",
+    format_lower %in% anndata_formats ~ "ANN_DATA",
+    format_lower %in% spatial_formats && allow_spatial ~ "SPATIAL",
+    .default = NA_character_
+  )
   if (is.na(format_str)) {
-    allowed_formats = c("'sce'", "'anndata'")
+    allowed_formats <- c("'sce'", "'anndata'")
     if (allow_spatial) {
       allowed_formats <- c(allowed_formats, "'spatial'")
     }
@@ -134,8 +134,9 @@ normalize_format <- function(format, allow_spatial = TRUE) {
       format,
       "`.\n",
       " Expected format strings are ",
-      stringr::string_flatten_comma(allowed_formats, last = ", or "),
+      stringr::str_flatten_comma(allowed_formats, last = ", or "),
       ", with some handling of common variants."
     )
   }
+  format_str
 }

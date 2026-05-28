@@ -92,17 +92,15 @@ create_dataset <- function(
 
   format_str <- tryCatch(
     normalize_format(format, allow_spatial = FALSE),
-    error = \(e) e
+    error = \(e) {
+      stop(
+        conditionMessage(e),
+        "\nFor a dataset with spatial samples, use format = 'sce' or 'anndata';",
+        " the spatial samples will always be returned in Space Ranger format.",
+        call. = FALSE
+      )
+    }
   )
-
-  if (inherits(format_str, "error")) {
-    stop(
-      conditionMessage(format_str),
-      "For a dataset with spatial samples, use format = 'sce' or 'anndata';",
-      " the spatial samples will always be returned in Space Ranger format.",
-      call. = FALSE
-    )
-  }
 
   data <- build_dataset_data(samples = samples, projects = projects, include_bulk = include_bulk)
 

@@ -21,11 +21,11 @@ test_that("normalize_format works correctly", {
 test_that("normalize_format with allow_spatial = FALSE rejects spatial formats", {
   expect_error(
     normalize_format("spatial", allow_spatial = FALSE),
-    "Space Ranger format"
+    "Invalid format"
   )
   expect_error(
     normalize_format("SpaceRanger", allow_spatial = FALSE),
-    "Space Ranger format"
+    "Invalid format"
   )
 })
 
