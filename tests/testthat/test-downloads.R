@@ -18,6 +18,29 @@ test_that("normalize_format works correctly", {
   expect_error(normalize_format(c("sce", "anndata")), "format must be a single string")
 })
 
+test_that("normalize_format with allow_spatial = FALSE rejects spatial formats", {
+  expect_error(
+    normalize_format("spatial", allow_spatial = FALSE),
+    "Space Ranger format"
+  )
+  expect_error(
+    normalize_format("SpaceRanger", allow_spatial = FALSE),
+    "Space Ranger format"
+  )
+})
+
+test_that("normalize_format with allow_spatial = FALSE still accepts sce and anndata", {
+  expect_equal(normalize_format("sce", allow_spatial = FALSE), "SINGLE_CELL_EXPERIMENT")
+  expect_equal(normalize_format("anndata", allow_spatial = FALSE), "ANN_DATA")
+})
+
+test_that("normalize_format with allow_spatial = FALSE still errors on invalid formats", {
+  expect_error(
+    normalize_format("invalid", allow_spatial = FALSE),
+    "Invalid format"
+  )
+})
+
 test_that("parse_download_file extracts filename correctly", {
   # Test URL with response-content-disposition parameter
   test_url <- paste0(
