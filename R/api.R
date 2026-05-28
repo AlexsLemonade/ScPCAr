@@ -93,10 +93,13 @@ check_api <- function() {
 #' @keywords internal
 #'
 #' @param format The input format string
+#' @param allow_spatial Whether to allow spatial format strings (default TRUE)
 #' @returns The normalized format string for API use
-normalize_format <- function(format) {
+normalize_format <- function(format, allow_spatial = TRUE) {
   stopifnot(
-    "format must be a single string" = is.character(format) && length(format) == 1
+    "format must be a single string" = is.character(format) && length(format) == 1,
+    "allow_spatial must be a single logical value" = is.logical(allow_spatial) &&
+      length(allow_spatial) == 1
   )
   # Accepted format strings (case insensitive) for the `format` argument in download functions
   sce_formats <- c(
@@ -114,17 +117,25 @@ normalize_format <- function(format) {
     "spatial-spaceranger"
   )
 
-  format <- tolower(format)
-  if (format %in% sce_formats) {
-    return("SINGLE_CELL_EXPERIMENT")
-  } else if (format %in% anndata_formats) {
-    return("ANN_DATA")
-  } else if (format %in% spatial_formats) {
-    return("SPATIAL")
-  } else {
+  format_str <- tolower(format) |>
+    dplyr::case_when(
+      format %in% sce_formats ~ "SINGLE_CELL_EXPERIMENT",
+      format %in% anndata_formats ~ "ANN_DATA",
+      format %in% spatial_formats && allow_spatial ~ "SPATIAL",
+      .default = NA_character_
+    )
+  if (is.na(format_str)) {
+    allowed_formats = c("'sce'", "'anndata'")
+    if (allow_spatial) {
+      allowed_formats <- c(allowed_formats, "'spatial'")
+    }
     stop(
-      "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
-      " (with some additional variants accepted)."
+      "Invalid format: `",
+      format,
+      "`.\n",
+      " Expected format strings are ",
+      stringr::string_flatten_comma(allowed_formats, last = ", or "),
+      ", with some handling of common variants."
     )
   }
 }

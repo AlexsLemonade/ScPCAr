@@ -90,10 +90,17 @@ create_dataset <- function(
     "include_bulk must be a logical value" = is.logical(include_bulk) && length(include_bulk) == 1
   )
 
-  format_str <- normalize_format(format)
-  if (format_str == "SPATIAL") {
+  format_str <- tryCatch(
+    normalize_format(format, allow_spatial = FALSE),
+    error = \(e) e
+  )
+
+  if (inherits(format_str, "error")) {
     stop(
-      "'spatial' is not a valid format for datasets. Spatial data is always returned in Space Ranger format."
+      conditionMessage(format_str),
+      "For a dataset with spatial samples, use format = 'sce' or 'anndata';",
+      " the spatial samples will always be returned in Space Ranger format.",
+      call. = FALSE
     )
   }
 
