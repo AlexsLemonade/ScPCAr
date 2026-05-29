@@ -1,45 +1,3 @@
-#' Internal helper to validate and normalize formats for the ScPCA API
-#'
-#' @keywords internal
-#'
-#' @param format The input format string
-#' @returns The normalized format string for API use
-normalize_format <- function(format) {
-  stopifnot(
-    "format must be a single string" = is.character(format) && length(format) == 1
-  )
-  # Accepted format strings (case insensitive) for the `format` argument in download functions
-  sce_formats <- c(
-    "sce",
-    "singlecellexperiment",
-    "single-cell-experiment",
-    "single_cell_experiment"
-  )
-  anndata_formats <- c("anndata", "h5ad", "ann-data")
-  spatial_formats <- c(
-    "spatial",
-    "spaceranger",
-    "space ranger",
-    "spatial_spaceranger",
-    "spatial-spaceranger"
-  )
-
-  format <- tolower(format)
-  if (format %in% sce_formats) {
-    return("SINGLE_CELL_EXPERIMENT")
-  } else if (format %in% anndata_formats) {
-    return("ANN_DATA")
-  } else if (format %in% spatial_formats) {
-    return("SPATIAL")
-  } else {
-    stop(
-      "Invalid format. Expected format strings are 'sce', 'anndata', or 'spatial'",
-      " (with some additional variants accepted)."
-    )
-  }
-}
-
-
 #' Download a sample's data files from the ScPCA Portal
 #'
 #' This function downloads the data files for a specified sample from the ScPCA Portal.
@@ -57,11 +15,11 @@ normalize_format <- function(format) {
 #' The function returns a vector of file paths for the downloaded files (invisibly).
 #'
 #' Note that downloading data requires an authorization token, which can be obtained
-#' using the `get_auth()` function.
+#' using the [get_auth()] function.
 #'
 #'
 #' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
-#' @param auth_token An authorization token obtained from `get_auth()`
+#' @param auth_token An authorization token obtained from [get_auth()]
 #' @param destination The path to the directory where the unzipped file directory should be saved.
 #'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
@@ -154,7 +112,7 @@ download_sample <- function(
 #' Download a project's data files from the ScPCA Portal
 #'
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
-#' @param auth_token An authorization token obtained from `get_auth()`
+#' @param auth_token An authorization token obtained from [get_auth()]
 #' @param destination The path to the directory where the unzipped file directory should be saved.
 #'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),

@@ -8,7 +8,7 @@ get_computed_file_ids(info_list, filters = list())
 }
 \arguments{
 \item{info_list}{A list object that includes a "computed_files" element,
-such as returned by get_sample_info() or get_project_info()}
+such as returned by \code{\link[=get_sample_info]{get_sample_info()}} or \code{\link[=get_project_info]{get_project_info()}}}
 
 \item{filters}{A named list of filtering criteria, where names are fields in
 the computed_files objects, and values are the desired values to match.

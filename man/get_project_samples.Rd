@@ -16,7 +16,7 @@ by removing list columns. Default is TRUE.}
 A data frame (tibble) of sample information for the specified project from the ScPCA API.
 }
 \description{
-This function retrievs a data frame of all biological samples associated with a SCPCA project,
+This function retrieves a data frame of all biological samples associated with a SCPCA project,
 including sample-level metadata. By default, list columns are removed to create
 a simplified data frame, but this can be disabled by setting \code{simplify = FALSE}.
 The unsimplified data frame contains nested list columns with additional details,

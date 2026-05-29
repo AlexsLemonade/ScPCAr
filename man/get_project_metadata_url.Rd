@@ -9,7 +9,7 @@ get_project_metadata_url(project_id, auth_token)
 \arguments{
 \item{project_id}{The ScPCA project ID (e.g. "SCPCP000001")}
 
-\item{auth_token}{An authorization token obtained from \code{get_auth()}}
+\item{auth_token}{An authorization token obtained from \code{\link[=get_auth]{get_auth()}}}
 }
 \value{
 A signed download URL for the project metadata file as would be found

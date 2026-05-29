@@ -75,10 +75,68 @@ check_api <- function() {
     },
     httr2_http_404 = \(cnd) NULL
   )
-  if (is.null(response) || status != 200) {
+  if (is.null(status) || status != 200) {
     stop(
       "The API may be down or unreachable. Please check your internet connection or try again later."
     )
   }
   TRUE
+}
+
+
+#' Internal helper to validate and normalize formats for the ScPCA API
+#'
+#' Note that while spatial format strings are included here, the API does not
+#' currently accommodate a format code for spatial data; that is designated in the
+#' modality field for individual samples or precomputed datasets.
+#'
+#' @keywords internal
+#'
+#' @param format The input format string
+#' @param allow_spatial Whether to allow spatial format strings (default TRUE)
+#' @returns The normalized format string for API use
+normalize_format <- function(format, allow_spatial = TRUE) {
+  stopifnot(
+    "format must be a single string" = is.character(format) && length(format) == 1,
+    "allow_spatial must be a single logical value" = is.logical(allow_spatial) &&
+      length(allow_spatial) == 1
+  )
+  # Accepted format strings (case insensitive) for the `format` argument in download functions
+  sce_formats <- c(
+    "sce",
+    "singlecellexperiment",
+    "single-cell-experiment",
+    "single_cell_experiment"
+  )
+  anndata_formats <- c("anndata", "h5ad", "ann-data")
+  spatial_formats <- c(
+    "spatial",
+    "spaceranger",
+    "space ranger",
+    "spatial_spaceranger",
+    "spatial-spaceranger"
+  )
+
+  format_lower <- tolower(format)
+  format_str <- dplyr::case_when(
+    format_lower %in% sce_formats ~ "SINGLE_CELL_EXPERIMENT",
+    format_lower %in% anndata_formats ~ "ANN_DATA",
+    format_lower %in% spatial_formats && allow_spatial ~ "SPATIAL",
+    .default = NA_character_
+  )
+  if (is.na(format_str)) {
+    allowed_formats <- c("'sce'", "'anndata'")
+    if (allow_spatial) {
+      allowed_formats <- c(allowed_formats, "'spatial'")
+    }
+    stop(
+      "Invalid format: `",
+      format,
+      "`.\n",
+      " Expected format strings are ",
+      stringr::str_flatten_comma(allowed_formats, last = ", or "),
+      ", with some handling of common variants."
+    )
+  }
+  format_str
 }

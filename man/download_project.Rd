@@ -19,7 +19,7 @@ download_project(
 \arguments{
 \item{project_id}{The ScPCA project ID (e.g. "SCPCP000001")}
 
-\item{auth_token}{An authorization token obtained from \code{get_auth()}}
+\item{auth_token}{An authorization token obtained from \code{\link[=get_auth]{get_auth()}}}
 
 \item{destination}{The path to the directory where the unzipped file directory should be saved.
 Default is "scpca_data".}

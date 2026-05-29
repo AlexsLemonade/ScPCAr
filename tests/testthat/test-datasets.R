@@ -139,6 +139,266 @@ test_that("get_ccdl_datasets does not include api-key header when auth_token is 
   expect_null(httr2::req_get_headers(captured_req, "reveal")$`api-key`)
 })
 
+# build_dataset_data tests
+
+test_that("build_dataset_data builds correct structure for single-cell samples", {
+  local_mocked_bindings(
+    get_sample_info = \(sample_id, ...) {
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = "SCPCP000001"),
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE
+      )
+    }
+  )
+  result <- build_dataset_data(samples = c("SCPCS000001", "SCPCS000002"))
+
+  expect_equal(names(result), "SCPCP000001")
+  expect_equal(result$SCPCP000001$SINGLE_CELL, list("SCPCS000001", "SCPCS000002"))
+  expect_equal(result$SCPCP000001$SPATIAL, list())
+  expect_false(result$SCPCP000001$includes_bulk)
+})
+
+test_that("build_dataset_data places spatial samples in SPATIAL list", {
+  local_mocked_bindings(
+    get_sample_info = \(sample_id, ...) {
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = "SCPCP000001"),
+        has_single_cell_data = FALSE,
+        has_spatial_data = TRUE
+      )
+    }
+  )
+  result <- build_dataset_data(samples = "SCPCS000003")
+
+  expect_equal(result$SCPCP000001$SINGLE_CELL, list())
+  expect_equal(result$SCPCP000001$SPATIAL, list("SCPCS000003"))
+})
+
+test_that("build_dataset_data groups samples by project", {
+  local_mocked_bindings(
+    get_sample_info = \(sample_id, ...) {
+      project_id <- if (sample_id == "SCPCS000001") "SCPCP000001" else "SCPCP000002"
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = project_id),
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE
+      )
+    }
+  )
+  result <- build_dataset_data(samples = c("SCPCS000001", "SCPCS000004"))
+
+  expect_setequal(names(result), c("SCPCP000001", "SCPCP000002"))
+})
+
+test_that("build_dataset_data expands project IDs to sample IDs", {
+  local_mocked_bindings(
+    get_project_samples = \(project_id, ...) {
+      tibble::tibble(scpca_sample_id = c("SCPCS000001", "SCPCS000002"))
+    },
+    get_sample_info = \(sample_id, ...) {
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = "SCPCP000001"),
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE
+      )
+    }
+  )
+  result <- build_dataset_data(projects = "SCPCP000001")
+
+  expect_equal(names(result), "SCPCP000001")
+  expect_setequal(
+    as.character(result$SCPCP000001$SINGLE_CELL),
+    c("SCPCS000001", "SCPCS000002")
+  )
+})
+
+test_that("build_dataset_data respects include_bulk parameter", {
+  local_mocked_bindings(
+    get_sample_info = \(sample_id, ...) {
+      list(
+        scpca_id = sample_id,
+        project = list(scpca_id = "SCPCP000001"),
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE
+      )
+    }
+  )
+  result <- build_dataset_data(samples = "SCPCS000001", include_bulk = TRUE)
+
+  expect_true(result$SCPCP000001$includes_bulk)
+})
+
+# create_dataset tests
+
+test_that("create_dataset errors when neither samples nor projects are provided", {
+  expect_error(
+    create_dataset(format = "sce", auth_token = "token"),
+    "At least one of 'samples' or 'projects' must be provided"
+  )
+})
+
+test_that("create_dataset errors when auth_token is empty", {
+  expect_error(
+    create_dataset(samples = "SCPCS000001", format = "sce", auth_token = ""),
+    "Authorization token must be provided"
+  )
+})
+
+test_that("create_dataset errors on invalid format", {
+  expect_error(
+    create_dataset(samples = "SCPCS000001", format = "invalid", auth_token = "token"),
+    "Invalid format"
+  )
+})
+
+test_that("create_dataset errors when spatial format is requested", {
+  expect_error(
+    create_dataset(samples = "SCPCS000001", format = "spatial", auth_token = "token"),
+    "Space Ranger format"
+  )
+})
+
+test_that("create_dataset POSTs with start = FALSE", {
+  local_mocked_bindings(
+    build_dataset_data = \(...) {
+      list(
+        SCPCP000001 = list(
+          SINGLE_CELL = list("SCPCS000001"),
+          SPATIAL = list(),
+          includes_bulk = FALSE
+        )
+      )
+    },
+    req_perform = \(req, ...) {
+      body <- req$body$data
+      json_response(c(body, list(id = "new-dataset-uuid")))
+    }
+  )
+
+  result <- NULL
+  expect_message(
+    {
+      result <- create_dataset(samples = "SCPCS000001", format = "sce", auth_token = "token")
+    },
+    "new-dataset-uuid"
+  )
+  expect_false(result$start)
+})
+
+test_that("create_dataset returns response invisibly and messages with dataset id", {
+  local_mocked_bindings(
+    build_dataset_data = \(...) {
+      list(
+        SCPCP000001 = list(
+          SINGLE_CELL = list("SCPCS000001"),
+          SPATIAL = list(),
+          includes_bulk = FALSE
+        )
+      )
+    },
+    scpca_request = \(...) httr2::request("https://api.scpca.alexslemonade.org"),
+    req_perform = \(req, ...) {
+      json_response(
+        list(id = "new-dataset-uuid", format = "ANN_DATA", data = list(), start = FALSE)
+      )
+    }
+  )
+
+  result <- NULL
+  expect_message(
+    {
+      result <- create_dataset(samples = "SCPCS000001", format = "anndata", auth_token = "token")
+    },
+    "new-dataset-uuid"
+  )
+  expect_equal(result$id, "new-dataset-uuid")
+})
+
+# get_dataset_info tests
+
+test_that("get_dataset_info returns dataset with data and status fields", {
+  with_mock_dir("ds_status", {
+    result <- get_dataset_info("ds-uuid", auth_token = "test-token")
+
+    expect_type(result, "list")
+    expect_equal(result$id, "ds-uuid")
+    expect_equal(result$format, "SINGLE_CELL_EXPERIMENT")
+    expect_false(result$is_started)
+    expect_false(result$is_succeeded)
+  })
+})
+
+test_that("get_dataset_info returns data field with project and sample structure", {
+  with_mock_dir("ds_status", {
+    result <- get_dataset_info("ds-uuid", auth_token = "test-token")
+
+    expect_type(result$data, "list")
+    expect_true("SCPCP000001" %in% names(result$data))
+    expect_contains(
+      result$data$SCPCP000001$SINGLE_CELL,
+      c("SCPCS000001", "SCPCS000002")
+    )
+  })
+})
+
+test_that("get_dataset_info includes api-key header when auth_token is provided", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) {
+      json_response(list(
+        id = "uuid",
+        data = list(),
+        api_key = httr2::req_get_headers(req, "reveal")$`api-key`
+      ))
+    }
+  )
+
+  result <- get_dataset_info("uuid", auth_token = "my-token")
+  expect_equal(result$api_key, "my-token")
+})
+
+test_that("get_dataset_info handles 404 errors correctly", {
+  local_mocked_bindings(
+    check_api = function() TRUE
+  )
+
+  with_mock_dir("ds_status_404", {
+    expect_error(
+      get_dataset_info("no-uuid", auth_token = "test-token"),
+      "Dataset `no-uuid` not found."
+    )
+  })
+})
+
+test_that("get_dataset_info accepts a list with $id in place of a string", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) json_response(list(id = "ds-uuid", data = list()))
+  )
+
+  dataset_list <- list(id = "ds-uuid", data = list())
+  result <- get_dataset_info(dataset_list, auth_token = "test-token")
+  expect_equal(result$id, "ds-uuid")
+})
+
+test_that("get_dataset_info errors when list has no $id element", {
+  expect_error(
+    get_dataset_info(list(data = list()), auth_token = "test-token"),
+    "dataset must be an id string or contain an \\$id element"
+  )
+})
+
+test_that("get_dataset_info errors when dataset is not a string or list", {
+  expect_error(
+    get_dataset_info(123, auth_token = "test-token"),
+    "dataset must be an id string or contain an \\$id element"
+  )
+})
+
+
 test_that("get_ccdl_dataset_detail returns dataset fields including download_url", {
   with_mock_dir("ccdl_dataset_detail", {
     result <- get_ccdl_dataset_detail("abc123", auth_token = "test-token")
