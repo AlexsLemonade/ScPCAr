@@ -319,6 +319,23 @@ test_that("create_dataset returns response invisibly and messages with dataset i
   expect_equal(result$id, "new-dataset-uuid")
 })
 
+test_that("create_dataset reads auth_token from the SCPCA_AUTH_TOKEN environment variable", {
+  withr::local_envvar(SCPCA_AUTH_TOKEN = "env-token")
+  local_mocked_bindings(
+    build_dataset_data = \(...) list(),
+    req_perform = \(req, ...) {
+      json_response(list(
+        id = "new-dataset-uuid",
+        api_key = httr2::req_get_headers(req, "reveal")$`api-key`
+      ))
+    }
+  )
+
+  # called without auth_token; the token should come from the environment
+  result <- suppressMessages(create_dataset(samples = "SCPCS000001", format = "sce"))
+  expect_equal(result$api_key, "env-token")
+})
+
 # get_dataset_detail tests
 
 test_that("get_dataset_detail returns dataset with data and status fields", {

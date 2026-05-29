@@ -125,15 +125,16 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' Creates a new user dataset without starting processing.
 #' The returned list includes the dataset `$id` along with its current contents and status.
 #'
-#' @param auth_token an authorization token obtained from [get_auth()]
 #' @param format the desired file format: "sce" (SingleCellExperiment, default) or
 #'   "anndata" (AnnData/H5AD). Spatial data is not a valid format option here;
 #'   spatial samples are always returned in Space Ranger format.
 #' @param samples optional character vector of ScPCA sample IDs (e.g. "SCPCS000001")
 #' @param projects optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
 #'   all samples from each project are included
-#' @param email optional email address for download notification
 #' @param include_bulk logical; whether to include bulk RNA-seq files. Default is FALSE.
+#' @param email optional email address for download notification
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
 #' @returns the API response as a list (invisibly), including the dataset `$id`
 #'
@@ -150,17 +151,17 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' ds$id
 #' }
 create_dataset <- function(
-  auth_token,
   format = "sce",
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE,
-  email = NULL
+  email = NULL,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
       !is.null(projects),
-    "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "include_bulk must be a logical value" = is.logical(include_bulk) && length(include_bulk) == 1
   )
 
@@ -247,7 +248,8 @@ get_dataset_detail <- function(dataset, auth_token) {
 #' A dataset that has already been started cannot be updated.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element.
-#' @param auth_token an authorization token obtained from [get_auth()].
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #' @param samples optional character vector of ScPCA sample IDs (e.g. "SCPCS000001").
 #' @param projects optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
 #'   all samples from each project are included.
@@ -264,11 +266,12 @@ get_dataset_detail <- function(dataset, auth_token) {
 #' }
 replace_dataset_data <- function(
   dataset,
-  auth_token,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE
 ) {
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
       !is.null(projects),
@@ -292,7 +295,8 @@ replace_dataset_data <- function(
 #' A dataset that has already been started cannot be modified.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element.
-#' @param auth_token an authorization token obtained from [get_auth()].
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #' @param email the email address to use for the download notification.
 #'
 #' @returns the updated dataset detail as a list (invisibly)
@@ -304,7 +308,8 @@ replace_dataset_data <- function(
 #' \dontrun{
 #' set_dataset_email(ds, auth_token = token, email = "user@example.com")
 #' }
-set_dataset_email <- function(dataset, auth_token, email) {
+set_dataset_email <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"), email) {
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "email must be a single character string" = is.character(email) &&
       length(email) == 1 &&
@@ -424,7 +429,8 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 #' [replace_dataset_data()] instead.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element.
-#' @param auth_token an authorization token obtained from [get_auth()].
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #' @param samples optional character vector of ScPCA sample IDs to add or remove.
 #' @param projects optional character vector of ScPCA project IDs to add or
 #'   remove; all samples from each project are included.
@@ -448,11 +454,12 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 #' }
 add_dataset_samples <- function(
   dataset,
-  auth_token,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE
 ) {
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
       !is.null(projects),
@@ -475,7 +482,13 @@ add_dataset_samples <- function(
 
 #' @rdname modify_dataset_samples
 #' @export
-remove_dataset_samples <- function(dataset, auth_token, samples = NULL, projects = NULL) {
+remove_dataset_samples <- function(
+  dataset,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
+  samples = NULL,
+  projects = NULL
+) {
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
       !is.null(projects)

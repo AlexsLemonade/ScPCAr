@@ -19,7 +19,8 @@
 #'
 #'
 #' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
-#' @param auth_token An authorization token obtained from [get_auth()]
+#' @param auth_token An authorization token from [get_auth()]. Defaults to the
+#'  `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #' @param destination The path to the directory where the unzipped file directory should be saved.
 #'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
@@ -51,15 +52,15 @@
 #' }
 download_sample <- function(
   sample_id,
-  auth_token,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
   destination = "scpca_data",
   format = "sce",
   overwrite = FALSE,
   redownload = FALSE,
   quiet = FALSE
 ) {
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
-    "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
 
@@ -112,7 +113,8 @@ download_sample <- function(
 #' Download a project's data files from the ScPCA Portal
 #'
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
-#' @param auth_token An authorization token obtained from [get_auth()]
+#' @param auth_token An authorization token from [get_auth()]. Defaults to the
+#'  `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #' @param destination The path to the directory where the unzipped file directory should be saved.
 #'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
@@ -155,7 +157,7 @@ download_sample <- function(
 #' }
 download_project <- function(
   project_id,
-  auth_token,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
   destination = "scpca_data",
   format = "sce",
   merged = FALSE,
@@ -164,9 +166,9 @@ download_project <- function(
   redownload = FALSE,
   quiet = FALSE
 ) {
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id),
-    "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
     "merged must be a logical value" = is.logical(merged) && length(merged) == 1,
     "include_multiplexed must be NULL or a logical value" = is.null(include_multiplexed) ||
