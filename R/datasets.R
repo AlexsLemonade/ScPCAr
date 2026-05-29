@@ -45,6 +45,71 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 }
 
 
+#' Resolve a dataset identifier to its ID string
+#'
+#' Accepts either a dataset UUID string or a list with an `$id` element (such as
+#' the return value of [create_dataset()] or [get_dataset_info()]) and returns
+#' the ID string.
+#'
+#' @param dataset a dataset UUID string, or a list with an `$id` element
+#'
+#' @keywords internal
+#'
+#' @returns the dataset ID as a length-1 character string
+resolve_dataset_id <- function(dataset) {
+  if (is.list(dataset)) {
+    stopifnot("dataset must be an id string or contain an $id element" = !is.null(dataset$id))
+    return(dataset$id)
+  }
+  stopifnot(
+    "dataset must be an id string or contain an $id element" = is.character(dataset) &&
+      length(dataset) == 1
+  )
+  dataset
+}
+
+
+#' Send a PATCH request to update a dataset
+#'
+#' Internal helper that issues a PATCH request to `datasets/{dataset_id}` with the
+#' supplied body. Datasets are locked once processing has started; the API returns
+#' a 409 in that case, which is surfaced here as an informative error.
+#'
+#' @param dataset_id the dataset UUID string
+#' @param body a named list to send as the JSON body of the PATCH request
+#' @param auth_token an authorization token obtained from [get_auth()]
+#'
+#' @keywords internal
+#'
+#' @import httr2
+#'
+#' @returns the API response as a list
+patch_dataset <- function(dataset_id, body, auth_token) {
+  tryCatch(
+    {
+      scpca_request(
+        resource = paste0("datasets/", dataset_id),
+        body = body,
+        auth_token = auth_token,
+        method = "PATCH"
+      ) |>
+        req_perform() |>
+        resp_body_json()
+    },
+    httr2_http_409 = \(cnd) {
+      stop(
+        glue::glue(
+          "Cannot modify dataset `{dataset_id}`:",
+          " it is already processing or has completed.",
+          " Datasets are locked once they have been started."
+        ),
+        call. = FALSE
+      )
+    }
+  )
+}
+
+
 #' Create a custom dataset on the ScPCA Portal
 #'
 #' Creates a new user dataset without starting processing.
@@ -148,16 +213,7 @@ create_dataset <- function(
 #' status <- get_dataset_info(status, auth_token = token)
 #' }
 get_dataset_info <- function(dataset, auth_token) {
-  if (is.list(dataset)) {
-    stopifnot("dataset must be an id string or contain an $id element" = !is.null(dataset$id))
-    dataset_id <- dataset$id
-  } else {
-    stopifnot(
-      "dataset must be an id string or contain an $id element" = is.character(dataset) &&
-        length(dataset) == 1
-    )
-    dataset_id <- dataset
-  }
+  dataset_id <- resolve_dataset_id(dataset)
   response <- tryCatch(
     {
       scpca_request(
