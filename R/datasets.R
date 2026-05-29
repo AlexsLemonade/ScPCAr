@@ -382,35 +382,47 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 }
 
 
-#' Add samples or projects to an existing custom dataset
+#' Add or remove samples and projects in a custom dataset
 #'
-#' Adds the given samples and/or all samples from the given projects to an
-#' existing dataset, keeping the samples already present. The current dataset is
-#' fetched, the new samples are merged in (taking the union per project and
-#' modality), and the combined selection is sent back via a PUT request.
+#' `add_dataset_samples()` adds the given samples and/or all samples from the
+#' given projects to an existing dataset, keeping the samples already present.
+#' `remove_dataset_samples()` removes the given samples and/or projects, keeping
+#' the remaining samples; any project left with no samples is dropped from the
+#' dataset.
+#'
+#' In both cases the current dataset is fetched, its `data` is modified locally
+#' (taking the union per project and modality when adding, or dropping the
+#' specified IDs when removing), and the updated selection is sent back via a PUT
+#' request. To replace the dataset contents wholesale instead, use
+#' [replace_dataset_data()].
 #'
 #' A dataset that has already been started cannot be modified. Projects whose
 #' single-cell data is merged (SINGLE_CELL = "MERGED") cannot be modified by
-#' sample; use [replace_dataset_data()] instead.
+#' sample (though they may be removed wholesale via `projects`); use
+#' [replace_dataset_data()] instead.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element.
 #' @param auth_token an authorization token obtained from [get_auth()].
-#' @param samples optional character vector of ScPCA sample IDs to add.
-#' @param projects optional character vector of ScPCA project IDs to add;
-#'   all samples from each project are included.
-#' @param include_bulk logical; the `includes_bulk` value to use for projects that
-#'   are newly added to the dataset. Existing projects keep their current value.
-#'   Default is FALSE.
+#' @param samples optional character vector of ScPCA sample IDs to add or remove.
+#' @param projects optional character vector of ScPCA project IDs to add or
+#'   remove; all samples from each project are included.
+#' @param include_bulk logical; for `add_dataset_samples()`, the `includes_bulk`
+#'   value to use for projects that are newly added to the dataset. Existing
+#'   projects keep their current value. Default is FALSE.
 #'
 #' @returns the updated dataset detail as a list (invisibly)
 #'
 #' @import httr2
+#' @rdname modify_dataset_samples
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' add_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
 #' add_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
+#'
+#' remove_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
+#' remove_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
 #' }
 add_dataset_samples <- function(
   dataset,
@@ -439,33 +451,8 @@ add_dataset_samples <- function(
 }
 
 
-#' Remove samples or projects from an existing custom dataset
-#'
-#' Removes the given samples and/or projects from an existing dataset, keeping
-#' the remaining samples. The current dataset is fetched, the specified samples
-#' and projects are removed, and the reduced selection is sent back via a PUT
-#' request. Any project left with no samples is dropped from the dataset.
-#'
-#' A dataset that has already been started cannot be modified. Projects whose
-#' single-cell data is merged (SINGLE_CELL = "MERGED") cannot be modified by
-#' sample (though they may be removed wholesale via `projects`).
-#'
-#' @param dataset the dataset UUID string, or a list with an `$id` element.
-#' @param auth_token an authorization token obtained from [get_auth()].
-#' @param samples optional character vector of ScPCA sample IDs to remove.
-#' @param projects optional character vector of ScPCA project IDs to remove
-#'   (all samples from each project are removed).
-#'
-#' @returns the updated dataset detail as a list (invisibly)
-#'
-#' @import httr2
+#' @rdname modify_dataset_samples
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' remove_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
-#' remove_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
-#' }
 remove_dataset_samples <- function(dataset, auth_token, samples = NULL, projects = NULL) {
   stopifnot(
     "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
