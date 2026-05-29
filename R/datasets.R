@@ -236,6 +236,252 @@ get_dataset_info <- function(dataset, auth_token) {
 }
 
 
+#' Replace the contents of an existing custom dataset
+#'
+#' Replaces the samples and/or projects in an existing dataset with a new
+#' selection, by sending a PATCH request with a freshly built `data` field. This
+#' is a wholesale replacement: the resulting dataset contains exactly the samples
+#' and projects supplied here. To incrementally add or remove samples while
+#' keeping the rest, use [add_dataset_samples()] or [remove_dataset_samples()].
+#'
+#' A dataset that has already been started cannot be updated.
+#'
+#' @param dataset the dataset UUID string, or a list with an `$id` element.
+#' @param auth_token an authorization token obtained from [get_auth()].
+#' @param samples optional character vector of ScPCA sample IDs (e.g. "SCPCS000001").
+#' @param projects optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
+#'   all samples from each project are included.
+#' @param include_bulk logical; whether to include bulk RNA-seq files. Default is FALSE.
+#' @param format optional new file format ("sce" or "anndata"). Note the API only
+#'   allows changing the format while the dataset has no data.
+#' @param email optional email address for download notification.
+#'
+#' @returns the updated dataset detail as a list (invisibly)
+#'
+#' @import httr2
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' replace_dataset_data(ds, auth_token = token, samples = c("SCPCS000001", "SCPCS000002"))
+#' }
+replace_dataset_data <- function(
+  dataset,
+  auth_token,
+  samples = NULL,
+  projects = NULL,
+  include_bulk = FALSE,
+  format = NULL,
+  email = NULL
+) {
+  stopifnot(
+    "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
+      !is.null(projects),
+    "include_bulk must be a logical value" = is.logical(include_bulk) && length(include_bulk) == 1
+  )
+  dataset_id <- resolve_dataset_id(dataset)
+
+  data <- build_dataset_data(samples = samples, projects = projects, include_bulk = include_bulk)
+  body <- list(data = data)
+
+  if (!is.null(format)) {
+    body$format <- normalize_format(format, allow_spatial = FALSE)
+  }
+  if (!is.null(email)) {
+    body$email <- email
+  }
+
+  response <- patch_dataset(dataset_id, body, auth_token = auth_token)
+  invisible(response)
+}
+
+
+#' Merge additional dataset data into an existing dataset data structure
+#'
+#' Combines two dataset `data` structures (project ID -> list of SINGLE_CELL,
+#' SPATIAL, and includes_bulk), taking the union of sample IDs within each
+#' modality. The `includes_bulk` value of existing projects is preserved; newly
+#' added projects use the supplied `include_bulk` value.
+#'
+#' @param existing the current dataset `data` list
+#' @param additions a dataset `data` list to merge in (e.g. from [build_dataset_data()])
+#' @param include_bulk logical value to assign to projects that are new to the dataset
+#'
+#' @keywords internal
+#'
+#' @returns the merged dataset `data` list
+merge_dataset_data <- function(existing, additions, include_bulk = FALSE) {
+  for (project_id in names(additions)) {
+    addition <- additions[[project_id]]
+    current <- existing[[project_id]]
+    if (is.null(current)) {
+      existing[[project_id]] <- addition
+      existing[[project_id]]$includes_bulk <- include_bulk
+      next
+    }
+    # Safety check for datasets created outside this package (e.g. directly via the API)
+    # where SINGLE_CELL may be the sentinel string "MERGED" rather than a list of IDs.
+    if (identical(current$SINGLE_CELL, "MERGED")) {
+      stop(
+        glue::glue(
+          "Project {project_id} uses merged single-cell data (SINGLE_CELL = \"MERGED\")",
+          " and cannot be modified by sample. Use replace_dataset_data() to replace its contents."
+        ),
+        call. = FALSE
+      )
+    }
+    existing[[project_id]]$SINGLE_CELL <- unique(c(current$SINGLE_CELL, addition$SINGLE_CELL))
+    existing[[project_id]]$SPATIAL <- unique(c(current$SPATIAL, addition$SPATIAL))
+  }
+  existing
+}
+
+
+#' Remove samples and/or projects from a dataset data structure
+#'
+#' Drops any project listed in `projects` entirely, and removes any IDs in
+#' `samples` from every project's SINGLE_CELL and SPATIAL lists. A project is
+#' removed once both of its modality lists are empty.
+#'
+#' @param existing the current dataset `data` list
+#' @param samples optional character vector of sample IDs to remove
+#' @param projects optional character vector of project IDs to remove
+#'
+#' @keywords internal
+#'
+#' @returns the reduced dataset `data` list
+remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) {
+  # drop whole projects
+  if (!is.null(projects)) {
+    existing <- existing[setdiff(names(existing), projects)]
+  }
+
+  # remove individual samples from each remaining project
+  if (!is.null(samples)) {
+    for (project_id in names(existing)) {
+      current <- existing[[project_id]]
+      # Safety check for datasets created outside this package (see merge_dataset_data)
+      if (identical(current$SINGLE_CELL, "MERGED")) {
+        stop(
+          glue::glue(
+            "Project {project_id} uses merged single-cell data (SINGLE_CELL = \"MERGED\")",
+            " and cannot be modified by sample. Use replace_dataset_data() to replace its contents."
+          ),
+          call. = FALSE
+        )
+      }
+      # setdiff() requires vectors; convert from list and back
+      current$SINGLE_CELL <- as.list(setdiff(as.character(current$SINGLE_CELL), samples))
+      current$SPATIAL <- as.list(setdiff(as.character(current$SPATIAL), samples))
+      existing[[project_id]] <- current
+    }
+  }
+
+  # drop any project that no longer has any samples
+  keep <- purrr::map_lgl(existing, \(p) length(p$SINGLE_CELL) > 0 || length(p$SPATIAL) > 0)
+  existing[keep]
+}
+
+
+#' Add samples or projects to an existing custom dataset
+#'
+#' Adds the given samples and/or all samples from the given projects to an
+#' existing dataset, keeping the samples already present. The current dataset is
+#' fetched, the new samples are merged in (taking the union per project and
+#' modality), and the combined selection is sent back via a PATCH request.
+#'
+#' A dataset that has already been started cannot be modified. Projects whose
+#' single-cell data is merged (SINGLE_CELL = "MERGED") cannot be modified by
+#' sample; use [replace_dataset_data()] instead.
+#'
+#' @param dataset the dataset UUID string, or a list with an `$id` element.
+#' @param auth_token an authorization token obtained from [get_auth()].
+#' @param samples optional character vector of ScPCA sample IDs to add.
+#' @param projects optional character vector of ScPCA project IDs to add;
+#'   all samples from each project are included.
+#' @param include_bulk logical; the `includes_bulk` value to use for projects that
+#'   are newly added to the dataset. Existing projects keep their current value.
+#'   Default is FALSE.
+#'
+#' @returns the updated dataset detail as a list (invisibly)
+#'
+#' @import httr2
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' add_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
+#' add_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
+#' }
+add_dataset_samples <- function(
+  dataset,
+  auth_token,
+  samples = NULL,
+  projects = NULL,
+  include_bulk = FALSE
+) {
+  stopifnot(
+    "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
+      !is.null(projects),
+    "include_bulk must be a logical value" = is.logical(include_bulk) && length(include_bulk) == 1
+  )
+  dataset_id <- resolve_dataset_id(dataset)
+
+  current <- get_dataset_info(dataset_id, auth_token = auth_token)
+  additions <- build_dataset_data(
+    samples = samples,
+    projects = projects,
+    include_bulk = include_bulk
+  )
+  new_data <- merge_dataset_data(current$data, additions, include_bulk = include_bulk)
+
+  response <- patch_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
+  invisible(response)
+}
+
+
+#' Remove samples or projects from an existing custom dataset
+#'
+#' Removes the given samples and/or projects from an existing dataset, keeping
+#' the remaining samples. The current dataset is fetched, the specified samples
+#' and projects are removed, and the reduced selection is sent back via a PATCH
+#' request. Any project left with no samples is dropped from the dataset.
+#'
+#' A dataset that has already been started cannot be modified. Projects whose
+#' single-cell data is merged (SINGLE_CELL = "MERGED") cannot be modified by
+#' sample (though they may be removed wholesale via `projects`).
+#'
+#' @param dataset the dataset UUID string, or a list with an `$id` element.
+#' @param auth_token an authorization token obtained from [get_auth()].
+#' @param samples optional character vector of ScPCA sample IDs to remove.
+#' @param projects optional character vector of ScPCA project IDs to remove
+#'   (all samples from each project are removed).
+#'
+#' @returns the updated dataset detail as a list (invisibly)
+#'
+#' @import httr2
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' remove_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
+#' remove_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
+#' }
+remove_dataset_samples <- function(dataset, auth_token, samples = NULL, projects = NULL) {
+  stopifnot(
+    "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
+      !is.null(projects)
+  )
+  dataset_id <- resolve_dataset_id(dataset)
+
+  current <- get_dataset_info(dataset_id, auth_token = auth_token)
+  new_data <- remove_from_dataset_data(current$data, samples = samples, projects = projects)
+
+  response <- patch_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
+  invisible(response)
+}
+
+
 #' Get CCDL dataset objects from the ScPCA API
 #'
 #' @param project_id Optional ScPCA project ID to filter by (e.g. "SCPCP000001")
