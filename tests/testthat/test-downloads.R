@@ -63,66 +63,80 @@ test_that("parse_download_file extracts filename correctly", {
 test_that("download_sample validates input parameters", {
   # Test missing auth token
   expect_error(
-    download_sample("SCPCS000001", ""),
+    download_sample("SCPCS000001", auth_token = ""),
     "Authorization token must be provided"
   )
 
   expect_error(
-    download_sample("SCPCS000001", character(0)),
+    download_sample("SCPCS000001", auth_token = character(0)),
     "Authorization token must be provided"
   )
 
   # Test invalid quiet parameter
   expect_error(
-    download_sample("SCPCS000001", "valid-token", quiet = "not-logical"),
+    download_sample("SCPCS000001", auth_token = "valid-token", quiet = "not-logical"),
     "quiet must be a logical value"
   )
 
   expect_error(
-    download_sample("SCPCS000001", "valid-token", quiet = c(TRUE, FALSE)),
+    download_sample("SCPCS000001", auth_token = "valid-token", quiet = c(TRUE, FALSE)),
     "quiet must be a logical value"
   )
+})
+
+test_that("check_destination warns when destination looks like an auth token (UUID)", {
+  # auth_token is the last argument, so a positionally-passed token lands in destination
+  expect_warning(
+    check_destination("123e4567-e89b-12d3-a456-426614174000"),
+    "looks like an authorization token"
+  )
+  # a normal directory path does not warn
+  expect_no_warning(check_destination("scpca_data"))
 })
 
 test_that("download_project validates input parameters", {
   # Test invalid project_id format
   expect_error(
-    download_project("invalid", "valid-token"),
+    download_project("invalid", auth_token = "valid-token"),
     "Invalid project_id"
   )
   expect_error(
-    download_project("SCPCS000001", "valid-token"),
+    download_project("SCPCS000001", auth_token = "valid-token"),
     "Invalid project_id"
   )
 
   # Test missing auth token
   expect_error(
-    download_project("SCPCP000001", ""),
+    download_project("SCPCP000001", auth_token = ""),
     "Authorization token must be provided"
   )
 
   # Test invalid quiet parameter
   expect_error(
-    download_project("SCPCP000001", "valid-token", quiet = "not-logical"),
+    download_project("SCPCP000001", auth_token = "valid-token", quiet = "not-logical"),
     "quiet must be a logical value"
   )
 
   # Test invalid merged parameter
   expect_error(
-    download_project("SCPCP000001", "valid-token", merged = "not-logical"),
+    download_project("SCPCP000001", auth_token = "valid-token", merged = "not-logical"),
     "merged must be a logical value"
   )
 
   # Test invalid include_multiplexed parameter
   expect_error(
-    download_project("SCPCP000001", "valid-token", include_multiplexed = "not-logical"),
+    download_project(
+      "SCPCP000001",
+      auth_token = "valid-token",
+      include_multiplexed = "not-logical"
+    ),
     "include_multiplexed must be NULL or a logical value"
   )
 })
 
 test_that("download_project validates format and merged combinations", {
   expect_error(
-    download_project("SCPCP000001", "valid-token", format = "spatial", merged = TRUE),
+    download_project("SCPCP000001", auth_token = "valid-token", format = "spatial", merged = TRUE),
     "Merged spatial files are not available"
   )
 })
@@ -143,7 +157,7 @@ test_that("download_project uses the available dataset when include_multiplexed 
     },
     download_and_extract_file = function(url, ...) unname(url)
   )
-  result <- download_project("SCPCP000001", "valid-token", format = "sce")
+  result <- download_project("SCPCP000001", auth_token = "valid-token", format = "sce")
   expect_match(result, "no-multi-id")
 })
 
@@ -166,7 +180,7 @@ test_that("download_project warns when include_multiplexed = TRUE but project ha
   expect_warning(
     result <- download_project(
       "SCPCP000001",
-      "valid-token",
+      auth_token = "valid-token",
       format = "sce",
       include_multiplexed = TRUE
     ),
@@ -191,7 +205,7 @@ test_that("download_project uses multiplexed dataset when include_multiplexed = 
     },
     download_and_extract_file = function(url, ...) unname(url)
   )
-  result <- download_project("SCPCP000001", "valid-token", format = "sce")
+  result <- download_project("SCPCP000001", auth_token = "valid-token", format = "sce")
   expect_match(result, "multi-id")
 })
 
@@ -213,7 +227,7 @@ test_that("download_project uses non-multiplexed dataset when include_multiplexe
   )
   result <- download_project(
     "SCPCP000001",
-    "valid-token",
+    auth_token = "valid-token",
     format = "sce",
     include_multiplexed = FALSE
   )
@@ -231,7 +245,7 @@ test_that("download_project errors when unexpected number of datasets returned",
     }
   )
   expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce"),
+    download_project("SCPCP000001", auth_token = "valid-token", format = "sce"),
     "Multiple pre-built datasets found"
   )
 })
@@ -252,7 +266,7 @@ test_that("download_project downloads when a matching CCDL dataset exists", {
     },
     download_and_extract_file = function(url, ...) c("path/to/file1.rds", "path/to/file2.rds")
   )
-  result <- download_project("SCPCP000001", "valid-token", format = "sce")
+  result <- download_project("SCPCP000001", auth_token = "valid-token", format = "sce")
   expect_equal(result, c("path/to/file1.rds", "path/to/file2.rds"))
 })
 
@@ -262,7 +276,7 @@ test_that("download_project errors when no CCDL dataset is found", {
     get_ccdl_datasets = function(...) list()
   )
   expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce"),
+    download_project("SCPCP000001", auth_token = "valid-token", format = "sce"),
     "SCPCP000001"
   )
 })
@@ -273,15 +287,25 @@ test_that("download_project error mentions relevant options when none found", {
     get_ccdl_datasets = function(...) list()
   )
   expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce", merged = TRUE),
+    download_project("SCPCP000001", auth_token = "valid-token", format = "sce", merged = TRUE),
     "merged = TRUE"
   )
   expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = FALSE),
+    download_project(
+      "SCPCP000001",
+      auth_token = "valid-token",
+      format = "sce",
+      include_multiplexed = FALSE
+    ),
     "include_multiplexed = FALSE"
   )
   expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce", include_multiplexed = TRUE),
+    download_project(
+      "SCPCP000001",
+      auth_token = "valid-token",
+      format = "sce",
+      include_multiplexed = TRUE
+    ),
     "include_multiplexed = TRUE"
   )
 })
@@ -300,7 +324,7 @@ test_that("download_project errors when no dataset has is_succeeded = TRUE", {
     }
   )
   expect_error(
-    download_project("SCPCP000001", "valid-token", format = "sce"),
+    download_project("SCPCP000001", auth_token = "valid-token", format = "sce"),
     "No pre-built dataset found"
   )
 })

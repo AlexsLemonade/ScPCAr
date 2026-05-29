@@ -69,11 +69,8 @@ resolve_dataset_id <- function(dataset) {
   }
 
   # dataset IDs are UUIDs (e.g. "123e4567-e89b-12d3-a456-426614174000")
-  uuid_pattern <- "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
   stopifnot(
-    "dataset id must be a valid UUID" = is.character(id) &&
-      length(id) == 1 &&
-      grepl(uuid_pattern, id, ignore.case = TRUE)
+    "dataset id must be a valid UUID" = is_uuid(id)
   )
   id
 }
@@ -248,12 +245,12 @@ get_dataset_detail <- function(dataset, auth_token) {
 #' A dataset that has already been started cannot be updated.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element.
-#' @param auth_token an authorization token from [get_auth()]. Defaults to the
-#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #' @param samples optional character vector of ScPCA sample IDs (e.g. "SCPCS000001").
 #' @param projects optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
 #'   all samples from each project are included.
 #' @param include_bulk logical; whether to include bulk RNA-seq files. Default is FALSE.
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
 #' @returns the updated dataset detail as a list (invisibly)
 #'
@@ -262,14 +259,14 @@ get_dataset_detail <- function(dataset, auth_token) {
 #'
 #' @examples
 #' \dontrun{
-#' replace_dataset_data(ds, auth_token = token, samples = c("SCPCS000001", "SCPCS000002"))
+#' replace_dataset_data(ds, samples = c("SCPCS000001", "SCPCS000002"))
 #' }
 replace_dataset_data <- function(
   dataset,
-  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
   samples = NULL,
   projects = NULL,
-  include_bulk = FALSE
+  include_bulk = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
@@ -295,9 +292,9 @@ replace_dataset_data <- function(
 #' A dataset that has already been started cannot be modified.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element.
+#' @param email the email address to use for the download notification.
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
-#' @param email the email address to use for the download notification.
 #'
 #' @returns the updated dataset detail as a list (invisibly)
 #'
@@ -306,9 +303,9 @@ replace_dataset_data <- function(
 #'
 #' @examples
 #' \dontrun{
-#' set_dataset_email(ds, auth_token = token, email = "user@example.com")
+#' set_dataset_email(ds, email = "user@example.com")
 #' }
-set_dataset_email <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"), email) {
+set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "email must be a single character string" = is.character(email) &&
@@ -429,14 +426,14 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 #' [replace_dataset_data()] instead.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element.
-#' @param auth_token an authorization token from [get_auth()]. Defaults to the
-#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #' @param samples optional character vector of ScPCA sample IDs to add or remove.
 #' @param projects optional character vector of ScPCA project IDs to add or
 #'   remove; all samples from each project are included.
 #' @param include_bulk logical; for `add_dataset_samples()`, the `includes_bulk`
 #'   value to use for projects that are newly added to the dataset. Existing
 #'   projects keep their current value. Default is FALSE.
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
 #' @returns the updated dataset detail as a list (invisibly)
 #'
@@ -446,18 +443,18 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 #'
 #' @examples
 #' \dontrun{
-#' add_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
-#' add_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
+#' add_dataset_samples(ds, samples = "SCPCS000003")
+#' add_dataset_samples(ds, projects = "SCPCP000002")
 #'
-#' remove_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
-#' remove_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
+#' remove_dataset_samples(ds, samples = "SCPCS000003")
+#' remove_dataset_samples(ds, projects = "SCPCP000002")
 #' }
 add_dataset_samples <- function(
   dataset,
-  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
   samples = NULL,
   projects = NULL,
-  include_bulk = FALSE
+  include_bulk = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
@@ -484,9 +481,9 @@ add_dataset_samples <- function(
 #' @export
 remove_dataset_samples <- function(
   dataset,
-  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
   samples = NULL,
-  projects = NULL
+  projects = NULL,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
