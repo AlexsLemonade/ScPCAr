@@ -7,8 +7,10 @@
 <url><loc>https://alexslemonade.github.io/ScPCAr/articles/index.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/authors.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/index.html</loc></url>
+<url><loc>https://alexslemonade.github.io/ScPCAr/reference/build_dataset_data.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/check_api.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/computed_files_filter.html</loc></url>
+<url><loc>https://alexslemonade.github.io/ScPCAr/reference/create_dataset.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/download_and_extract_file.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/download_project.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/download_sample.html</loc></url>
@@ -16,6 +18,7 @@
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/get_ccdl_dataset_detail.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/get_ccdl_datasets.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/get_computed_file_ids.html</loc></url>
+<url><loc>https://alexslemonade.github.io/ScPCAr/reference/get_dataset_info.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/get_project_info.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/get_project_libraries.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/get_project_metadata_url.html</loc></url>

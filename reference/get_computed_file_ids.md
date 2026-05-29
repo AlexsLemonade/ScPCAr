@@ -14,7 +14,10 @@ get_computed_file_ids(info_list, filters = list())
 - info_list:
 
   A list object that includes a "computed_files" element, such as
-  returned by get_sample_info() or get_project_info()
+  returned by
+  [`get_sample_info()`](https://alexslemonade.github.io/ScPCAr/reference/get_sample_info.md)
+  or
+  [`get_project_info()`](https://alexslemonade.github.io/ScPCAr/reference/get_project_info.md)
 
 - filters:
 

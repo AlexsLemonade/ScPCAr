@@ -27,3 +27,10 @@
   : Download a sample's data files from the ScPCA Portal
 - [`download_project()`](https://alexslemonade.github.io/ScPCAr/reference/download_project.md)
   : Download a project's data files from the ScPCA Portal
+
+### Custom datasets
+
+- [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md)
+  : Create a custom dataset on the ScPCA Portal
+- [`get_dataset_info()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_info.md)
+  : Get the status and contents of a custom dataset

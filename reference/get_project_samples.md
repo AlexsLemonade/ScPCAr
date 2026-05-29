@@ -1,11 +1,11 @@
 # Get a data frame of all samples in a given project
 
-This function retrievs a data frame of all biological samples associated
-with a SCPCA project, including sample-level metadata. By default, list
-columns are removed to create a simplified data frame, but this can be
-disabled by setting `simplify = FALSE`. The unsimplified data frame
-contains nested list columns with additional details, such as the
-experimental modalities associated with each sample.
+This function retrieves a data frame of all biological samples
+associated with a SCPCA project, including sample-level metadata. By
+default, list columns are removed to create a simplified data frame, but
+this can be disabled by setting `simplify = FALSE`. The unsimplified
+data frame contains nested list columns with additional details, such as
+the experimental modalities associated with each sample.
 
 ## Usage
 
