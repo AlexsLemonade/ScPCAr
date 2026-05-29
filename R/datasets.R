@@ -116,7 +116,7 @@ patch_dataset <- function(dataset_id, body, auth_token) {
 #' After creation, use [get_dataset_info()] to inspect the dataset contents and status.
 #'
 #' @param auth_token an authorization token obtained from [get_auth()]
-#' @param format the desired file format: "sce" (SingleCellExperiment) or
+#' @param format the desired file format: "sce" (SingleCellExperiment, default) or
 #'   "anndata" (AnnData/H5AD). Spatial data is not a valid format option here;
 #'   spatial samples are always returned in Space Ranger format.
 #' @param samples optional character vector of ScPCA sample IDs (e.g. "SCPCS000001")
@@ -135,14 +135,13 @@ patch_dataset <- function(dataset_id, body, auth_token) {
 #' token <- get_auth("user@example.com", agree = TRUE)
 #' ds <- create_dataset(
 #'   auth_token = token,
-#'   format = "sce",
 #'   samples = c("SCPCS000001", "SCPCS000002")
 #' )
 #' ds$id
 #' }
 create_dataset <- function(
   auth_token,
-  format,
+  format = "sce",
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE,
