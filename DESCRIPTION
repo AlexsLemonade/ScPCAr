@@ -33,6 +33,7 @@ Suggests:
     httptest2,
     jsonlite,
     knitr,
+    rlang,
     rmarkdown,
     scater,
     SingleCellExperiment,

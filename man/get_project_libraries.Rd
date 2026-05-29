@@ -4,12 +4,13 @@
 \alias{get_project_libraries}
 \title{Get metadata for all libraries in a given project}
 \usage{
-get_project_libraries(project_id, auth_token)
+get_project_libraries(project_id, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"))
 }
 \arguments{
 \item{project_id}{The ScPCA project ID (e.g. "SCPCP000001")}
 
-\item{auth_token}{An authorization token obtained from \code{\link[=get_auth]{get_auth()}}}
+\item{auth_token}{An authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
+\code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
 A data frame (tibble) of library metadata for the specified project.

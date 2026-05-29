@@ -15,7 +15,8 @@ view_terms()
 \item{agree}{A logical indicating whether the user agrees to the terms of service}
 }
 \value{
-A string containing the authorization token
+The authorization token string (invisibly). The token is also stored
+in the \code{SCPCA_AUTH_TOKEN} environment variable.
 }
 \description{
 \code{get_auth()} allows obtaining an authorization token string from the ScPCA API,
@@ -24,6 +25,11 @@ after providing an email address and agreeing to the terms of use.
 \details{
 To view the terms of use before agreeing to them, use \code{\link[=view_terms]{view_terms()}},
 which opens the terms of use page in a web browser.
+
+The token is stored in the \code{SCPCA_AUTH_TOKEN} environment variable, which the
+package's authenticated functions (e.g. \code{\link[=download_sample]{download_sample()}}) read automatically,
+so you usually do not need to pass it explicitly. The token is also returned
+invisibly, in case you wish to capture it.
 }
 \examples{
 \dontrun{

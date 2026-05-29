@@ -6,7 +6,7 @@
 \usage{
 replace_dataset_data(
   dataset,
-  auth_token,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"),
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE
@@ -15,7 +15,8 @@ replace_dataset_data(
 \arguments{
 \item{dataset}{the dataset UUID string, or a list with an \verb{$id} element.}
 
-\item{auth_token}{an authorization token obtained from \code{\link[=get_auth]{get_auth()}}.}
+\item{auth_token}{an authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
+\code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 
 \item{samples}{optional character vector of ScPCA sample IDs (e.g. "SCPCS000001").}
 

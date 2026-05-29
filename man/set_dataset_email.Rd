@@ -4,12 +4,13 @@
 \alias{set_dataset_email}
 \title{Set the notification email for a custom dataset}
 \usage{
-set_dataset_email(dataset, auth_token, email)
+set_dataset_email(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"), email)
 }
 \arguments{
 \item{dataset}{the dataset UUID string, or a list with an \verb{$id} element.}
 
-\item{auth_token}{an authorization token obtained from \code{\link[=get_auth]{get_auth()}}.}
+\item{auth_token}{an authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
+\code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 
 \item{email}{the email address to use for the download notification.}
 }

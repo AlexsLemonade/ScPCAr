@@ -5,17 +5,15 @@
 \title{Create a custom dataset on the ScPCA Portal}
 \usage{
 create_dataset(
-  auth_token,
   format = "sce",
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE,
-  email = NULL
+  email = NULL,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 }
 \arguments{
-\item{auth_token}{an authorization token obtained from \code{\link[=get_auth]{get_auth()}}}
-
 \item{format}{the desired file format: "sce" (SingleCellExperiment, default) or
 "anndata" (AnnData/H5AD). Spatial data is not a valid format option here;
 spatial samples are always returned in Space Ranger format.}
@@ -28,6 +26,9 @@ all samples from each project are included}
 \item{include_bulk}{logical; whether to include bulk RNA-seq files. Default is FALSE.}
 
 \item{email}{optional email address for download notification}
+
+\item{auth_token}{an authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
+\code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
 the API response as a list (invisibly), including the dataset \verb{$id}
