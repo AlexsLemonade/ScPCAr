@@ -4,7 +4,13 @@
 \alias{scpca_request}
 \title{Base request object for ScPCA API}
 \usage{
-scpca_request(resource = "", body = list(), auth_token = "", ...)
+scpca_request(
+  resource = "",
+  body = list(),
+  auth_token = "",
+  method = NULL,
+  ...
+)
 }
 \arguments{
 \item{resource}{API resource to query, e.g. "projects", default is "" (base URL)}
@@ -12,6 +18,9 @@ scpca_request(resource = "", body = list(), auth_token = "", ...)
 \item{body}{optional named list to include as JSON body in the request}
 
 \item{auth_token}{optional API authentication token}
+
+\item{method}{optional HTTP method to use (e.g. "PATCH"). When NULL (the
+default), httr2 infers the method: POST when a body is present, otherwise GET.}
 
 \item{...}{additional query parameters to include in the request}
 }

@@ -6,7 +6,7 @@
 \usage{
 create_dataset(
   auth_token,
-  format,
+  format = "sce",
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE,
@@ -16,7 +16,7 @@ create_dataset(
 \arguments{
 \item{auth_token}{an authorization token obtained from \code{\link[=get_auth]{get_auth()}}}
 
-\item{format}{the desired file format: "sce" (SingleCellExperiment) or
+\item{format}{the desired file format: "sce" (SingleCellExperiment, default) or
 "anndata" (AnnData/H5AD). Spatial data is not a valid format option here;
 spatial samples are always returned in Space Ranger format.}
 
@@ -41,7 +41,6 @@ After creation, use \code{\link[=get_dataset_info]{get_dataset_info()}} to inspe
 token <- get_auth("user@example.com", agree = TRUE)
 ds <- create_dataset(
   auth_token = token,
-  format = "sce",
   samples = c("SCPCS000001", "SCPCS000002")
 )
 ds$id
