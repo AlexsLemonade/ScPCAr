@@ -6,10 +6,16 @@
 #' To view the terms of use before agreeing to them, use [view_terms()],
 #' which opens the terms of use page in a web browser.
 #'
+#' The token is stored in the `SCPCA_AUTH_TOKEN` environment variable, which the
+#' package's authenticated functions (e.g. [download_sample()]) read automatically,
+#' so you usually do not need to pass it explicitly. The token is also returned
+#' invisibly, in case you wish to capture it.
+#'
 #' @param email The user's email address
 #' @param agree A logical indicating whether the user agrees to the terms of service
 #'
-#' @returns A string containing the authorization token
+#' @returns The authorization token string (invisibly). The token is also stored
+#'   in the `SCPCA_AUTH_TOKEN` environment variable.
 #'
 #' @import httr2
 #'
@@ -47,7 +53,35 @@ get_auth <- function(email, agree = FALSE) {
     }
   )
 
-  response$id
+  token <- response$id
+  Sys.setenv(SCPCA_AUTH_TOKEN = token)
+  invisible(token)
+}
+
+
+#' Resolve an authorization token, falling back to the environment
+#'
+#' Returns the supplied `auth_token` if it is a non-empty string. Otherwise it
+#' falls back to the `SCPCA_AUTH_TOKEN` environment variable, which is set
+#' automatically by [get_auth()]. An informative error is raised if neither
+#' source yields a token.
+#'
+#' @param auth_token an authorization token string. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable.
+#'
+#' @keywords internal
+#'
+#' @returns the resolved token as a length-1 character string
+resolve_auth_token <- function(auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
+  if (length(auth_token) != 1 || is.null(auth_token) || !nzchar(auth_token)) {
+    stop(
+      "Authorization token must be provided via the `auth_token` argument",
+      " or the `SCPCA_AUTH_TOKEN` environment variable",
+      " (use `get_auth()` to obtain one).",
+      call. = FALSE
+    )
+  }
+  auth_token
 }
 
 
