@@ -34,7 +34,7 @@ the API response as a list (invisibly), including the dataset \verb{$id}
 }
 \description{
 Creates a new user dataset without starting processing.
-After creation, use \code{\link[=get_dataset_info]{get_dataset_info()}} to inspect the dataset contents and status.
+The returned list includes the dataset \verb{$id} along with its current contents and status.
 }
 \examples{
 \dontrun{

@@ -14,7 +14,7 @@ the dataset ID as a length-1 character string
 }
 \description{
 Accepts either a dataset UUID string or a list with an \verb{$id} element (such as
-the return value of \code{\link[=create_dataset]{create_dataset()}} or \code{\link[=get_dataset_info]{get_dataset_info()}}) and returns
+the return value of \code{\link[=create_dataset]{create_dataset()}} or \code{\link[=get_dataset_detail]{get_dataset_detail()}}) and returns
 the ID string.
 }
 \keyword{internal}

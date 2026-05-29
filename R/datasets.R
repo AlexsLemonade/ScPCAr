@@ -48,7 +48,7 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 #' Resolve a dataset identifier to its ID string
 #'
 #' Accepts either a dataset UUID string or a list with an `$id` element (such as
-#' the return value of [create_dataset()] or [get_dataset_info()]) and returns
+#' the return value of [create_dataset()] or [get_dataset_detail()]) and returns
 #' the ID string.
 #'
 #' @param dataset a dataset UUID string, or a list with an `$id` element
@@ -113,7 +113,7 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' Create a custom dataset on the ScPCA Portal
 #'
 #' Creates a new user dataset without starting processing.
-#' After creation, use [get_dataset_info()] to inspect the dataset contents and status.
+#' The returned list includes the dataset `$id` along with its current contents and status.
 #'
 #' @param auth_token an authorization token obtained from [get_auth()]
 #' @param format the desired file format: "sce" (SingleCellExperiment, default) or
@@ -178,10 +178,7 @@ create_dataset <- function(
     req_perform() |>
     resp_body_json()
 
-  message(glue::glue(
-    "Dataset {response$id} created.",
-    " Use get_dataset_info() to inspect the dataset."
-  ))
+  message(glue::glue("Dataset {response$id} created."))
   invisible(response)
 }
 
@@ -192,26 +189,20 @@ create_dataset <- function(
 #' samples are included and processing status fields such as `$is_started`,
 #' `$is_processing`, `$is_succeeded`, and `$is_failed`.
 #'
+#' This is an internal helper intended to be wrapped by higher-level functions;
+#' it is also used by the dataset modification functions to fetch current
+#' contents before updating.
+#'
 #' @param dataset the dataset UUID string, or a list with an `$id` element
-#'   such as the return value of [create_dataset()] or [get_dataset_info()].
+#'   such as the return value of [create_dataset()].
 #' @param auth_token an authorization token obtained from [get_auth()];
 #'  must match the token used to create the dataset.
 #'
 #' @returns the dataset detail as a list
 #'
 #' @import httr2
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' status <- get_dataset_info("your-dataset-uuid", auth_token = token)
-#' status$data         # nested list of projects and samples
-#' status$is_succeeded # TRUE when the dataset file is ready for download
-#'
-#' # You can also pass the result of a previous get_dataset_info() call:
-#' status <- get_dataset_info(status, auth_token = token)
-#' }
-get_dataset_info <- function(dataset, auth_token) {
+#' @keywords internal
+get_dataset_detail <- function(dataset, auth_token) {
   dataset_id <- resolve_dataset_id(dataset)
   response <- tryCatch(
     {
@@ -459,7 +450,7 @@ add_dataset_samples <- function(
   )
   dataset_id <- resolve_dataset_id(dataset)
 
-  current <- get_dataset_info(dataset_id, auth_token = auth_token)
+  current <- get_dataset_detail(dataset_id, auth_token = auth_token)
   additions <- build_dataset_data(
     samples = samples,
     projects = projects,
@@ -481,7 +472,7 @@ remove_dataset_samples <- function(dataset, auth_token, samples = NULL, projects
   )
   dataset_id <- resolve_dataset_id(dataset)
 
-  current <- get_dataset_info(dataset_id, auth_token = auth_token)
+  current <- get_dataset_detail(dataset_id, auth_token = auth_token)
   new_data <- remove_from_dataset_data(current$data, samples = samples, projects = projects)
 
   response <- update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)

@@ -319,11 +319,11 @@ test_that("create_dataset returns response invisibly and messages with dataset i
   expect_equal(result$id, "new-dataset-uuid")
 })
 
-# get_dataset_info tests
+# get_dataset_detail tests
 
-test_that("get_dataset_info returns dataset with data and status fields", {
+test_that("get_dataset_detail returns dataset with data and status fields", {
   with_mock_dir("ds_status", {
-    result <- get_dataset_info("ds-uuid", auth_token = "test-token")
+    result <- get_dataset_detail("ds-uuid", auth_token = "test-token")
 
     expect_type(result, "list")
     expect_equal(result$id, "ds-uuid")
@@ -333,9 +333,9 @@ test_that("get_dataset_info returns dataset with data and status fields", {
   })
 })
 
-test_that("get_dataset_info returns data field with project and sample structure", {
+test_that("get_dataset_detail returns data field with project and sample structure", {
   with_mock_dir("ds_status", {
-    result <- get_dataset_info("ds-uuid", auth_token = "test-token")
+    result <- get_dataset_detail("ds-uuid", auth_token = "test-token")
 
     expect_type(result$data, "list")
     expect_true("SCPCP000001" %in% names(result$data))
@@ -346,7 +346,7 @@ test_that("get_dataset_info returns data field with project and sample structure
   })
 })
 
-test_that("get_dataset_info includes api-key header when auth_token is provided", {
+test_that("get_dataset_detail includes api-key header when auth_token is provided", {
   local_mocked_bindings(
     req_perform = \(req, ...) {
       json_response(list(
@@ -357,43 +357,43 @@ test_that("get_dataset_info includes api-key header when auth_token is provided"
     }
   )
 
-  result <- get_dataset_info("uuid", auth_token = "my-token")
+  result <- get_dataset_detail("uuid", auth_token = "my-token")
   expect_equal(result$api_key, "my-token")
 })
 
-test_that("get_dataset_info handles 404 errors correctly", {
+test_that("get_dataset_detail handles 404 errors correctly", {
   local_mocked_bindings(
     check_api = function() TRUE
   )
 
   with_mock_dir("ds_status_404", {
     expect_error(
-      get_dataset_info("no-uuid", auth_token = "test-token"),
+      get_dataset_detail("no-uuid", auth_token = "test-token"),
       "Dataset `no-uuid` not found."
     )
   })
 })
 
-test_that("get_dataset_info accepts a list with $id in place of a string", {
+test_that("get_dataset_detail accepts a list with $id in place of a string", {
   local_mocked_bindings(
     req_perform = \(req, ...) json_response(list(id = "ds-uuid", data = list()))
   )
 
   dataset_list <- list(id = "ds-uuid", data = list())
-  result <- get_dataset_info(dataset_list, auth_token = "test-token")
+  result <- get_dataset_detail(dataset_list, auth_token = "test-token")
   expect_equal(result$id, "ds-uuid")
 })
 
-test_that("get_dataset_info errors when list has no $id element", {
+test_that("get_dataset_detail errors when list has no $id element", {
   expect_error(
-    get_dataset_info(list(data = list()), auth_token = "test-token"),
+    get_dataset_detail(list(data = list()), auth_token = "test-token"),
     "dataset must be an id string or contain an \\$id element"
   )
 })
 
-test_that("get_dataset_info errors when dataset is not a string or list", {
+test_that("get_dataset_detail errors when dataset is not a string or list", {
   expect_error(
-    get_dataset_info(123, auth_token = "test-token"),
+    get_dataset_detail(123, auth_token = "test-token"),
     "dataset must be an id string or contain an \\$id element"
   )
 })
@@ -570,7 +570,7 @@ test_that("remove_from_dataset_data drops whole projects", {
 test_that("add_dataset_samples merges new samples into existing data and PUTs", {
   captured_req <- NULL
   local_mocked_bindings(
-    get_dataset_info = \(dataset, auth_token) {
+    get_dataset_detail = \(dataset, auth_token) {
       list(
         id = "ds-uuid",
         data = list(
@@ -608,7 +608,7 @@ test_that("add_dataset_samples merges new samples into existing data and PUTs", 
 test_that("remove_dataset_samples removes a project and PUTs", {
   captured_req <- NULL
   local_mocked_bindings(
-    get_dataset_info = \(dataset, auth_token) {
+    get_dataset_detail = \(dataset, auth_token) {
       list(
         id = "ds-uuid",
         data = list(
