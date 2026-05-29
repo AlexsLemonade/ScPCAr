@@ -101,7 +101,7 @@ update_dataset <- function(dataset_id, body, auth_token) {
         glue::glue(
           "Cannot modify dataset `{dataset_id}`:",
           " it is already processing or has completed.",
-          " Datasets are locked once they have been started."
+          " Datasets are locked once processing has started."
         ),
         call. = FALSE
       )
@@ -251,9 +251,6 @@ get_dataset_info <- function(dataset, auth_token) {
 #' @param projects optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
 #'   all samples from each project are included.
 #' @param include_bulk logical; whether to include bulk RNA-seq files. Default is FALSE.
-#' @param format optional new file format ("sce" or "anndata"). Note the API only
-#'   allows changing the format while the dataset has no data.
-#' @param email optional email address for download notification.
 #'
 #' @returns the updated dataset detail as a list (invisibly)
 #'
@@ -269,9 +266,7 @@ replace_dataset_data <- function(
   auth_token,
   samples = NULL,
   projects = NULL,
-  include_bulk = FALSE,
-  format = NULL,
-  email = NULL
+  include_bulk = FALSE
 ) {
   stopifnot(
     "At least one of 'samples' or 'projects' must be provided" = !is.null(samples) ||
@@ -281,16 +276,42 @@ replace_dataset_data <- function(
   dataset_id <- resolve_dataset_id(dataset)
 
   data <- build_dataset_data(samples = samples, projects = projects, include_bulk = include_bulk)
-  body <- list(data = data)
 
-  if (!is.null(format)) {
-    body$format <- normalize_format(format, allow_spatial = FALSE)
-  }
-  if (!is.null(email)) {
-    body$email <- email
-  }
+  response <- update_dataset(dataset_id, list(data = data), auth_token = auth_token)
+  invisible(response)
+}
 
-  response <- update_dataset(dataset_id, body, auth_token = auth_token)
+
+#' Set the notification email for a custom dataset
+#'
+#' Updates the email address the ScPCA Portal will use to notify you when the
+#' dataset is ready for download, by sending a PUT request with a new `email`
+#' value. The dataset's samples, projects, and format are left unchanged.
+#'
+#' A dataset that has already been started cannot be modified.
+#'
+#' @param dataset the dataset UUID string, or a list with an `$id` element.
+#' @param auth_token an authorization token obtained from [get_auth()].
+#' @param email the email address to use for the download notification.
+#'
+#' @returns the updated dataset detail as a list (invisibly)
+#'
+#' @import httr2
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' set_dataset_email(ds, auth_token = token, email = "user@example.com")
+#' }
+set_dataset_email <- function(dataset, auth_token, email) {
+  stopifnot(
+    "email must be a single character string" = is.character(email) &&
+      length(email) == 1 &&
+      nchar(email) > 0
+  )
+  dataset_id <- resolve_dataset_id(dataset)
+
+  response <- update_dataset(dataset_id, list(email = email), auth_token = auth_token)
   invisible(response)
 }
 

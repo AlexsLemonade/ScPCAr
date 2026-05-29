@@ -9,9 +9,7 @@ replace_dataset_data(
   auth_token,
   samples = NULL,
   projects = NULL,
-  include_bulk = FALSE,
-  format = NULL,
-  email = NULL
+  include_bulk = FALSE
 )
 }
 \arguments{
@@ -25,11 +23,6 @@ replace_dataset_data(
 all samples from each project are included.}
 
 \item{include_bulk}{logical; whether to include bulk RNA-seq files. Default is FALSE.}
-
-\item{format}{optional new file format ("sce" or "anndata"). Note the API only
-allows changing the format while the dataset has no data.}
-
-\item{email}{optional email address for download notification.}
 }
 \value{
 the updated dataset detail as a list (invisibly)

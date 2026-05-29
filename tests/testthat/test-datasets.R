@@ -431,7 +431,7 @@ test_that("replace_dataset_data errors when neither samples nor projects are pro
   )
 })
 
-test_that("replace_dataset_data PUTs a rebuilt data field and optional format", {
+test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
   captured_req <- NULL
   local_mocked_bindings(
     build_dataset_data = \(samples = NULL, projects = NULL, include_bulk = FALSE) {
@@ -452,14 +452,37 @@ test_that("replace_dataset_data PUTs a rebuilt data field and optional format", 
   result <- replace_dataset_data(
     "ds-uuid",
     auth_token = "token",
-    samples = "SCPCS000001",
-    format = "anndata"
+    samples = "SCPCS000001"
   )
 
   expect_equal(captured_req$method, "PUT")
   expect_match(captured_req$url, "datasets/ds-uuid")
-  expect_equal(result$format, "ANN_DATA")
+  expect_null(result$format)
   expect_true("SCPCP000001" %in% names(result$data))
+})
+
+# set_dataset_email tests
+
+test_that("set_dataset_email PUTs a new email", {
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform = \(req, ...) {
+      captured_req <<- req
+      json_response(req$body$data)
+    }
+  )
+
+  result <- set_dataset_email("ds-uuid", auth_token = "token", email = "user@example.com")
+  expect_equal(captured_req$method, "PUT")
+  expect_match(captured_req$url, "datasets/ds-uuid")
+  expect_equal(result$email, "user@example.com")
+})
+
+test_that("set_dataset_email errors when email is not a single string", {
+  expect_error(
+    set_dataset_email("ds-uuid", auth_token = "token", email = c("a@b.com", "c@d.com")),
+    "email must be a single character string"
+  )
 })
 
 # merge_dataset_data / remove_from_dataset_data unit tests

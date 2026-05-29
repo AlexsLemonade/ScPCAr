@@ -34,3 +34,4 @@ reference:
       - get_dataset_info
       - replace_dataset_data
       - add_dataset_samples
+      - set_dataset_email
