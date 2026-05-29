@@ -49,7 +49,7 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 #'
 #' Accepts either a dataset UUID string or a list with an `$id` element (such as
 #' the return value of [create_dataset()] or [get_dataset_detail()]) and returns
-#' the ID string.
+#' the ID string, after checking that it is a valid UUID.
 #'
 #' @param dataset a dataset UUID string, or a list with an `$id` element
 #'
@@ -59,13 +59,23 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 resolve_dataset_id <- function(dataset) {
   if (is.list(dataset)) {
     stopifnot("dataset must be an id string or contain an $id element" = !is.null(dataset$id))
-    return(dataset$id)
+    id <- dataset$id
+  } else {
+    stopifnot(
+      "dataset must be an id string or contain an $id element" = is.character(dataset) &&
+        length(dataset) == 1
+    )
+    id <- dataset
   }
+
+  # dataset IDs are UUIDs (e.g. "123e4567-e89b-12d3-a456-426614174000")
+  uuid_pattern <- "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
   stopifnot(
-    "dataset must be an id string or contain an $id element" = is.character(dataset) &&
-      length(dataset) == 1
+    "dataset id must be a valid UUID" = is.character(id) &&
+      length(id) == 1 &&
+      grepl(uuid_pattern, id, ignore.case = TRUE)
   )
-  dataset
+  id
 }
 
 
