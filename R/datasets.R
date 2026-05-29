@@ -69,14 +69,14 @@ resolve_dataset_id <- function(dataset) {
 }
 
 
-#' Send a PATCH request to update a dataset
+#' Send a PUT request to update a dataset
 #'
-#' Internal helper that issues a PATCH request to `datasets/{dataset_id}` with the
+#' Internal helper that issues a PUT request to `datasets/{dataset_id}` with the
 #' supplied body. Datasets are locked once processing has started; the API returns
 #' a 409 in that case, which is surfaced here as an informative error.
 #'
 #' @param dataset_id the dataset UUID string
-#' @param body a named list to send as the JSON body of the PATCH request
+#' @param body a named list to send as the JSON body of the PUT request
 #' @param auth_token an authorization token obtained from [get_auth()]
 #'
 #' @keywords internal
@@ -84,14 +84,14 @@ resolve_dataset_id <- function(dataset) {
 #' @import httr2
 #'
 #' @returns the API response as a list
-patch_dataset <- function(dataset_id, body, auth_token) {
+update_dataset <- function(dataset_id, body, auth_token) {
   tryCatch(
     {
       scpca_request(
         resource = paste0("datasets/", dataset_id),
         body = body,
         auth_token = auth_token,
-        method = "PATCH"
+        method = "PUT"
       ) |>
         req_perform() |>
         resp_body_json()
@@ -238,7 +238,7 @@ get_dataset_info <- function(dataset, auth_token) {
 #' Replace the contents of an existing custom dataset
 #'
 #' Replaces the samples and/or projects in an existing dataset with a new
-#' selection, by sending a PATCH request with a freshly built `data` field. This
+#' selection, by sending a PUT request with a freshly built `data` field. This
 #' is a wholesale replacement: the resulting dataset contains exactly the samples
 #' and projects supplied here. To incrementally add or remove samples while
 #' keeping the rest, use [add_dataset_samples()] or [remove_dataset_samples()].
@@ -290,7 +290,7 @@ replace_dataset_data <- function(
     body$email <- email
   }
 
-  response <- patch_dataset(dataset_id, body, auth_token = auth_token)
+  response <- update_dataset(dataset_id, body, auth_token = auth_token)
   invisible(response)
 }
 
@@ -387,7 +387,7 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 #' Adds the given samples and/or all samples from the given projects to an
 #' existing dataset, keeping the samples already present. The current dataset is
 #' fetched, the new samples are merged in (taking the union per project and
-#' modality), and the combined selection is sent back via a PATCH request.
+#' modality), and the combined selection is sent back via a PUT request.
 #'
 #' A dataset that has already been started cannot be modified. Projects whose
 #' single-cell data is merged (SINGLE_CELL = "MERGED") cannot be modified by
@@ -434,7 +434,7 @@ add_dataset_samples <- function(
   )
   new_data <- merge_dataset_data(current$data, additions, include_bulk = include_bulk)
 
-  response <- patch_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
+  response <- update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
   invisible(response)
 }
 
@@ -443,7 +443,7 @@ add_dataset_samples <- function(
 #'
 #' Removes the given samples and/or projects from an existing dataset, keeping
 #' the remaining samples. The current dataset is fetched, the specified samples
-#' and projects are removed, and the reduced selection is sent back via a PATCH
+#' and projects are removed, and the reduced selection is sent back via a PUT
 #' request. Any project left with no samples is dropped from the dataset.
 #'
 #' A dataset that has already been started cannot be modified. Projects whose
@@ -476,7 +476,7 @@ remove_dataset_samples <- function(dataset, auth_token, samples = NULL, projects
   current <- get_dataset_info(dataset_id, auth_token = auth_token)
   new_data <- remove_from_dataset_data(current$data, samples = samples, projects = projects)
 
-  response <- patch_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
+  response <- update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
   invisible(response)
 }
 
