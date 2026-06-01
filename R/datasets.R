@@ -134,12 +134,12 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' Creates a new user dataset without starting processing.
 #' The returned list includes the dataset `$id` along with its current contents and status.
 #'
-#' @param format the desired file format: "sce" (SingleCellExperiment, default) or
-#'   "anndata" (AnnData/H5AD). Spatial data is not a valid format option here;
-#'   spatial samples are always returned in Space Ranger format.
 #' @param samples optional character vector of ScPCA sample IDs (e.g. "SCPCS000001")
 #' @param projects optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
 #'   all samples from each project are included
+#' @param format the desired file format: "sce" (SingleCellExperiment, default) or
+#'   "anndata" (AnnData/H5AD). Spatial data is not a valid format option here;
+#'   spatial samples are always returned in Space Ranger format.
 #' @param include_bulk logical; whether to include bulk RNA-seq files. Default is FALSE.
 #' @param email optional email address for download notification
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
@@ -160,9 +160,9 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' ds$id
 #' }
 create_dataset <- function(
-  format = "sce",
   samples = NULL,
   projects = NULL,
+  format = "sce",
   include_bulk = FALSE,
   email = NULL,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
