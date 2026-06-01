@@ -457,10 +457,20 @@ download_dataset <- function(
   dataset_id <- resolve_dataset_id(dataset)
   detail <- get_dataset_detail(dataset_id, auth_token)
 
+  if (isTRUE(detail$is_expired)) {
+    stop(
+      glue::glue(
+        "Dataset `{dataset_id}` has expired and is no longer available for download.",
+        " Use `wait_and_download_dataset()` to regenerate it."
+      ),
+      call. = FALSE
+    )
+  }
+
   if (!isTRUE(detail$is_succeeded)) {
     status <- if (isTRUE(detail$is_failed)) {
       "failed"
-    } else if (isTRUE(detail$is_started)) {
+    } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {
       "processing"
     } else {
       "pending"
@@ -468,8 +478,7 @@ download_dataset <- function(
     stop(
       glue::glue(
         "Dataset `{dataset_id}` is not ready for download (status: {status}).",
-        " Use `wait_and_download_dataset()` to wait for processing to complete,",
-        " or `start_dataset_processing()` to start processing first."
+        " Use `wait_and_download_dataset()` to wait for processing to complete."
       ),
       call. = FALSE
     )
@@ -527,7 +536,7 @@ wait_and_download_dataset <- function(
   )
   dataset_id <- resolve_dataset_id(dataset)
 
-  if (get_dataset_status(dataset_id, auth_token = auth_token) == "pending") {
+  if (get_dataset_status(dataset_id, auth_token = auth_token) %in% c("pending", "expired")) {
     start_dataset_processing(dataset_id, email = email, auth_token = auth_token)
   }
 
@@ -536,7 +545,7 @@ wait_and_download_dataset <- function(
 
   if (!quiet) {
     cli::cli_progress_bar(
-      format = "{cli::pb_spin} Waiting for dataset {dataset_id} [{status}]{cli::pb_elapsed}",
+      format = "{cli::pb_spin} Waiting for dataset {dataset_id} [{status}] {cli::pb_elapsed}",
       clear = FALSE
     )
   }
@@ -550,6 +559,18 @@ wait_and_download_dataset <- function(
         cli::cli_progress_done()
       }
       stop(glue::glue("Dataset `{dataset_id}` processing failed."), call. = FALSE)
+    }
+    if (status == "expired") {
+      if (!quiet) {
+        cli::cli_progress_done()
+      }
+      stop(
+        glue::glue(
+          "Dataset `{dataset_id}` unexpectedly expired during processing.",
+          " Please report this as a bug."
+        ),
+        call. = FALSE
+      )
     }
 
     elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "mins"))
@@ -567,10 +588,11 @@ wait_and_download_dataset <- function(
     }
 
     if (!quiet) {
-      deadline <- Sys.time() + poll_interval * 60
-      while (Sys.time() < deadline) {
+      # keep the progress spinner updating every half second until the next poll
+      next_loop <- Sys.time() + poll_interval * 60
+      while (Sys.time() < next_loop) {
         cli::cli_progress_update(force = TRUE)
-        Sys.sleep(0.25)
+        Sys.sleep(0.5)
       }
     } else {
       Sys.sleep(poll_interval * 60)

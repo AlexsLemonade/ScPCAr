@@ -281,6 +281,8 @@ get_dataset_status <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKE
   detail <- get_dataset_detail(dataset, auth_token)
   if (isTRUE(detail$is_failed)) {
     "failed"
+  } else if (isTRUE(detail$is_expired)) {
+    "expired"
   } else if (isTRUE(detail$is_succeeded)) {
     "succeeded"
   } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {

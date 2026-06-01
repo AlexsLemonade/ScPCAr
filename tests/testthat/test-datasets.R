@@ -478,6 +478,13 @@ test_that("get_dataset_status maps detail status fields to a status string", {
   # a failed dataset is reported as failed even if is_succeeded is also set
   detail <- list(is_succeeded = TRUE, is_failed = TRUE)
   expect_equal(get_dataset_status(id, auth_token = "token"), "failed")
+
+  detail <- list(is_expired = TRUE)
+  expect_equal(get_dataset_status(id, auth_token = "token"), "expired")
+
+  # expired takes priority over succeeded (expired datasets likely still have is_succeeded = TRUE)
+  detail <- list(is_succeeded = TRUE, is_expired = TRUE)
+  expect_equal(get_dataset_status(id, auth_token = "token"), "expired")
 })
 
 test_that("get_dataset_status passes the resolved auth_token to get_dataset_detail", {

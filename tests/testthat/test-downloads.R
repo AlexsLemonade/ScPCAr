@@ -697,6 +697,16 @@ test_that("download_dataset error names the current status", {
   )
 })
 
+test_that("download_dataset errors when dataset is expired", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) list(is_succeeded = TRUE, is_expired = TRUE)
+  )
+  expect_error(
+    download_dataset("00000000-0000-0000-0000-000000000001", auth_token = "token"),
+    "expired"
+  )
+})
+
 test_that("download_dataset passes unzip = FALSE to download_and_extract_file", {
   captured_unzip <- NULL
   local_mocked_bindings(
@@ -775,6 +785,52 @@ test_that("wait_and_download_dataset errors when dataset fails", {
       auth_token = "token"
     ),
     "processing failed"
+  )
+})
+
+test_that("wait_and_download_dataset restarts processing when dataset is expired", {
+  started <- FALSE
+  call_count <- 0L
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) {
+      call_count <<- call_count + 1L
+      if (call_count == 1L) "expired" else "succeeded"
+    },
+    start_dataset_processing = \(dataset, email = NULL, auth_token) {
+      started <<- TRUE
+      invisible(list())
+    },
+    download_dataset = \(dataset, ...) c("scpca_data/dataset/file.rds")
+  )
+
+  result <- wait_and_download_dataset(
+    "00000000-0000-0000-0000-000000000001",
+    quiet = TRUE,
+    poll_interval = 0,
+    auth_token = "token"
+  )
+  expect_true(started)
+  expect_equal(result, c("scpca_data/dataset/file.rds"))
+})
+
+test_that("wait_and_download_dataset errors with unexpected message if expired during polling", {
+  call_count <- 0L
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) {
+      call_count <<- call_count + 1L
+      if (call_count == 1L) "processing" else "expired"
+    },
+    start_dataset_processing = \(dataset, email = NULL, auth_token) invisible(list())
+  )
+
+  expect_error(
+    wait_and_download_dataset(
+      "00000000-0000-0000-0000-000000000001",
+      quiet = TRUE,
+      poll_interval = 0,
+      auth_token = "token"
+    ),
+    "unexpectedly expired"
   )
 })
 
