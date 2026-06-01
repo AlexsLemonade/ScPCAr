@@ -36,3 +36,4 @@ reference:
       - set_dataset_email
       - start_dataset_processing
       - get_dataset_status
+      - download_dataset

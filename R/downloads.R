@@ -496,23 +496,20 @@ download_dataset <- function(
 #' @rdname download_dataset
 #' @export
 #'
-#' @param start Whether to start processing the dataset before waiting. Default
-#'   is FALSE. If FALSE and the dataset has not yet been started, an error is raised.
 #' @param email optional email address for the download notification. Only used
 #'   when `start = TRUE`. Passed to [start_dataset_processing()].
 #' @param poll_interval Number of minutes to wait between status checks.
-#'   Default is 2.
+#'   Default is 0.5 (30 seconds).
 #' @param timeout Maximum number of minutes to wait for processing to complete.
 #'   Use `Inf` to wait indefinitely. Default is 60 (1 hour).
 wait_and_download_dataset <- function(
   dataset,
   destination = "scpca_data",
-  start = FALSE,
   email = NULL,
   unzip = TRUE,
   overwrite = FALSE,
   redownload = FALSE,
-  poll_interval = 2,
+  poll_interval = 0.5,
   timeout = 60,
   quiet = FALSE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
@@ -520,7 +517,6 @@ wait_and_download_dataset <- function(
   check_destination(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
-    "start must be a logical value" = is.logical(start) && length(start) == 1,
     "poll_interval must be a single non-negative number of minutes" = is.numeric(poll_interval) &&
       length(poll_interval) == 1 &&
       poll_interval >= 0,
@@ -531,23 +527,12 @@ wait_and_download_dataset <- function(
   )
   dataset_id <- resolve_dataset_id(dataset)
 
-  if (start) {
+  if (get_dataset_status(dataset_id, auth_token = auth_token) == "pending") {
     start_dataset_processing(dataset_id, email = email, auth_token = auth_token)
   }
 
   start_time <- Sys.time()
   status <- get_dataset_status(dataset_id, auth_token = auth_token)
-
-  if (status == "pending" && !start) {
-    stop(
-      glue::glue(
-        "Dataset `{dataset_id}` has not been started.",
-        " Call `start_dataset_processing()` first,",
-        " or set `start = TRUE` to start processing before waiting."
-      ),
-      call. = FALSE
-    )
-  }
 
   if (!quiet) {
     cli::cli_progress_bar(
