@@ -364,6 +364,56 @@ set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUT
 }
 
 
+#' Start processing a custom dataset
+#'
+#' Starts processing of an existing custom dataset so that its files can be
+#' built for download, by sending a PUT request that sets `start = TRUE`.
+#' Optionally sets the notification email as part of the same request.
+#'
+#' Once processing has started a dataset is locked and can no longer be
+#' modified; attempting to modify or re-start it will raise an error.
+#'
+#' @param dataset the dataset UUID string, or a list with an `$id` element,
+#'   such as the return value of [create_dataset()].
+#' @param email optional email address for the download notification. When
+#'   supplied, it is set as part of the same request that starts processing.
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
+#'
+#' @returns the updated dataset detail as a list (invisibly)
+#'
+#' @import httr2
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ds <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
+#' start_dataset_processing(ds, email = "user@example.com")
+#' }
+start_dataset_processing <- function(
+  dataset,
+  email = NULL,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
+) {
+  auth_token <- resolve_auth_token(auth_token)
+  dataset_id <- resolve_dataset_id(dataset)
+
+  body <- list(start = TRUE)
+  if (!is.null(email)) {
+    stopifnot(
+      "email must be a single character string" = is.character(email) &&
+        length(email) == 1 &&
+        nchar(email) > 0
+    )
+    body$email <- email
+  }
+
+  response <- update_dataset(dataset_id, body, auth_token = auth_token)
+  message(glue::glue("Dataset {dataset_id} processing started."))
+  invisible(response)
+}
+
+
 #' Merge additional dataset data into an existing dataset data structure
 #'
 #' Combines two dataset `data` structures (project ID -> list of SINGLE_CELL,
