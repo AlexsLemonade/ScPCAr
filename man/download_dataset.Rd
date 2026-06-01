@@ -8,10 +8,10 @@
 download_dataset(
   dataset,
   destination = "scpca_data",
-  unzip = TRUE,
   overwrite = FALSE,
   redownload = FALSE,
   quiet = FALSE,
+  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 
@@ -19,12 +19,12 @@ wait_and_download_dataset(
   dataset,
   destination = "scpca_data",
   email = NULL,
-  unzip = TRUE,
   overwrite = FALSE,
   redownload = FALSE,
   poll_interval = 0.5,
   timeout = 60,
   quiet = FALSE,
+  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 }
@@ -35,9 +35,6 @@ such as the return value of \code{\link[=create_dataset]{create_dataset()}}.}
 \item{destination}{The path to the directory where the unzipped file directory
 should be saved. Default is "scpca_data".}
 
-\item{unzip}{Whether to unzip the downloaded file. Default is TRUE. When FALSE,
-the zip file is saved directly to \code{destination} and its path is returned.}
-
 \item{overwrite}{Whether to overwrite files in existing directories if they
 already exist. Note that files in existing directories that do not have the
 same name as one of the downloaded files will not be deleted. Default is FALSE.}
@@ -46,6 +43,9 @@ same name as one of the downloaded files will not be deleted. Default is FALSE.}
 exist. If FALSE, existing files will be returned. Default is FALSE.}
 
 \item{quiet}{Whether to suppress download progress messages. Default is FALSE.}
+
+\item{unzip}{Whether to unzip the downloaded file. Default is TRUE. When FALSE,
+the zip file is saved directly to \code{destination} and its path is returned.}
 
 \item{auth_token}{an authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
