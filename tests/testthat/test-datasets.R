@@ -425,6 +425,31 @@ test_that("get_dataset_detail handles 404 errors correctly", {
   )
 })
 
+test_that("get_dataset_detail handles 403 errors with an authorization message", {
+  # 403 should not invoke check_api() — confirm by not mocking it
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_403", message = "Forbidden")
+  )
+
+  expect_error(
+    get_dataset_detail("00000000-0000-0000-0000-000000000001", auth_token = "bad-token"),
+    "Authorization failed"
+  )
+})
+
+test_that("get_ccdl_datasets handles 403 errors with an authorization message", {
+  local_mocked_bindings(
+    req_perform_iterative = \(req, ...) {
+      rlang::abort(class = "httr2_http_403", message = "Forbidden")
+    }
+  )
+
+  expect_error(
+    get_ccdl_datasets(auth_token = "bad-token"),
+    "Authorization failed"
+  )
+})
+
 test_that("get_dataset_detail accepts a list with $id in place of a string", {
   local_mocked_bindings(
     req_perform = \(req, ...) {
@@ -644,7 +669,7 @@ test_that("set_dataset_email surfaces the generic conflict error on a locked dat
       email = "user@example.com",
       auth_token = "token"
     ),
-    "Cannot modify dataset"
+    "Cannot modify ScPCA dataset"
   )
 })
 
