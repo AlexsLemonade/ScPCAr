@@ -245,7 +245,6 @@ get_dataset_detail <- function(dataset, auth_token) {
 #'
 #' @returns the updated dataset detail as a list (invisibly)
 #'
-#' @import httr2
 #' @export
 #'
 #' @examples
@@ -287,7 +286,6 @@ replace_dataset_data <- function(
 #'
 #' @returns the updated dataset detail as a list (invisibly)
 #'
-#' @import httr2
 #' @export
 #'
 #' @examples
@@ -389,8 +387,7 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
   }
 
   # drop any project that no longer has any samples
-  keep <- purrr::map_lgl(existing, \(p) length(p$SINGLE_CELL) > 0 || length(p$SPATIAL) > 0)
-  existing[keep]
+  purrr::keep(existing, \(p) length(p$SINGLE_CELL) > 0 || length(p$SPATIAL) > 0)
 }
 
 
@@ -424,7 +421,6 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 #'
 #' @returns the updated dataset detail as a list (invisibly)
 #'
-#' @import httr2
 #' @rdname modify_dataset_samples
 #' @export
 #'
