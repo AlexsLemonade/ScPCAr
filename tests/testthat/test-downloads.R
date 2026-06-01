@@ -761,43 +761,6 @@ test_that("wait_and_download_dataset polls until succeeded", {
   expect_gte(call_count, 3L)
 })
 
-test_that("wait_and_download_dataset calls start_dataset_processing when start = TRUE", {
-  started <- FALSE
-  local_mocked_bindings(
-    start_dataset_processing = \(dataset, email = NULL, auth_token) {
-      started <<- TRUE
-      invisible(list())
-    },
-    get_dataset_status = \(dataset, auth_token) "succeeded",
-    download_dataset = \(dataset, ...) character(0)
-  )
-
-  wait_and_download_dataset(
-    "00000000-0000-0000-0000-000000000001",
-    start = TRUE,
-    quiet = TRUE,
-    poll_interval = 0,
-    auth_token = "token"
-  )
-  expect_true(started)
-})
-
-test_that("wait_and_download_dataset errors when dataset is pending and start = FALSE", {
-  local_mocked_bindings(
-    get_dataset_status = \(dataset, auth_token) "pending"
-  )
-
-  expect_error(
-    wait_and_download_dataset(
-      "00000000-0000-0000-0000-000000000001",
-      start = FALSE,
-      quiet = TRUE,
-      poll_interval = 0,
-      auth_token = "token"
-    ),
-    "has not been started"
-  )
-})
 
 test_that("wait_and_download_dataset errors when dataset fails", {
   local_mocked_bindings(

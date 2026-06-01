@@ -18,12 +18,11 @@ download_dataset(
 wait_and_download_dataset(
   dataset,
   destination = "scpca_data",
-  start = FALSE,
   email = NULL,
   unzip = TRUE,
   overwrite = FALSE,
   redownload = FALSE,
-  poll_interval = 2,
+  poll_interval = 0.5,
   timeout = 60,
   quiet = FALSE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
@@ -51,14 +50,11 @@ exist. If FALSE, existing files will be returned. Default is FALSE.}
 \item{auth_token}{an authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 
-\item{start}{Whether to start processing the dataset before waiting. Default
-is FALSE. If FALSE and the dataset has not yet been started, an error is raised.}
-
 \item{email}{optional email address for the download notification. Only used
 when \code{start = TRUE}. Passed to \code{\link[=start_dataset_processing]{start_dataset_processing()}}.}
 
 \item{poll_interval}{Number of minutes to wait between status checks.
-Default is 2.}
+Default is 0.5 (30 seconds).}
 
 \item{timeout}{Maximum number of minutes to wait for processing to complete.
 Use \code{Inf} to wait indefinitely. Default is 60 (1 hour).}

@@ -31,12 +31,12 @@ the updated dataset detail as a list (invisibly)
 \description{
 Replaces the samples and/or projects in an existing dataset with a new
 selection, by sending a PUT request with a freshly built \code{data} field. This
-is a wholesale replacement: the resulting dataset contains exactly the samples
+is a wholesale replacement: the resulting dataset contains only the samples
 and projects supplied here. To incrementally add or remove samples while
 keeping the rest, use \code{\link[=add_dataset_samples]{add_dataset_samples()}} or \code{\link[=remove_dataset_samples]{remove_dataset_samples()}}.
 }
 \details{
-A dataset that has already been started cannot be updated.
+A dataset that has already started processing cannot be updated.
 }
 \examples{
 \dontrun{
