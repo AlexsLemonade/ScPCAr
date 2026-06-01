@@ -388,3 +388,106 @@ parse_download_file <- function(scpca_url) {
     stringr::str_extract("SCPC[^\\s]+\\.zip") |>
     unname()
 }
+
+
+#' Download a custom dataset's files from the ScPCA Portal
+#'
+#' Downloads and extracts the files for a custom dataset that has finished
+#' processing. The dataset must have a status of "succeeded"; use
+#' [get_dataset_status()] to check before calling this function, or use
+#' [wait_and_download_dataset()] to wait for processing to complete and then
+#' download in a single call.
+#'
+#' The downloaded files are saved in a subdirectory of `destination`, named
+#' from the dataset's download filename (which includes the dataset ID, format,
+#' and date).
+#'
+#' @param dataset the dataset UUID string, or a list with an `$id` element,
+#'   such as the return value of [create_dataset()].
+#' @param destination The path to the directory where the unzipped file directory
+#'   should be saved. Default is "scpca_data".
+#' @param unzip Whether to unzip the downloaded file. Default is TRUE. When FALSE,
+#'   the zip file is saved directly to `destination` and its path is returned.
+#' @param overwrite Whether to overwrite files in existing directories if they
+#'   already exist. Note that files in existing directories that do not have the
+#'   same name as one of the downloaded files will not be deleted. Default is FALSE.
+#' @param redownload Whether to re-download if files from the same dataset already
+#'   exist. If FALSE, existing files will be returned. Default is FALSE.
+#' @param quiet Whether to suppress download progress messages. Default is FALSE.
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
+#'
+#' @importFrom stats setNames
+#'
+#' @returns a vector of file paths for the downloaded files (invisibly)
+#'
+#' @import httr2
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create a dataset, start processing, then download once complete
+#' ds <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
+#' start_dataset_processing(ds, email = "user@example.com")
+#'
+#' # Check status then download when ready
+#' get_dataset_status(ds)
+#' download_dataset(ds, destination = "scpca_data")
+#'
+#' # Or use wait_and_download_dataset() to do all of this in one call
+#' wait_and_download_dataset(ds, start = TRUE, email = "user@example.com")
+#' }
+download_dataset <- function(
+  dataset,
+  destination = "scpca_data",
+  unzip = TRUE,
+  overwrite = FALSE,
+  redownload = FALSE,
+  quiet = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
+) {
+  check_destination(destination)
+  auth_token <- resolve_auth_token(auth_token)
+  stopifnot(
+    "unzip must be a logical value" = is.logical(unzip) && length(unzip) == 1,
+    "overwrite must be a logical value" = is.logical(overwrite) && length(overwrite) == 1,
+    "redownload must be a logical value" = is.logical(redownload) && length(redownload) == 1,
+    "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
+  )
+  dataset_id <- resolve_dataset_id(dataset)
+  detail <- get_dataset_detail(dataset_id, auth_token)
+
+  if (!isTRUE(detail$is_succeeded)) {
+    status <- if (isTRUE(detail$is_failed)) {
+      "failed"
+    } else if (isTRUE(detail$is_started)) {
+      "processing"
+    } else {
+      "pending"
+    }
+    stop(
+      glue::glue(
+        "Dataset `{dataset_id}` is not ready for download (status: {status}).",
+        " Use `wait_and_download_dataset()` to wait for processing to complete,",
+        " or `start_dataset_processing()` to start processing first."
+      ),
+      call. = FALSE
+    )
+  }
+
+  if (!dir.exists(destination)) {
+    dir.create(destination, recursive = TRUE)
+  }
+
+  download_url <- setNames(detail$download_url, detail$download_filename)
+
+  file_paths <- download_and_extract_file(
+    download_url,
+    destination,
+    overwrite,
+    redownload,
+    quiet,
+    unzip = unzip
+  )
+  invisible(file_paths)
+}
