@@ -297,12 +297,34 @@ download_project <- function(
 #' @param redownload Whether to re-download if files from the same url already exist
 #'  (if FALSE, existing files will be returned)
 #' @param quiet Whether to suppress progress messages
+#' @param unzip Whether to unzip the downloaded file. Default is TRUE. When FALSE,
+#'   the zip file is saved directly to `parent_dir` and its path is returned.
 #'
-#' @returns A character vector of extracted file paths
+#' @returns A character vector of extracted file paths, or the zip file path when
+#'   `unzip = FALSE`.
 #'
 #' @keywords internal
-download_and_extract_file <- function(url, parent_dir, overwrite, redownload, quiet) {
+download_and_extract_file <- function(url, parent_dir, overwrite, redownload, quiet, unzip = TRUE) {
   download_filename <- if (!is.null(names(url))) names(url) else parse_download_file(url)
+
+  if (!unzip) {
+    zip_path <- file.path(parent_dir, download_filename)
+    if (file.exists(zip_path) && !overwrite) {
+      message(glue::glue(
+        "File {zip_path} already exists; skipping download.",
+        "\nUse 'overwrite = TRUE' to replace the existing file."
+      ))
+      return(zip_path)
+    }
+    req <- httr2::request(unname(url))
+    if (!quiet) {
+      message(glue::glue("Downloading {download_filename}..."))
+      req <- httr2::req_progress(req, type = "down")
+    }
+    req |> req_perform(path = zip_path)
+    return(zip_path)
+  }
+
   destination_dir <- file.path(parent_dir, stringr::str_remove(download_filename, "\\.zip$"))
 
   # exit if directory already exists
