@@ -491,3 +491,121 @@ download_dataset <- function(
   )
   invisible(file_paths)
 }
+
+
+#' @rdname download_dataset
+#' @export
+#'
+#' @param start Whether to start processing the dataset before waiting. Default
+#'   is FALSE. If FALSE and the dataset has not yet been started, an error is raised.
+#' @param email optional email address for the download notification. Only used
+#'   when `start = TRUE`. Passed to [start_dataset_processing()].
+#' @param poll_interval Number of minutes to wait between status checks.
+#'   Default is 2.
+#' @param timeout Maximum number of minutes to wait for processing to complete.
+#'   Use `Inf` to wait indefinitely. Default is 60 (1 hour).
+wait_and_download_dataset <- function(
+  dataset,
+  destination = "scpca_data",
+  start = FALSE,
+  email = NULL,
+  unzip = TRUE,
+  overwrite = FALSE,
+  redownload = FALSE,
+  poll_interval = 2,
+  timeout = 60,
+  quiet = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
+) {
+  check_destination(destination)
+  auth_token <- resolve_auth_token(auth_token)
+  stopifnot(
+    "start must be a logical value" = is.logical(start) && length(start) == 1,
+    "poll_interval must be a single non-negative number of minutes" = is.numeric(poll_interval) &&
+      length(poll_interval) == 1 &&
+      poll_interval >= 0,
+    "timeout must be a single positive number or Inf" = is.numeric(timeout) &&
+      length(timeout) == 1 &&
+      timeout >= 0,
+    "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
+  )
+  dataset_id <- resolve_dataset_id(dataset)
+
+  if (start) {
+    start_dataset_processing(dataset_id, email = email, auth_token = auth_token)
+  }
+
+  start_time <- Sys.time()
+  status <- get_dataset_status(dataset_id, auth_token = auth_token)
+
+  if (status == "pending" && !start) {
+    stop(
+      glue::glue(
+        "Dataset `{dataset_id}` has not been started.",
+        " Call `start_dataset_processing()` first,",
+        " or set `start = TRUE` to start processing before waiting."
+      ),
+      call. = FALSE
+    )
+  }
+
+  if (!quiet) {
+    cli::cli_progress_bar(
+      format = "{cli::pb_spin} Waiting for dataset {dataset_id} [{status}]{cli::pb_elapsed}",
+      clear = FALSE
+    )
+  }
+
+  repeat {
+    if (status == "succeeded") {
+      break
+    }
+    if (status == "failed") {
+      if (!quiet) {
+        cli::cli_progress_done()
+      }
+      stop(glue::glue("Dataset `{dataset_id}` processing failed."), call. = FALSE)
+    }
+
+    elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "mins"))
+    if (is.finite(timeout) && elapsed >= timeout) {
+      if (!quiet) {
+        cli::cli_progress_done()
+      }
+      stop(
+        glue::glue(
+          "Timed out after {round(elapsed, 1)} minutes waiting for dataset `{dataset_id}`.",
+          " Use `timeout = Inf` to wait indefinitely."
+        ),
+        call. = FALSE
+      )
+    }
+
+    if (!quiet) {
+      deadline <- Sys.time() + poll_interval * 60
+      while (Sys.time() < deadline) {
+        cli::cli_progress_update(force = TRUE)
+        Sys.sleep(0.25)
+      }
+    } else {
+      Sys.sleep(poll_interval * 60)
+    }
+
+    status <- get_dataset_status(dataset_id, auth_token = auth_token)
+    if (!quiet) cli::cli_progress_update(force = TRUE)
+  }
+
+  if (!quiet) {
+    cli::cli_progress_done()
+  }
+
+  download_dataset(
+    dataset_id,
+    destination = destination,
+    unzip = unzip,
+    overwrite = overwrite,
+    redownload = redownload,
+    quiet = quiet,
+    auth_token = auth_token
+  )
+}
