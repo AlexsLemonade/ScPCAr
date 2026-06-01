@@ -290,7 +290,7 @@ download_project <- function(
   download_url <- setNames(detail$download_url, detail$download_filename)
   file_paths <- download_and_extract_file(
     url = download_url,
-    destination = destination,
+    parent_dir = destination,
     overwrite = overwrite,
     redownload = redownload,
     quiet = quiet,
@@ -501,11 +501,11 @@ download_dataset <- function(
   download_url <- setNames(detail$download_url, detail$download_filename)
 
   file_paths <- download_and_extract_file(
-    download_url,
-    destination,
-    overwrite,
-    redownload,
-    quiet,
+    url = download_url,
+    parent_dir = destination,
+    overwrite = overwrite,
+    redownload = redownload,
+    quiet = quiet,
     unzip = unzip
   )
   invisible(file_paths)
