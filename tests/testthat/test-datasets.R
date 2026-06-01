@@ -463,6 +463,12 @@ test_that("get_dataset_status maps detail status fields to a status string", {
   detail <- list(is_started = TRUE)
   expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
 
+  detail <- list(is_processing = TRUE)
+  expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
+
+  detail <- list(is_processing = TRUE, is_started = FALSE)
+  expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
+
   detail <- list(is_started = TRUE, is_succeeded = TRUE)
   expect_equal(get_dataset_status(id, auth_token = "token"), "succeeded")
 
