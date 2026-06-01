@@ -16,6 +16,7 @@ BugReports: https://github.com/AlexsLemonade/ScPCAr/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Imports:
+    cli,
     curl,
     dplyr,
     glue,
