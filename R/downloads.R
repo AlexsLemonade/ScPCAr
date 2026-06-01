@@ -289,11 +289,11 @@ download_project <- function(
   detail <- get_ccdl_dataset_detail(dataset$id, auth_token)
   download_url <- setNames(detail$download_url, detail$download_filename)
   file_paths <- download_and_extract_file(
-    download_url,
-    destination,
-    overwrite,
-    redownload,
-    quiet,
+    url = download_url,
+    destination = destination,
+    overwrite = overwrite,
+    redownload = redownload,
+    quiet = quiet,
     unzip = unzip
   )
   invisible(file_paths)
