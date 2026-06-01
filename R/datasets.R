@@ -230,11 +230,11 @@ get_dataset_detail <- function(dataset, auth_token) {
 #'
 #' Replaces the samples and/or projects in an existing dataset with a new
 #' selection, by sending a PUT request with a freshly built `data` field. This
-#' is a wholesale replacement: the resulting dataset contains exactly the samples
+#' is a wholesale replacement: the resulting dataset contains only the samples
 #' and projects supplied here. To incrementally add or remove samples while
 #' keeping the rest, use [add_dataset_samples()] or [remove_dataset_samples()].
 #'
-#' A dataset that has already been started cannot be updated.
+#' A dataset that has already started processing cannot be updated.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element.
 #' @param auth_token an authorization token obtained from [get_auth()].
