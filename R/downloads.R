@@ -156,6 +156,8 @@ download_sample <- function(
 #'  If FALSE, existing files will be returned.
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
+#' @param unzip Whether to unzip the downloaded file. Default is TRUE. When FALSE,
+#'   the zip file is saved directly to `destination` and its path is returned.
 #' @param auth_token An authorization token from [get_auth()]. Defaults to the
 #'  `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
@@ -188,6 +190,7 @@ download_project <- function(
   overwrite = FALSE,
   redownload = FALSE,
   quiet = FALSE,
+  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
   check_destination(destination)
@@ -285,7 +288,14 @@ download_project <- function(
 
   detail <- get_ccdl_dataset_detail(dataset$id, auth_token)
   download_url <- setNames(detail$download_url, detail$download_filename)
-  file_paths <- download_and_extract_file(download_url, destination, overwrite, redownload, quiet)
+  file_paths <- download_and_extract_file(
+    download_url,
+    destination,
+    overwrite,
+    redownload,
+    quiet,
+    unzip = unzip
+  )
   invisible(file_paths)
 }
 
@@ -406,14 +416,14 @@ parse_download_file <- function(scpca_url) {
 #'   such as the return value of [create_dataset()].
 #' @param destination The path to the directory where the unzipped file directory
 #'   should be saved. Default is "scpca_data".
-#' @param unzip Whether to unzip the downloaded file. Default is TRUE. When FALSE,
-#'   the zip file is saved directly to `destination` and its path is returned.
 #' @param overwrite Whether to overwrite files in existing directories if they
 #'   already exist. Note that files in existing directories that do not have the
 #'   same name as one of the downloaded files will not be deleted. Default is FALSE.
 #' @param redownload Whether to re-download if files from the same dataset already
 #'   exist. If FALSE, existing files will be returned. Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
+#' @param unzip Whether to unzip the downloaded file. Default is TRUE. When FALSE,
+#'   the zip file is saved directly to `destination` and its path is returned.
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
@@ -440,10 +450,10 @@ parse_download_file <- function(scpca_url) {
 download_dataset <- function(
   dataset,
   destination = "scpca_data",
-  unzip = TRUE,
   overwrite = FALSE,
   redownload = FALSE,
   quiet = FALSE,
+  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
   check_destination(destination)
@@ -515,12 +525,12 @@ wait_and_download_dataset <- function(
   dataset,
   destination = "scpca_data",
   email = NULL,
-  unzip = TRUE,
   overwrite = FALSE,
   redownload = FALSE,
   poll_interval = 0.5,
   timeout = 60,
   quiet = FALSE,
+  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
   check_destination(destination)
