@@ -92,40 +92,30 @@ resolve_dataset_id <- function(dataset) {
 #'
 #' @returns the API response as a list
 update_dataset <- function(dataset_id, body, auth_token) {
-  tryCatch(
-    {
-      scpca_request(
-        resource = paste0("datasets/", dataset_id),
-        body = body,
-        auth_token = auth_token,
-        method = "PUT"
-      ) |>
-        req_perform() |>
-        resp_body_json()
-    },
-    httr2_http_409 = \(cnd) {
-      # A 409 means the dataset is locked because processing has started.
-      # Give a start-specific message when the failed request was itself a
-      # request to start processing.
-      if (isTRUE(body$start)) {
-        stop(
-          glue::glue(
-            "Cannot start processing for dataset `{dataset_id}`:",
-            " it has already started processing or has completed."
-          ),
-          call. = FALSE
-        )
-      }
-      stop(
-        glue::glue(
-          "Cannot modify dataset `{dataset_id}`:",
-          " it is already processing or has completed.",
-          " Datasets are locked once processing has started."
-        ),
-        call. = FALSE
-      )
-    }
-  )
+  # A 409 means the dataset is locked because processing has started.
+  # Give a start-specific message when the failed request was itself a
+  # request to start processing.
+  conflict_msg <- if (isTRUE(body$start)) {
+    glue::glue(
+      "Cannot start processing for dataset `{dataset_id}`:",
+      " it has already started processing or has completed."
+    )
+  } else {
+    glue::glue(
+      "Cannot modify dataset `{dataset_id}`:",
+      " it is already processing or has completed.",
+      " Datasets are locked once processing has started."
+    )
+  }
+
+  scpca_request(
+    resource = paste0("datasets/", dataset_id),
+    body = body,
+    auth_token = auth_token,
+    method = "PUT"
+  ) |>
+    scpca_perform(conflict_msg = conflict_msg) |>
+    resp_body_json()
 }
 
 
@@ -195,7 +185,7 @@ create_dataset <- function(
   }
 
   response <- scpca_request("datasets", auth_token = auth_token, body = body) |>
-    req_perform() |>
+    scpca_perform() |>
     resp_body_json()
 
   message(glue::glue("Dataset {response$id} created."))
@@ -224,25 +214,18 @@ create_dataset <- function(
 #' @keywords internal
 get_dataset_detail <- function(dataset, auth_token) {
   dataset_id <- resolve_dataset_id(dataset)
-  response <- tryCatch(
-    {
-      scpca_request(
-        resource = paste0("datasets/", dataset_id),
-        auth_token = auth_token
-      ) |>
-        req_perform()
-    },
-    # return NULL if 404 and the API is reachable (check_api will raise error if not)
-    httr2_http_404 = \(cnd) if (check_api()) NULL
-  )
-  if (is.null(response)) {
-    stop(glue::glue(
-      "Dataset `{dataset_id}` not found.",
-      " Please check the dataset ID and your auth_token.",
-      " The token must match the one used to create the dataset."
-    ))
-  }
-  resp_body_json(response)
+  scpca_request(
+    resource = paste0("datasets/", dataset_id),
+    auth_token = auth_token
+  ) |>
+    scpca_perform(
+      not_found_msg = glue::glue(
+        "Dataset `{dataset_id}` not found.",
+        " Please check the dataset ID and your auth_token.",
+        " The token must match the one used to create the dataset."
+      )
+    ) |>
+    resp_body_json()
 }
 
 
@@ -654,8 +637,10 @@ get_ccdl_datasets <- function(
     req <- httr2::req_url_query(req, ccdl_name = "ALL_METADATA")
   }
 
-  datasets <- req |>
-    req_perform_iterative(iterate_scpca) |> # no httr2 prefix to allow mocking in tests
+  datasets <- with_scpca_errors(
+    req |>
+      req_perform_iterative(iterate_scpca) # no httr2:: prefix to allow mocking in tests
+  ) |>
     purrr::map(\(resp) resp_body_json(resp)$results) |>
     purrr::list_flatten()
   return(datasets)
@@ -676,6 +661,6 @@ get_ccdl_dataset_detail <- function(id, auth_token) {
     resource = paste0("ccdl-datasets/", id),
     auth_token = auth_token
   ) |>
-    req_perform() |>
+    scpca_perform(not_found_msg = glue::glue("CCDL dataset `{id}` not found.")) |>
     resp_body_json()
 }
