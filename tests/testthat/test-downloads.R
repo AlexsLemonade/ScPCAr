@@ -596,3 +596,245 @@ test_that("download_and_extract_file redownloads when exact directory exists, ov
   # (overwrite doesn't clear directory to prevent user error if they put additional files there)
   expect_true(file.exists(file.path(existing_dir, "old.txt")))
 })
+
+# download_and_extract_file unzip = FALSE tests
+
+test_that("download_and_extract_file with unzip = FALSE saves the zip and returns its path", {
+  temp_dir <- file.path(tempdir(), "test_no_unzip")
+  dir.create(temp_dir, showWarnings = FALSE)
+  on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
+
+  local_mocked_bindings(
+    req_perform = function(req, path = NULL, ...) {
+      writeLines("fake zip", path)
+      invisible(NULL)
+    }
+  )
+
+  result <- download_and_extract_file(
+    setNames("https://example.com/dataset.zip", "dataset.zip"),
+    temp_dir,
+    overwrite = FALSE,
+    redownload = FALSE,
+    quiet = TRUE,
+    unzip = FALSE
+  )
+
+  expect_equal(result, file.path(temp_dir, "dataset.zip"))
+  expect_true(file.exists(result))
+  expect_false(dir.exists(file.path(temp_dir, "dataset")))
+})
+
+test_that("download_and_extract_file with unzip = FALSE skips when file exists and overwrite = FALSE", {
+  temp_dir <- file.path(tempdir(), "test_no_unzip_skip")
+  dir.create(temp_dir, showWarnings = FALSE)
+  on.exit(unlink(temp_dir, recursive = TRUE), add = TRUE)
+
+  zip_path <- file.path(temp_dir, "dataset.zip")
+  writeLines("existing", zip_path)
+
+  expect_message(
+    result <- download_and_extract_file(
+      setNames("https://example.com/dataset.zip", "dataset.zip"),
+      temp_dir,
+      overwrite = FALSE,
+      redownload = FALSE,
+      quiet = TRUE,
+      unzip = FALSE
+    ),
+    "already exists"
+  )
+  expect_equal(result, zip_path)
+  # file should not have been overwritten
+  expect_equal(readLines(zip_path), "existing")
+})
+
+# download_dataset tests
+
+test_that("download_dataset downloads a succeeded dataset", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        is_succeeded = TRUE,
+        download_url = "https://example.com/dataset.zip",
+        download_filename = "dataset.zip"
+      )
+    },
+    download_and_extract_file = \(url, ...) c("scpca_data/dataset/file.rds")
+  )
+
+  result <- download_dataset(
+    "00000000-0000-0000-0000-000000000001",
+    auth_token = "token"
+  )
+  expect_equal(result, c("scpca_data/dataset/file.rds"))
+})
+
+
+test_that("download_dataset errors when dataset is not succeeded", {
+  for (detail in list(
+    list(is_started = FALSE),
+    list(is_started = TRUE),
+    list(is_started = TRUE, is_failed = TRUE)
+  )) {
+    local_mocked_bindings(
+      get_dataset_detail = \(dataset, auth_token) detail
+    )
+    expect_error(
+      download_dataset("00000000-0000-0000-0000-000000000001", auth_token = "token"),
+      "not ready for download"
+    )
+  }
+})
+
+test_that("download_dataset error names the current status", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) list(is_started = TRUE)
+  )
+  expect_error(
+    download_dataset("00000000-0000-0000-0000-000000000001", auth_token = "token"),
+    "processing"
+  )
+})
+
+test_that("download_dataset passes unzip = FALSE to download_and_extract_file", {
+  captured_unzip <- NULL
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        is_succeeded = TRUE,
+        download_url = "https://example.com/dataset.zip",
+        download_filename = "dataset.zip"
+      )
+    },
+    download_and_extract_file = \(url, parent_dir, overwrite, redownload, quiet, unzip = TRUE) {
+      captured_unzip <<- unzip
+      "scpca_data/dataset.zip"
+    }
+  )
+
+  download_dataset("00000000-0000-0000-0000-000000000001", unzip = FALSE, auth_token = "token")
+  expect_false(captured_unzip)
+})
+
+test_that("download_dataset errors when auth_token is empty", {
+  expect_error(
+    download_dataset("00000000-0000-0000-0000-000000000001", auth_token = ""),
+    "Authorization token must be provided"
+  )
+})
+
+# wait_and_download_dataset tests
+
+test_that("wait_and_download_dataset downloads a dataset that is already succeeded", {
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "succeeded",
+    download_dataset = \(dataset, ...) c("scpca_data/dataset/file.rds")
+  )
+
+  result <- wait_and_download_dataset(
+    "00000000-0000-0000-0000-000000000001",
+    quiet = TRUE,
+    poll_interval = 0,
+    auth_token = "token"
+  )
+  expect_equal(result, c("scpca_data/dataset/file.rds"))
+})
+
+test_that("wait_and_download_dataset polls until succeeded", {
+  call_count <- 0L
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) {
+      call_count <<- call_count + 1L
+      if (call_count < 3L) "processing" else "succeeded"
+    },
+    download_dataset = \(dataset, ...) c("scpca_data/dataset/file.rds")
+  )
+
+  result <- wait_and_download_dataset(
+    "00000000-0000-0000-0000-000000000001",
+    quiet = TRUE,
+    poll_interval = 0,
+    auth_token = "token"
+  )
+  expect_equal(result, c("scpca_data/dataset/file.rds"))
+  expect_gte(call_count, 3L)
+})
+
+test_that("wait_and_download_dataset calls start_dataset_processing when start = TRUE", {
+  started <- FALSE
+  local_mocked_bindings(
+    start_dataset_processing = \(dataset, email = NULL, auth_token) {
+      started <<- TRUE
+      invisible(list())
+    },
+    get_dataset_status = \(dataset, auth_token) "succeeded",
+    download_dataset = \(dataset, ...) character(0)
+  )
+
+  wait_and_download_dataset(
+    "00000000-0000-0000-0000-000000000001",
+    start = TRUE,
+    quiet = TRUE,
+    poll_interval = 0,
+    auth_token = "token"
+  )
+  expect_true(started)
+})
+
+test_that("wait_and_download_dataset errors when dataset is pending and start = FALSE", {
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "pending"
+  )
+
+  expect_error(
+    wait_and_download_dataset(
+      "00000000-0000-0000-0000-000000000001",
+      start = FALSE,
+      quiet = TRUE,
+      poll_interval = 0,
+      auth_token = "token"
+    ),
+    "has not been started"
+  )
+})
+
+test_that("wait_and_download_dataset errors when dataset fails", {
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "failed"
+  )
+
+  expect_error(
+    wait_and_download_dataset(
+      "00000000-0000-0000-0000-000000000001",
+      quiet = TRUE,
+      poll_interval = 0,
+      auth_token = "token"
+    ),
+    "processing failed"
+  )
+})
+
+test_that("wait_and_download_dataset errors on timeout", {
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "processing"
+  )
+
+  expect_error(
+    wait_and_download_dataset(
+      "00000000-0000-0000-0000-000000000001",
+      quiet = TRUE,
+      poll_interval = 0,
+      timeout = 0,
+      auth_token = "token"
+    ),
+    "Timed out"
+  )
+})
+
+test_that("wait_and_download_dataset errors when auth_token is empty", {
+  expect_error(
+    wait_and_download_dataset("00000000-0000-0000-0000-000000000001", auth_token = ""),
+    "Authorization token must be provided"
+  )
+})
