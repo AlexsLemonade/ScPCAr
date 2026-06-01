@@ -234,6 +234,51 @@ get_dataset_detail <- function(dataset, auth_token) {
 }
 
 
+#' Get the processing status of a custom dataset
+#'
+#' Returns a single string describing where a dataset is in the processing
+#' lifecycle, by fetching the dataset detail and translating its status fields
+#' (`is_started`, `is_succeeded`, `is_failed`). A dataset that has been started
+#' but has neither succeeded nor failed is reported as "processing".
+#'
+#' Possible values are:
+#' \describe{
+#'   \item{"pending"}{the dataset has not been started}
+#'   \item{"processing"}{the dataset has been started but is not yet finished}
+#'   \item{"succeeded"}{processing finished and the dataset is ready to download}
+#'   \item{"failed"}{processing failed}
+#' }
+#'
+#' @param dataset the dataset UUID string, or a list with an `$id` element,
+#'   such as the return value of [create_dataset()].
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
+#'
+#' @returns a single character string: one of "pending", "processing",
+#'   "succeeded", or "failed".
+#'
+#' @import httr2
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' get_dataset_status(ds)
+#' }
+get_dataset_status <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
+  auth_token <- resolve_auth_token(auth_token)
+  detail <- get_dataset_detail(dataset, auth_token)
+  if (isTRUE(detail$is_failed)) {
+    "failed"
+  } else if (isTRUE(detail$is_succeeded)) {
+    "succeeded"
+  } else if (isTRUE(detail$is_started)) {
+    "processing"
+  } else {
+    "pending"
+  }
+}
+
+
 #' Replace the contents of an existing custom dataset
 #'
 #' Replaces the samples and/or projects in an existing dataset with a new
