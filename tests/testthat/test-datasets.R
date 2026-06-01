@@ -617,6 +617,21 @@ test_that("set_dataset_email errors when email is not a single string", {
   )
 })
 
+test_that("set_dataset_email surfaces the generic conflict error on a locked dataset", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_409", message = "Conflict")
+  )
+
+  expect_error(
+    set_dataset_email(
+      "00000000-0000-0000-0000-000000000001",
+      email = "user@example.com",
+      auth_token = "token"
+    ),
+    "Cannot modify dataset"
+  )
+})
+
 # start_dataset_processing tests
 
 test_that("start_dataset_processing PUTs start = TRUE", {
@@ -683,14 +698,14 @@ test_that("start_dataset_processing errors when auth_token is empty", {
   )
 })
 
-test_that("start_dataset_processing surfaces an informative error when already processing", {
+test_that("start_dataset_processing gives a start-specific error when already processing", {
   local_mocked_bindings(
     req_perform = \(req, ...) rlang::abort(class = "httr2_http_409", message = "Conflict")
   )
 
   expect_error(
     start_dataset_processing("00000000-0000-0000-0000-000000000001", auth_token = "token"),
-    "already processing or has completed"
+    "Cannot start processing for dataset"
   )
 })
 

@@ -104,6 +104,18 @@ update_dataset <- function(dataset_id, body, auth_token) {
         resp_body_json()
     },
     httr2_http_409 = \(cnd) {
+      # A 409 means the dataset is locked because processing has started.
+      # Give a start-specific message when the failed request was itself a
+      # request to start processing.
+      if (isTRUE(body$start)) {
+        stop(
+          glue::glue(
+            "Cannot start processing for dataset `{dataset_id}`:",
+            " it has already started processing or has completed."
+          ),
+          call. = FALSE
+        )
+      }
       stop(
         glue::glue(
           "Cannot modify dataset `{dataset_id}`:",
