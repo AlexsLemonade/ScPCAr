@@ -4,7 +4,14 @@
 \alias{download_and_extract_file}
 \title{Download and extract a single file from a URL}
 \usage{
-download_and_extract_file(url, parent_dir, overwrite, redownload, quiet)
+download_and_extract_file(
+  url,
+  parent_dir,
+  overwrite,
+  redownload,
+  quiet,
+  unzip = TRUE
+)
 }
 \arguments{
 \item{url}{The download URL}
@@ -17,9 +24,13 @@ download_and_extract_file(url, parent_dir, overwrite, redownload, quiet)
 (if FALSE, existing files will be returned)}
 
 \item{quiet}{Whether to suppress progress messages}
+
+\item{unzip}{Whether to unzip the downloaded file. Default is TRUE. When FALSE,
+the zip file is saved directly to \code{parent_dir} and its path is returned.}
 }
 \value{
-A character vector of extracted file paths
+A character vector of extracted file paths, or the zip file path when
+\code{unzip = FALSE}.
 }
 \description{
 Download and extract a single file from a URL
