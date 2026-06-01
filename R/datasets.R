@@ -283,7 +283,7 @@ get_dataset_status <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKE
     "failed"
   } else if (isTRUE(detail$is_succeeded)) {
     "succeeded"
-  } else if (isTRUE(detail$is_started)) {
+  } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {
     "processing"
   } else {
     "pending"
