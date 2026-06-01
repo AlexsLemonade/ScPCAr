@@ -102,8 +102,7 @@ update_dataset <- function(dataset_id, body, auth_token) {
     )
   } else {
     glue::glue(
-      "Cannot modify dataset `{dataset_id}`:",
-      " it is already processing or has completed.",
+      "Cannot modify ScPCA dataset `{dataset_id}`:",
       " Datasets are locked once processing has started."
     )
   }
@@ -188,7 +187,7 @@ create_dataset <- function(
     scpca_perform() |>
     resp_body_json()
 
-  message(glue::glue("Dataset {response$id} created."))
+  message(glue::glue("ScPCA dataset {response$id} created."))
   invisible(response)
 }
 
@@ -220,7 +219,7 @@ get_dataset_detail <- function(dataset, auth_token) {
   ) |>
     scpca_perform(
       not_found_msg = glue::glue(
-        "Dataset `{dataset_id}` not found.",
+        "ScPCA dataset `{dataset_id}` not found.",
         " Please check the dataset ID and your auth_token.",
         " The token must match the one used to create the dataset."
       )
@@ -404,7 +403,7 @@ start_dataset_processing <- function(
   }
 
   response <- update_dataset(dataset_id, body, auth_token = auth_token)
-  message(glue::glue("Dataset {dataset_id} processing started."))
+  message(glue::glue("ScPCA dataset {dataset_id} processing started."))
   invisible(response)
 }
 

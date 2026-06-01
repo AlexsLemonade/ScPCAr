@@ -470,7 +470,7 @@ download_dataset <- function(
   if (isTRUE(detail$is_expired)) {
     stop(
       glue::glue(
-        "Dataset `{dataset_id}` has expired and is no longer available for download.",
+        "ScPCA dataset `{dataset_id}` has expired and is no longer available for download.",
         " Use `wait_and_download_dataset()` to regenerate it."
       ),
       call. = FALSE
@@ -487,7 +487,7 @@ download_dataset <- function(
     }
     stop(
       glue::glue(
-        "Dataset `{dataset_id}` is not ready for download (status: {status}).",
+        "ScPCA dataset `{dataset_id}` is not ready for download (status: {status}).",
         " Use `wait_and_download_dataset()` to wait for processing to complete."
       ),
       call. = FALSE
@@ -568,7 +568,7 @@ wait_and_download_dataset <- function(
       if (!quiet) {
         cli::cli_progress_done()
       }
-      stop(glue::glue("Dataset `{dataset_id}` processing failed."), call. = FALSE)
+      stop(glue::glue("ScPCA dataset `{dataset_id}` processing failed."), call. = FALSE)
     }
     if (status == "expired") {
       if (!quiet) {
@@ -576,7 +576,7 @@ wait_and_download_dataset <- function(
       }
       stop(
         glue::glue(
-          "Dataset `{dataset_id}` unexpectedly expired during processing.",
+          "ScPCA dataset `{dataset_id}` unexpectedly expired during processing.",
           " Please report this as a bug."
         ),
         call. = FALSE
