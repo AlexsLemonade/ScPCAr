@@ -77,7 +77,7 @@ resolve_auth_token <- function(auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
     stop(
       "Authorization token must be provided via the `auth_token` argument",
       " or the `SCPCA_AUTH_TOKEN` environment variable",
-      " (use `get_auth()` to obtain one).",
+      " (use `get_auth()` to obtain one and set the environment variable).",
       call. = FALSE
     )
   }
