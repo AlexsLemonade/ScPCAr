@@ -9,7 +9,7 @@
 #' @param destination the `destination` argument to validate
 #'
 #' @noRd
-check_destination_is_auth <- function(destination) {
+warn_destination_is_auth <- function(destination) {
   if (is_uuid(destination)) {
     warning(
       "`destination` looks like an authorization token (a UUID), not a directory path.",
@@ -83,7 +83,7 @@ download_sample <- function(
   quiet = FALSE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  check_destination_is_auth(destination)
+  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
@@ -193,7 +193,7 @@ download_project <- function(
   unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  check_destination_is_auth(destination)
+  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id),
@@ -456,7 +456,7 @@ download_dataset <- function(
   unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  check_destination(destination)
+  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "unzip must be a logical value" = is.logical(unzip) && length(unzip) == 1,
@@ -533,7 +533,7 @@ wait_and_download_dataset <- function(
   unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  check_destination(destination)
+  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "poll_interval must be a single non-negative number of minutes" = is.numeric(poll_interval) &&
