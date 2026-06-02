@@ -8,9 +8,9 @@ status.
 
 ``` r
 create_dataset(
-  format = "sce",
   samples = NULL,
   projects = NULL,
+  format = "sce",
   include_bulk = FALSE,
   email = NULL,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
@@ -18,12 +18,6 @@ create_dataset(
 ```
 
 ## Arguments
-
-- format:
-
-  the desired file format: "sce" (SingleCellExperiment, default) or
-  "anndata" (AnnData/H5AD). Spatial data is not a valid format option
-  here; spatial samples are always returned in Space Ranger format.
 
 - samples:
 
@@ -33,6 +27,12 @@ create_dataset(
 
   optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
   all samples from each project are included
+
+- format:
+
+  the desired file format: "sce" (SingleCellExperiment, default) or
+  "anndata" (AnnData/H5AD). Spatial data is not a valid format option
+  here; spatial samples are always returned in Space Ranger format.
 
 - include_bulk:
 
