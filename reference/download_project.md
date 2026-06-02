@@ -7,14 +7,14 @@ Download a project's data files from the ScPCA Portal
 ``` r
 download_project(
   project_id,
-  auth_token,
   destination = "scpca_data",
   format = "sce",
   merged = FALSE,
   include_multiplexed = NULL,
   overwrite = FALSE,
   redownload = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 ```
 
@@ -23,11 +23,6 @@ download_project(
 - project_id:
 
   The ScPCA project ID (e.g. "SCPCP000001")
-
-- auth_token:
-
-  An authorization token obtained from
-  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
 
 - destination:
 
@@ -67,6 +62,14 @@ download_project(
 
   Whether to suppress download progress messages. Default is FALSE.
 
+- auth_token:
+
+  An authorization token from
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
+  Defaults to the `SCPCA_AUTH_TOKEN` environment variable, which
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
+  sets automatically.
+
 ## Value
 
 a vector of file paths for the downloaded files (invisibly)
@@ -75,15 +78,14 @@ a vector of file paths for the downloaded files (invisibly)
 
 ``` r
 if (FALSE) { # \dontrun{
-# Get a token first
-auth_token <- get_auth("your.email@example.com", agree = TRUE)
-# Then ask for a sample download
-download_project("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
+# get_auth() stores the token in SCPCA_AUTH_TOKEN, so downloads pick it up automatically
+get_auth("your.email@example.com", agree = TRUE)
+# Then ask for a project download
+download_project("SCPCP000001", destination = "scpca_data", format = "sce")
 
 # Downloading merged files in AnnData format
 download_project(
-  "SCPCS000001",
-  auth_token,
+  "SCPCP000001",
   destination = "scpca_data",
   format = "anndata",
   merged = TRUE

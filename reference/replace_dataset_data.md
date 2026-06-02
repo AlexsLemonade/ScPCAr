@@ -14,10 +14,10 @@ or
 ``` r
 replace_dataset_data(
   dataset,
-  auth_token,
   samples = NULL,
   projects = NULL,
-  include_bulk = FALSE
+  include_bulk = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 ```
 
@@ -26,11 +26,6 @@ replace_dataset_data(
 - dataset:
 
   the dataset UUID string, or a list with an `$id` element.
-
-- auth_token:
-
-  an authorization token obtained from
-  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
 
 - samples:
 
@@ -45,6 +40,14 @@ replace_dataset_data(
 
   logical; whether to include bulk RNA-seq files. Default is FALSE.
 
+- auth_token:
+
+  an authorization token from
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
+  Defaults to the `SCPCA_AUTH_TOKEN` environment variable, which
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
+  sets automatically.
+
 ## Value
 
 the updated dataset detail as a list (invisibly)
@@ -57,6 +60,6 @@ A dataset that has already been started cannot be updated.
 
 ``` r
 if (FALSE) { # \dontrun{
-replace_dataset_data(ds, auth_token = token, samples = c("SCPCS000001", "SCPCS000002"))
+replace_dataset_data(ds, samples = c("SCPCS000001", "SCPCS000002"))
 } # }
 ```

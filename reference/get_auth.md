@@ -24,12 +24,19 @@ view_terms()
 
 ## Value
 
-A string containing the authorization token
+The authorization token string (invisibly). The token is also stored in
+the `SCPCA_AUTH_TOKEN` environment variable.
 
 ## Details
 
 To view the terms of use before agreeing to them, use `view_terms()`,
 which opens the terms of use page in a web browser.
+
+The token is stored in the `SCPCA_AUTH_TOKEN` environment variable,
+which the package's authenticated functions (e.g.
+[`download_sample()`](https://alexslemonade.github.io/ScPCAr/reference/download_sample.md))
+read automatically, so you usually do not need to pass it explicitly.
+The token is also returned invisibly, in case you wish to capture it.
 
 ## Examples
 

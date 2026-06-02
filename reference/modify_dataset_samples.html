@@ -59,13 +59,18 @@ dataset.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_dataset_samples</span><span class="op">(</span></span>
 <span>  <span class="va">dataset</span>,</span>
-<span>  <span class="va">auth_token</span>,</span>
 <span>  samples <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  projects <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  include_bulk <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  include_bulk <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  auth_token <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SCPCA_AUTH_TOKEN"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">remove_dataset_samples</span><span class="op">(</span><span class="va">dataset</span>, <span class="va">auth_token</span>, samples <span class="op">=</span> <span class="cn">NULL</span>, projects <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remove_dataset_samples</span><span class="op">(</span></span>
+<span>  <span class="va">dataset</span>,</span>
+<span>  samples <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  projects <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  auth_token <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SCPCA_AUTH_TOKEN"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -74,10 +79,6 @@ dataset.</p>
 
 <dl><dt id="arg-dataset">dataset<a class="anchor" aria-label="anchor" href="#arg-dataset"></a></dt>
 <dd><p>the dataset UUID string, or a list with an <code>$id</code> element.</p></dd>
-
-
-<dt id="arg-auth-token">auth_token<a class="anchor" aria-label="anchor" href="#arg-auth-token"></a></dt>
-<dd><p>an authorization token obtained from <code><a href="get_auth.html">get_auth()</a></code>.</p></dd>
 
 
 <dt id="arg-samples">samples<a class="anchor" aria-label="anchor" href="#arg-samples"></a></dt>
@@ -93,6 +94,11 @@ remove; all samples from each project are included.</p></dd>
 <dd><p>logical; for <code>add_dataset_samples()</code>, the <code>includes_bulk</code>
 value to use for projects that are newly added to the dataset. Existing
 projects keep their current value. Default is FALSE.</p></dd>
+
+
+<dt id="arg-auth-token">auth_token<a class="anchor" aria-label="anchor" href="#arg-auth-token"></a></dt>
+<dd><p>an authorization token from <code><a href="get_auth.html">get_auth()</a></code>. Defaults to the
+<code>SCPCA_AUTH_TOKEN</code> environment variable, which <code><a href="get_auth.html">get_auth()</a></code> sets automatically.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -115,11 +121,11 @@ sample (though they may be removed wholesale via <code>projects</code>); use
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="fu">add_dataset_samples</span><span class="op">(</span><span class="va">ds</span>, auth_token <span class="op">=</span> <span class="va">token</span>, samples <span class="op">=</span> <span class="st">"SCPCS000003"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">add_dataset_samples</span><span class="op">(</span><span class="va">ds</span>, auth_token <span class="op">=</span> <span class="va">token</span>, projects <span class="op">=</span> <span class="st">"SCPCP000002"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">add_dataset_samples</span><span class="op">(</span><span class="va">ds</span>, samples <span class="op">=</span> <span class="st">"SCPCS000003"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">add_dataset_samples</span><span class="op">(</span><span class="va">ds</span>, projects <span class="op">=</span> <span class="st">"SCPCP000002"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">remove_dataset_samples</span><span class="op">(</span><span class="va">ds</span>, auth_token <span class="op">=</span> <span class="va">token</span>, samples <span class="op">=</span> <span class="st">"SCPCS000003"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">remove_dataset_samples</span><span class="op">(</span><span class="va">ds</span>, auth_token <span class="op">=</span> <span class="va">token</span>, projects <span class="op">=</span> <span class="st">"SCPCP000002"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">remove_dataset_samples</span><span class="op">(</span><span class="va">ds</span>, samples <span class="op">=</span> <span class="st">"SCPCS000003"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">remove_dataset_samples</span><span class="op">(</span><span class="va">ds</span>, projects <span class="op">=</span> <span class="st">"SCPCP000002"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

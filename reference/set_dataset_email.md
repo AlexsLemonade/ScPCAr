@@ -8,7 +8,7 @@ unchanged.
 ## Usage
 
 ``` r
-set_dataset_email(dataset, auth_token, email)
+set_dataset_email(dataset, email, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"))
 ```
 
 ## Arguments
@@ -17,14 +17,17 @@ set_dataset_email(dataset, auth_token, email)
 
   the dataset UUID string, or a list with an `$id` element.
 
-- auth_token:
-
-  an authorization token obtained from
-  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
-
 - email:
 
   the email address to use for the download notification.
+
+- auth_token:
+
+  an authorization token from
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
+  Defaults to the `SCPCA_AUTH_TOKEN` environment variable, which
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
+  sets automatically.
 
 ## Value
 
@@ -38,6 +41,6 @@ A dataset that has already been started cannot be modified.
 
 ``` r
 if (FALSE) { # \dontrun{
-set_dataset_email(ds, auth_token = token, email = "user@example.com")
+set_dataset_email(ds, email = "user@example.com")
 } # }
 ```

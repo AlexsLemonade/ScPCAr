@@ -11,13 +11,18 @@ samples is dropped from the dataset.
 ``` r
 add_dataset_samples(
   dataset,
-  auth_token,
   samples = NULL,
   projects = NULL,
-  include_bulk = FALSE
+  include_bulk = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 
-remove_dataset_samples(dataset, auth_token, samples = NULL, projects = NULL)
+remove_dataset_samples(
+  dataset,
+  samples = NULL,
+  projects = NULL,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
+)
 ```
 
 ## Arguments
@@ -25,11 +30,6 @@ remove_dataset_samples(dataset, auth_token, samples = NULL, projects = NULL)
 - dataset:
 
   the dataset UUID string, or a list with an `$id` element.
-
-- auth_token:
-
-  an authorization token obtained from
-  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
 
 - samples:
 
@@ -45,6 +45,14 @@ remove_dataset_samples(dataset, auth_token, samples = NULL, projects = NULL)
   logical; for `add_dataset_samples()`, the `includes_bulk` value to use
   for projects that are newly added to the dataset. Existing projects
   keep their current value. Default is FALSE.
+
+- auth_token:
+
+  an authorization token from
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
+  Defaults to the `SCPCA_AUTH_TOKEN` environment variable, which
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
+  sets automatically.
 
 ## Value
 
@@ -70,10 +78,10 @@ instead.
 
 ``` r
 if (FALSE) { # \dontrun{
-add_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
-add_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
+add_dataset_samples(ds, samples = "SCPCS000003")
+add_dataset_samples(ds, projects = "SCPCP000002")
 
-remove_dataset_samples(ds, auth_token = token, samples = "SCPCS000003")
-remove_dataset_samples(ds, auth_token = token, projects = "SCPCP000002")
+remove_dataset_samples(ds, samples = "SCPCS000003")
+remove_dataset_samples(ds, projects = "SCPCP000002")
 } # }
 ```

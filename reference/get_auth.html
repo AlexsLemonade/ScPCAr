@@ -67,12 +67,17 @@ after providing an email address and agreeing to the terms of use.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A string containing the authorization token</p>
+    <p>The authorization token string (invisibly). The token is also stored
+in the <code>SCPCA_AUTH_TOKEN</code> environment variable.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>To view the terms of use before agreeing to them, use <code>view_terms()</code>,
 which opens the terms of use page in a web browser.</p>
+<p>The token is stored in the <code>SCPCA_AUTH_TOKEN</code> environment variable, which the
+package's authenticated functions (e.g. <code><a href="download_sample.html">download_sample()</a></code>) read automatically,
+so you usually do not need to pass it explicitly. The token is also returned
+invisibly, in case you wish to capture it.</p>
     </div>
 
     <div class="section level2">

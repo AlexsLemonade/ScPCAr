@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Interact with the ScPCA Portal API">
-<meta name="description" content="An R package to interact with the Single-Cell Pediatric Cancer Atlas Portal API.">
-<meta property="og:description" content="An R package to interact with the Single-Cell Pediatric Cancer Atlas Portal API.">
+<meta name="description" content="An R package to interact with the Single-cell Pediatric Cancer Atlas Portal API.">
+<meta property="og:description" content="An R package to interact with the Single-cell Pediatric Cancer Atlas Portal API.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -77,17 +77,18 @@
 <span><span class="co"># First, look at the terms of use</span></span>
 <span><span class="fu"><a href="reference/get_auth.html">view_terms</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Get an authentication token for use with the ScPCA Portal</span></span>
-<span><span class="va">auth_token</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_auth.html">get_auth</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"your.email@example.com"</span>, agree <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="co"># Get an authentication token for use with the ScPCA Portal.</span></span>
+<span><span class="co"># This stores the token in the `SCPCA_AUTH_TOKEN` environment variable,</span></span>
+<span><span class="co"># which the download functions read automatically.</span></span>
+<span><span class="fu"><a href="reference/get_auth.html">get_auth</a></span><span class="op">(</span>email <span class="op">=</span> <span class="st">"your.email@example.com"</span>, agree <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Get the sample metadata for a project</span></span>
 <span><span class="va">sample_metadata</span> <span class="op">&lt;-</span> <span class="fu">get_sample_metadata</span><span class="op">(</span>project_id <span class="op">=</span> <span class="st">"SCPCP000001"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Download a data for a sample</span></span>
+<span><span class="co"># Download data for a sample</span></span>
 <span><span class="co"># this function returns a vector of the downloaded file paths</span></span>
 <span><span class="va">file_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/download_sample.html">download_sample</a></span><span class="op">(</span></span>
 <span>  sample_id <span class="op">=</span> <span class="st">"SCPCS000001"</span>,</span>
-<span>  auth_token <span class="op">=</span> <span class="va">auth_token</span>,</span>
 <span>  destination <span class="op">=</span> <span class="st">"scpca_data"</span>,</span>
 <span>  format <span class="op">=</span> <span class="st">"sce"</span></span>
 <span><span class="op">)</span></span></code></pre></div>

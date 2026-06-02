@@ -8,7 +8,7 @@ including information about each library that is part of the project.
 ## Usage
 
 ``` r
-get_project_libraries(project_id, auth_token)
+get_project_libraries(project_id, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"))
 ```
 
 ## Arguments
@@ -19,8 +19,11 @@ get_project_libraries(project_id, auth_token)
 
 - auth_token:
 
-  An authorization token obtained from
+  An authorization token from
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
+  Defaults to the `SCPCA_AUTH_TOKEN` environment variable, which
   [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
+  sets automatically.
 
 ## Value
 

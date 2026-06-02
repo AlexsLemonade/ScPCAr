@@ -8,21 +8,16 @@ status.
 
 ``` r
 create_dataset(
-  auth_token,
   format = "sce",
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE,
-  email = NULL
+  email = NULL,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 ```
 
 ## Arguments
-
-- auth_token:
-
-  an authorization token obtained from
-  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
 
 - format:
 
@@ -46,6 +41,14 @@ create_dataset(
 - email:
 
   optional email address for download notification
+
+- auth_token:
+
+  an authorization token from
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md).
+  Defaults to the `SCPCA_AUTH_TOKEN` environment variable, which
+  [`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
+  sets automatically.
 
 ## Value
 
