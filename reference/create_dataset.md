@@ -1,16 +1,15 @@
 # Create a custom dataset on the ScPCA Portal
 
-Creates a new user dataset without starting processing. After creation,
-use
-[`get_dataset_info()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_info.md)
-to inspect the dataset contents and status.
+Creates a new user dataset without starting processing. The returned
+list includes the dataset `$id` along with its current contents and
+status.
 
 ## Usage
 
 ``` r
 create_dataset(
   auth_token,
-  format,
+  format = "sce",
   samples = NULL,
   projects = NULL,
   include_bulk = FALSE,
@@ -27,9 +26,9 @@ create_dataset(
 
 - format:
 
-  the desired file format: "sce" (SingleCellExperiment) or "anndata"
-  (AnnData/H5AD). Spatial data is not a valid format option here;
-  spatial samples are always returned in Space Ranger format.
+  the desired file format: "sce" (SingleCellExperiment, default) or
+  "anndata" (AnnData/H5AD). Spatial data is not a valid format option
+  here; spatial samples are always returned in Space Ranger format.
 
 - samples:
 
@@ -59,7 +58,6 @@ if (FALSE) { # \dontrun{
 token <- get_auth("user@example.com", agree = TRUE)
 ds <- create_dataset(
   auth_token = token,
-  format = "sce",
   samples = c("SCPCS000001", "SCPCS000002")
 )
 ds$id

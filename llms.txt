@@ -79,8 +79,13 @@ documentation](https://alexslemonade.github.io/ScPCAr/).
 
 - [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md)
   : Create a custom dataset on the ScPCA Portal
-- [`get_dataset_info()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_info.md)
-  : Get the status and contents of a custom dataset
+- [`replace_dataset_data()`](https://alexslemonade.github.io/ScPCAr/reference/replace_dataset_data.md)
+  : Replace the contents of an existing custom dataset
+- [`add_dataset_samples()`](https://alexslemonade.github.io/ScPCAr/reference/modify_dataset_samples.md)
+  [`remove_dataset_samples()`](https://alexslemonade.github.io/ScPCAr/reference/modify_dataset_samples.md)
+  : Add or remove samples and projects in a custom dataset
+- [`set_dataset_email()`](https://alexslemonade.github.io/ScPCAr/reference/set_dataset_email.md)
+  : Set the notification email for a custom dataset
 
 # Articles
 

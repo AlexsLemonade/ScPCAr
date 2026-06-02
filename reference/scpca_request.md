@@ -5,7 +5,13 @@ Base request object for ScPCA API
 ## Usage
 
 ``` r
-scpca_request(resource = "", body = list(), auth_token = "", ...)
+scpca_request(
+  resource = "",
+  body = list(),
+  auth_token = "",
+  method = NULL,
+  ...
+)
 ```
 
 ## Arguments
@@ -21,6 +27,11 @@ scpca_request(resource = "", body = list(), auth_token = "", ...)
 - auth_token:
 
   optional API authentication token
+
+- method:
+
+  optional HTTP method to use (e.g. "PATCH"). When NULL (the default),
+  httr2 infers the method: POST when a body is present, otherwise GET.
 
 - ...:
 
