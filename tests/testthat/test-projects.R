@@ -128,32 +128,40 @@ test_that("get_project_samples returns simplified data frame by default", {
 })
 
 
-test_that("get_project_metadata_url returns the succeeded metadata dataset URL", {
+test_that("get_project_metadata_url returns a named URL for the metadata dataset", {
+  # the signed download URL comes from the dataset detail endpoint, not the list
   local_mocked_bindings(
     get_ccdl_datasets = function(project_id, metadata_only, auth_token) {
+      list(list(id = 1, is_succeeded = TRUE))
+    },
+    get_ccdl_dataset_detail = function(id, auth_token) {
       list(
-        list(
-          is_succeeded = TRUE,
-          download_url = "https://example.com/SCPCP000001_ALL_METADATA.zip"
-        )
+        download_url = "https://example.com/SCPCP000001_ALL_METADATA.zip",
+        download_filename = "SCPCP000001_ALL_METADATA.zip"
       )
     }
   )
 
   download_url <- get_project_metadata_url("SCPCP000001", "mock-token-123")
 
-  # Verify the download URL format
+  # Verify the download URL and its name (filename)
   expect_type(download_url, "character")
   expect_true(grepl("^https://", download_url))
-  expect_true(grepl("SCPCP000001", download_url))
+  expect_named(download_url, "SCPCP000001_ALL_METADATA.zip")
 })
 
 test_that("get_project_metadata_url warns and uses the first when several exist", {
   local_mocked_bindings(
     get_ccdl_datasets = function(project_id, metadata_only, auth_token) {
       list(
-        list(is_succeeded = TRUE, download_url = "https://example.com/first.zip"),
-        list(is_succeeded = TRUE, download_url = "https://example.com/second.zip")
+        list(id = "first", is_succeeded = TRUE),
+        list(id = "second", is_succeeded = TRUE)
+      )
+    },
+    get_ccdl_dataset_detail = function(id, auth_token) {
+      list(
+        download_url = glue::glue("https://example.com/{id}.zip"),
+        download_filename = glue::glue("{id}.zip")
       )
     }
   )
@@ -162,19 +170,15 @@ test_that("get_project_metadata_url warns and uses the first when several exist"
     download_url <- get_project_metadata_url("SCPCP000001", "mock-token-123"),
     "Multiple ScPCA metadata datasets found for project `SCPCP000001`"
   )
-  expect_equal(download_url, "https://example.com/first.zip")
+  expect_equal(unname(download_url), "https://example.com/first.zip")
+  expect_named(download_url, "first.zip")
 })
 
 test_that("get_project_metadata_url skips datasets that have not succeeded", {
-  # an dataset with is_suceeeded= FALSE should be filtered out, leaving no usable dataset
+  # a dataset with is_succeeded = FALSE should be filtered out, leaving no usable dataset
   local_mocked_bindings(
     get_ccdl_datasets = function(project_id, metadata_only, auth_token) {
-      list(
-        list(
-          is_succeeded = FALSE,
-          download_url = "https://example.com/SCPCP000001_ALL_METADATA.zip"
-        )
-      )
+      list(list(id = 1, is_succeeded = FALSE))
     }
   )
 
