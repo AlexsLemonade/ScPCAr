@@ -458,36 +458,35 @@ test_that("get_dataset_status maps detail status fields to a status string", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) detail
   )
-  id <- "00000000-0000-0000-0000-000000000001"
 
   detail <- list(is_started = FALSE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "pending")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "pending")
 
   detail <- list(is_started = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
 
   detail <- list(is_processing = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
 
   detail <- list(is_processing = TRUE, is_started = FALSE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
 
   detail <- list(is_started = TRUE, is_succeeded = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "succeeded")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "succeeded")
 
   detail <- list(is_started = TRUE, is_failed = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "failed")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "failed")
 
   # a failed dataset is reported as failed even if is_succeeded is also set
   detail <- list(is_succeeded = TRUE, is_failed = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "failed")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "failed")
 
   detail <- list(is_expired = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "expired")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "expired")
 
   # expired takes priority over succeeded (expired datasets likely still have is_succeeded = TRUE)
   detail <- list(is_succeeded = TRUE, is_expired = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "expired")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "expired")
 })
 
 test_that("get_dataset_status passes the resolved auth_token to get_dataset_detail", {
@@ -499,7 +498,7 @@ test_that("get_dataset_status passes the resolved auth_token to get_dataset_deta
     }
   )
 
-  get_dataset_status("00000000-0000-0000-0000-000000000001", auth_token = "my-token")
+  get_dataset_status(DATASET_ID, auth_token = "my-token")
   expect_equal(captured_token, "my-token")
 })
 
@@ -513,13 +512,13 @@ test_that("get_dataset_status reads auth_token from the SCPCA_AUTH_TOKEN environ
     }
   )
 
-  get_dataset_status("00000000-0000-0000-0000-000000000001")
+  get_dataset_status(DATASET_ID)
   expect_equal(captured_token, "env-token")
 })
 
 test_that("get_dataset_status errors when auth_token is empty", {
   expect_error(
-    get_dataset_status("00000000-0000-0000-0000-000000000001", auth_token = ""),
+    get_dataset_status(DATASET_ID, auth_token = ""),
     "Authorization token must be provided"
   )
 })
@@ -596,7 +595,7 @@ test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
   )
 
   expect_equal(captured_req$method, "PUT")
-  expect_match(captured_req$url, "datasets/00000000-0000-0000-0000-000000000001")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
   expect_null(result$format)
   expect_true("SCPCP000001" %in% names(result$data))
 })
@@ -618,7 +617,7 @@ test_that("set_dataset_email PUTs a new email", {
     email = "user@example.com"
   )
   expect_equal(captured_req$method, "PUT")
-  expect_match(captured_req$url, "datasets/00000000-0000-0000-0000-000000000001")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
   expect_equal(result$email, "user@example.com")
 })
 
@@ -640,7 +639,7 @@ test_that("set_dataset_email surfaces the generic conflict error on a locked dat
 
   expect_error(
     set_dataset_email(
-      "00000000-0000-0000-0000-000000000001",
+      DATASET_ID,
       email = "user@example.com",
       auth_token = "token"
     ),
@@ -663,14 +662,14 @@ test_that("start_dataset_processing PUTs start = TRUE", {
   expect_message(
     {
       result <- start_dataset_processing(
-        "00000000-0000-0000-0000-000000000001",
+        DATASET_ID,
         auth_token = "token"
       )
     },
     "processing started"
   )
   expect_equal(captured_req$method, "PUT")
-  expect_match(captured_req$url, "datasets/00000000-0000-0000-0000-000000000001")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
   expect_true(result$start)
   expect_null(result$email)
 })
@@ -686,7 +685,7 @@ test_that("start_dataset_processing includes email in the same request when prov
 
   result <- suppressMessages(
     start_dataset_processing(
-      "00000000-0000-0000-0000-000000000001",
+      DATASET_ID,
       email = "user@example.com",
       auth_token = "token"
     )
@@ -699,7 +698,7 @@ test_that("start_dataset_processing includes email in the same request when prov
 test_that("start_dataset_processing errors when email is not a single string", {
   expect_error(
     start_dataset_processing(
-      "00000000-0000-0000-0000-000000000001",
+      DATASET_ID,
       email = c("a@b.com", "c@d.com"),
       auth_token = "token"
     ),
@@ -709,7 +708,7 @@ test_that("start_dataset_processing errors when email is not a single string", {
 
 test_that("start_dataset_processing errors when auth_token is empty", {
   expect_error(
-    start_dataset_processing("00000000-0000-0000-0000-000000000001", auth_token = ""),
+    start_dataset_processing(DATASET_ID, auth_token = ""),
     "Authorization token must be provided"
   )
 })
@@ -720,7 +719,7 @@ test_that("start_dataset_processing gives a start-specific error when already pr
   )
 
   expect_error(
-    start_dataset_processing("00000000-0000-0000-0000-000000000001", auth_token = "token"),
+    start_dataset_processing(DATASET_ID, auth_token = "token"),
     "Cannot start processing for dataset"
   )
 })
