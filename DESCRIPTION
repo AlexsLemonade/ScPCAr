@@ -9,12 +9,13 @@ Authors@R: c(
     person("Alex's Lemonade Stand Foundation", role = c("cph", "fnd"),
            comment = c(ROR = "038ja4880"))
     )
-Description: An R package to interact with the Single-Cell Pediatric Cancer Atlas Portal API.
+Description: An R package to interact with the Single-cell Pediatric Cancer Atlas Portal API.
 License: BSD_3_clause + file LICENSE
 URL: https://alexslemonade.github.io/ScPCAr, https://github.com/AlexsLemonade/ScPCAr
 BugReports: https://github.com/AlexsLemonade/ScPCAr/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
+Depends: R (>= 4.1.0)
 Imports:
     cli,
     dplyr,
