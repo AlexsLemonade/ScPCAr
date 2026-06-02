@@ -6,20 +6,18 @@
 \usage{
 download_project(
   project_id,
-  auth_token,
   destination = "scpca_data",
   format = "sce",
   merged = FALSE,
   include_multiplexed = NULL,
   overwrite = FALSE,
   redownload = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 }
 \arguments{
 \item{project_id}{The ScPCA project ID (e.g. "SCPCP000001")}
-
-\item{auth_token}{An authorization token obtained from \code{\link[=get_auth]{get_auth()}}}
 
 \item{destination}{The path to the directory where the unzipped file directory should be saved.
 Default is "scpca_data".}
@@ -45,6 +43,9 @@ If FALSE, existing files will be returned.
 Default is FALSE.}
 
 \item{quiet}{Whether to suppress download progress messages. Default is FALSE.}
+
+\item{auth_token}{An authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
+\code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
 a vector of file paths for the downloaded files (invisibly)
@@ -54,15 +55,14 @@ Download a project's data files from the ScPCA Portal
 }
 \examples{
 \dontrun{
-# Get a token first
-auth_token <- get_auth("your.email@example.com", agree = TRUE)
-# Then ask for a sample download
-download_project("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
+# get_auth() stores the token in SCPCA_AUTH_TOKEN, so downloads pick it up automatically
+get_auth("your.email@example.com", agree = TRUE)
+# Then ask for a project download
+download_project("SCPCP000001", destination = "scpca_data", format = "sce")
 
 # Downloading merged files in AnnData format
 download_project(
-  "SCPCS000001",
-  auth_token,
+  "SCPCP000001",
   destination = "scpca_data",
   format = "anndata",
   merged = TRUE

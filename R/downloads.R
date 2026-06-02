@@ -1,3 +1,27 @@
+#' Warn about a misplaced auth token in the `destination` argument
+#'
+#' `auth_token` was previously the second positional argument. If a caller
+#' passes a token positionally it would silently land in `destination`.
+#' Auth tokens are UUIDs, so a UUID-shaped `destination` almost certainly indicates
+#' this mistake; warn so the caller can spot it.
+#' (the download itself will fail if the token is misplaced).
+#'
+#' @param destination the `destination` argument to validate
+#'
+#' @noRd
+check_destination_is_auth <- function(destination) {
+  if (is_uuid(destination)) {
+    warning(
+      "`destination` looks like an authorization token (a UUID), not a directory path.",
+      " `auth_token` is no longer the second positional argument: pass your token with `auth_token = ...`",
+      " or set the SCPCA_AUTH_TOKEN environment variable (see `get_auth()`).",
+      call. = FALSE
+    )
+  }
+  invisible(destination)
+}
+
+
 #' Download a sample's data files from the ScPCA Portal
 #'
 #' This function downloads the data files for a specified sample from the ScPCA Portal.
@@ -19,7 +43,6 @@
 #'
 #'
 #' @param sample_id The ScPCA sample ID (e.g. "SCPCS000001")
-#' @param auth_token An authorization token obtained from [get_auth()]
 #' @param destination The path to the directory where the unzipped file directory should be saved.
 #'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
@@ -33,6 +56,8 @@
 #'  If FALSE, existing files will be returned.
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
+#' @param auth_token An authorization token from [get_auth()]. Defaults to the
+#'  `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
 #' @import httr2
 #'
@@ -41,25 +66,26 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' # Get a token first
-#' auth_token <- get_auth("your.email@example.com", agree = TRUE)
+#' # get_auth() stores the token in SCPCA_AUTH_TOKEN, so downloads pick it up automatically
+#' get_auth("your.email@example.com", agree = TRUE)
 #' # Then ask for a sample download
-#' download_sample("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
+#' download_sample("SCPCS000001", destination = "scpca_data", format = "sce")
 #'
 #' # Downloading in AnnData format
-#' download_sample("SCPCS000001", auth_token, destination = "scpca_data", format = "anndata")
+#' download_sample("SCPCS000001", destination = "scpca_data", format = "anndata")
 #' }
 download_sample <- function(
   sample_id,
-  auth_token,
   destination = "scpca_data",
   format = "sce",
   overwrite = FALSE,
   redownload = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
+  check_destination_is_auth(destination)
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
-    "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
 
@@ -112,7 +138,6 @@ download_sample <- function(
 #' Download a project's data files from the ScPCA Portal
 #'
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
-#' @param auth_token An authorization token obtained from [get_auth()]
 #' @param destination The path to the directory where the unzipped file directory should be saved.
 #'  Default is "scpca_data".
 #' @param format The desired file format, either "sce" (SingleCellExperiment),
@@ -131,6 +156,8 @@ download_sample <- function(
 #'  If FALSE, existing files will be returned.
 #'  Default is FALSE.
 #' @param quiet Whether to suppress download progress messages. Default is FALSE.
+#' @param auth_token An authorization token from [get_auth()]. Defaults to the
+#'  `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
 #' @importFrom stats setNames
 #'
@@ -139,15 +166,14 @@ download_sample <- function(
 #' @export
 #' @examples
 #' \dontrun{
-#' # Get a token first
-#' auth_token <- get_auth("your.email@example.com", agree = TRUE)
-#' # Then ask for a sample download
-#' download_project("SCPCS000001", auth_token, destination = "scpca_data", format = "sce")
+#' # get_auth() stores the token in SCPCA_AUTH_TOKEN, so downloads pick it up automatically
+#' get_auth("your.email@example.com", agree = TRUE)
+#' # Then ask for a project download
+#' download_project("SCPCP000001", destination = "scpca_data", format = "sce")
 #'
 #' # Downloading merged files in AnnData format
 #' download_project(
-#'   "SCPCS000001",
-#'   auth_token,
+#'   "SCPCP000001",
 #'   destination = "scpca_data",
 #'   format = "anndata",
 #'   merged = TRUE
@@ -155,18 +181,19 @@ download_sample <- function(
 #' }
 download_project <- function(
   project_id,
-  auth_token,
   destination = "scpca_data",
   format = "sce",
   merged = FALSE,
   include_multiplexed = NULL,
   overwrite = FALSE,
   redownload = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
+  check_destination_is_auth(destination)
+  auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id),
-    "Authorization token must be provided" = is.character(auth_token) && nchar(auth_token) > 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
     "merged must be a logical value" = is.logical(merged) && length(merged) == 1,
     "include_multiplexed must be NULL or a logical value" = is.null(include_multiplexed) ||

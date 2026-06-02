@@ -6,16 +6,14 @@
 \usage{
 replace_dataset_data(
   dataset,
-  auth_token,
   samples = NULL,
   projects = NULL,
-  include_bulk = FALSE
+  include_bulk = FALSE,
+  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 }
 \arguments{
 \item{dataset}{the dataset UUID string, or a list with an \verb{$id} element.}
-
-\item{auth_token}{an authorization token obtained from \code{\link[=get_auth]{get_auth()}}.}
 
 \item{samples}{optional character vector of ScPCA sample IDs (e.g. "SCPCS000001").}
 
@@ -23,6 +21,9 @@ replace_dataset_data(
 all samples from each project are included.}
 
 \item{include_bulk}{logical; whether to include bulk RNA-seq files. Default is FALSE.}
+
+\item{auth_token}{an authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
+\code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
 the updated dataset detail as a list (invisibly)
@@ -39,6 +40,6 @@ A dataset that has already been started cannot be updated.
 }
 \examples{
 \dontrun{
-replace_dataset_data(ds, auth_token = token, samples = c("SCPCS000001", "SCPCS000002"))
+replace_dataset_data(ds, samples = c("SCPCS000001", "SCPCS000002"))
 }
 }

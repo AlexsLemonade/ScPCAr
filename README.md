@@ -25,17 +25,18 @@ library(ScPCAr)
 # First, look at the terms of use
 view_terms()
 
-# Get an authentication token for use with the ScPCA Portal
-auth_token <- get_auth(email = "your.email@example.com", agree = TRUE)
+# Get an authentication token for use with the ScPCA Portal.
+# This stores the token in the `SCPCA_AUTH_TOKEN` environment variable,
+# which the download functions read automatically.
+get_auth(email = "your.email@example.com", agree = TRUE)
 
 # Get the sample metadata for a project
 sample_metadata <- get_sample_metadata(project_id = "SCPCP000001")
 
-# Download a data for a sample
+# Download data for a sample
 # this function returns a vector of the downloaded file paths
 file_paths <- download_sample(
   sample_id = "SCPCS000001",
-  auth_token = auth_token,
   destination = "scpca_data",
   format = "sce"
 )

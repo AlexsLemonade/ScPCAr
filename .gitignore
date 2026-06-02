@@ -53,3 +53,4 @@ rsconnect/
 .Rproj.user
 docs
 inst/doc
+.claude/settings.local.json
