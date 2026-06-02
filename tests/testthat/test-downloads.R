@@ -84,14 +84,14 @@ test_that("download_sample validates input parameters", {
   )
 })
 
-test_that("check_destination warns when destination looks like an auth token (UUID)", {
+test_that("check_destination_is_auth warns when destination looks like an auth token (UUID)", {
   # auth_token is the last argument, so a positionally-passed token lands in destination
   expect_warning(
-    check_destination("123e4567-e89b-12d3-a456-426614174000"),
+    check_destination_is_auth("123e4567-e89b-12d3-a456-426614174000"),
     "looks like an authorization token"
   )
   # a normal directory path does not warn
-  expect_no_warning(check_destination("scpca_data"))
+  expect_no_warning(check_destination_is_auth("scpca_data"))
 })
 
 test_that("download_project validates input parameters", {

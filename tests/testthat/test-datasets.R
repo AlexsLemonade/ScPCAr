@@ -1,3 +1,6 @@
+DATASET_ID <- "00000000-0000-0000-0000-000000000001"
+DATASET_ID_404 <- "00000000-0000-0000-0000-000000000404"
+
 test_that("get_ccdl_datasets returns a list of dataset objects", {
   with_mock_dir("ccdl_datasets", {
     result <- get_ccdl_datasets()
@@ -342,7 +345,7 @@ test_that("get_dataset_detail returns dataset with data and status fields", {
   local_mocked_bindings(
     req_perform = \(req, ...) {
       json_response(list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         format = "SINGLE_CELL_EXPERIMENT",
         data = list(
           SCPCP000001 = list(
@@ -359,10 +362,10 @@ test_that("get_dataset_detail returns dataset with data and status fields", {
     }
   )
 
-  result <- get_dataset_detail("00000000-0000-0000-0000-000000000001", auth_token = "test-token")
+  result <- get_dataset_detail(DATASET_ID, auth_token = "test-token")
 
   expect_type(result, "list")
-  expect_equal(result$id, "00000000-0000-0000-0000-000000000001")
+  expect_equal(result$id, DATASET_ID)
   expect_equal(result$format, "SINGLE_CELL_EXPERIMENT")
   expect_false(result$is_started)
   expect_false(result$is_succeeded)
@@ -372,7 +375,7 @@ test_that("get_dataset_detail returns data field with project and sample structu
   local_mocked_bindings(
     req_perform = \(req, ...) {
       json_response(list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         format = "SINGLE_CELL_EXPERIMENT",
         data = list(
           SCPCP000001 = list(
@@ -385,7 +388,7 @@ test_that("get_dataset_detail returns data field with project and sample structu
     }
   )
 
-  result <- get_dataset_detail("00000000-0000-0000-0000-000000000001", auth_token = "test-token")
+  result <- get_dataset_detail(DATASET_ID, auth_token = "test-token")
 
   expect_type(result$data, "list")
   expect_true("SCPCP000001" %in% names(result$data))
@@ -399,14 +402,14 @@ test_that("get_dataset_detail includes api-key header when auth_token is provide
   local_mocked_bindings(
     req_perform = \(req, ...) {
       json_response(list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         data = list(),
         api_key = httr2::req_get_headers(req, "reveal")$`api-key`
       ))
     }
   )
 
-  result <- get_dataset_detail("00000000-0000-0000-0000-000000000001", auth_token = "my-token")
+  result <- get_dataset_detail(DATASET_ID, auth_token = "my-token")
   expect_equal(result$api_key, "my-token")
 })
 
@@ -417,7 +420,7 @@ test_that("get_dataset_detail handles 404 errors correctly", {
   )
 
   expect_error(
-    get_dataset_detail("00000000-0000-0000-0000-000000000404", auth_token = "test-token"),
+    get_dataset_detail(DATASET_ID_404, auth_token = "test-token"),
     "not found"
   )
 })
@@ -425,13 +428,13 @@ test_that("get_dataset_detail handles 404 errors correctly", {
 test_that("get_dataset_detail accepts a list with $id in place of a string", {
   local_mocked_bindings(
     req_perform = \(req, ...) {
-      json_response(list(id = "00000000-0000-0000-0000-000000000001", data = list()))
+      json_response(list(id = DATASET_ID, data = list()))
     }
   )
 
-  dataset_list <- list(id = "00000000-0000-0000-0000-000000000001", data = list())
+  dataset_list <- list(id = DATASET_ID, data = list())
   result <- get_dataset_detail(dataset_list, auth_token = "test-token")
-  expect_equal(result$id, "00000000-0000-0000-0000-000000000001")
+  expect_equal(result$id, DATASET_ID)
 })
 
 test_that("get_dataset_detail errors when list has no $id element", {
@@ -530,12 +533,12 @@ test_that("get_ccdl_dataset_detail returns dataset fields including download_url
 
 test_that("resolve_dataset_id accepts a string and a list with $id", {
   expect_equal(
-    resolve_dataset_id("00000000-0000-0000-0000-000000000001"),
-    "00000000-0000-0000-0000-000000000001"
+    resolve_dataset_id(DATASET_ID),
+    DATASET_ID
   )
   expect_equal(
-    resolve_dataset_id(list(id = "00000000-0000-0000-0000-000000000001", data = list())),
-    "00000000-0000-0000-0000-000000000001"
+    resolve_dataset_id(list(id = DATASET_ID, data = list())),
+    DATASET_ID
   )
 })
 
@@ -556,7 +559,7 @@ test_that("resolve_dataset_id errors when id is not a valid UUID", {
 
 test_that("replace_dataset_data errors when neither samples nor projects are provided", {
   expect_error(
-    replace_dataset_data("00000000-0000-0000-0000-000000000001", auth_token = "token"),
+    replace_dataset_data(DATASET_ID, auth_token = "token"),
     "At least one of 'samples' or 'projects' must be provided"
   )
 })
@@ -580,7 +583,7 @@ test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
   )
 
   result <- replace_dataset_data(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token",
     samples = "SCPCS000001"
   )
@@ -603,7 +606,7 @@ test_that("set_dataset_email PUTs a new email", {
   )
 
   result <- set_dataset_email(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token",
     email = "user@example.com"
   )
@@ -615,7 +618,7 @@ test_that("set_dataset_email PUTs a new email", {
 test_that("set_dataset_email errors when email is not a single string", {
   expect_error(
     set_dataset_email(
-      "00000000-0000-0000-0000-000000000001",
+      DATASET_ID,
       auth_token = "token",
       email = c("a@b.com", "c@d.com")
     ),
@@ -802,7 +805,7 @@ test_that("add_dataset_samples merges new samples into existing data and PUTs", 
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
       list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         data = list(
           SCPCP000001 = list(
             SINGLE_CELL = list("SCPCS000001"),
@@ -828,7 +831,7 @@ test_that("add_dataset_samples merges new samples into existing data and PUTs", 
   )
 
   result <- add_dataset_samples(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token",
     samples = "SCPCS000002"
   )
@@ -844,7 +847,7 @@ test_that("remove_dataset_samples removes a project and PUTs", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
       list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         data = list(
           SCPCP000001 = list(
             SINGLE_CELL = list("SCPCS000001"),
@@ -866,7 +869,7 @@ test_that("remove_dataset_samples removes a project and PUTs", {
   )
 
   result <- remove_dataset_samples(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token",
     projects = "SCPCP000002"
   )
