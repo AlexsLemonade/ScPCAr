@@ -3,6 +3,8 @@
 #' @param resource API resource to query, e.g. "projects", default is "" (base URL)
 #' @param body optional named list to include as JSON body in the request
 #' @param auth_token optional API authentication token
+#' @param method optional HTTP method to use (e.g. "PATCH"). When NULL (the
+#'   default), httr2 infers the method: POST when a body is present, otherwise GET.
 #' @param ... additional query parameters to include in the request
 #'
 #' @keywords internal
@@ -10,7 +12,7 @@
 #' @import httr2
 #'
 #' @returns a httr2 request object
-scpca_request <- function(resource = "", body = list(), auth_token = "", ...) {
+scpca_request <- function(resource = "", body = list(), auth_token = "", method = NULL, ...) {
   stopifnot(
     "body must be a named list" = is.list(body) && (length(body) == 0 || !is.null(names(body)))
   )
@@ -29,6 +31,10 @@ scpca_request <- function(resource = "", body = list(), auth_token = "", ...) {
 
   if (nchar(auth_token) > 0) {
     req <- req |> req_headers_redacted(`api-key` = auth_token)
+  }
+
+  if (!is.null(method)) {
+    req <- req |> req_method(method)
   }
 
   req
