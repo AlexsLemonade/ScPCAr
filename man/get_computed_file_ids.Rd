@@ -20,6 +20,6 @@ list(format = "SINGLE_CELL_EXPERIMENT", modality = "!SPATIAL").}
 a character vector of computed file ids matching the filtering criteria
 }
 \description{
-Get computed file ids from a sample info list, optionally filtered by criteria
+\strong{Deprecated.} The computed-files endpoint is being removed from the API.
 }
 \keyword{internal}

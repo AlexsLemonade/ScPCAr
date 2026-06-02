@@ -15,6 +15,6 @@ computed_files_filter(
 a list suitable for passing as the \code{filters} argument to \code{\link[=get_computed_file_ids]{get_computed_file_ids()}}.
 }
 \description{
-Helper function to create a filtering list for computed files by format
+\strong{Deprecated.} The computed-files endpoint is being removed from the API.
 }
 \keyword{internal}
