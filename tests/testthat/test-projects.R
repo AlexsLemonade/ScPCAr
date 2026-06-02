@@ -128,16 +128,71 @@ test_that("get_project_samples returns simplified data frame by default", {
 })
 
 
-test_that("get_project_metadata_url works as expected", {
-  with_mock_dir("project_info", {
-    token <- "mock-token-123"
-    download_url <- get_project_metadata_url("SCPCP000001", token)
+test_that("get_project_metadata_url returns the succeeded metadata dataset URL", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(project_id, metadata_only, auth_token) {
+      list(
+        list(
+          is_succeeded = TRUE,
+          download_url = "https://example.com/SCPCP000001_ALL_METADATA.zip"
+        )
+      )
+    }
+  )
 
-    # Verify the download URL format
-    expect_type(download_url, "character")
-    expect_true(grepl("^https://", download_url))
-    expect_true(grepl("SCPCP000001", download_url))
-  })
+  download_url <- get_project_metadata_url("SCPCP000001", "mock-token-123")
+
+  # Verify the download URL format
+  expect_type(download_url, "character")
+  expect_true(grepl("^https://", download_url))
+  expect_true(grepl("SCPCP000001", download_url))
+})
+
+test_that("get_project_metadata_url warns and uses the first when several exist", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(project_id, metadata_only, auth_token) {
+      list(
+        list(is_succeeded = TRUE, download_url = "https://example.com/first.zip"),
+        list(is_succeeded = TRUE, download_url = "https://example.com/second.zip")
+      )
+    }
+  )
+
+  expect_warning(
+    download_url <- get_project_metadata_url("SCPCP000001", "mock-token-123"),
+    "Multiple ScPCA metadata datasets found for project `SCPCP000001`"
+  )
+  expect_equal(download_url, "https://example.com/first.zip")
+})
+
+test_that("get_project_metadata_url skips datasets that have not succeeded", {
+  # an dataset with is_suceeeded= FALSE should be filtered out, leaving no usable dataset
+  local_mocked_bindings(
+    get_ccdl_datasets = function(project_id, metadata_only, auth_token) {
+      list(
+        list(
+          is_succeeded = FALSE,
+          download_url = "https://example.com/SCPCP000001_ALL_METADATA.zip"
+        )
+      )
+    }
+  )
+
+  expect_error(
+    get_project_metadata_url("SCPCP000001", "mock-token-123"),
+    "No ScPCA metadata dataset is available for project `SCPCP000001`"
+  )
+})
+
+test_that("get_project_metadata_url errors when no metadata dataset exists", {
+  local_mocked_bindings(
+    get_ccdl_datasets = function(project_id, metadata_only, auth_token) list()
+  )
+
+  expect_error(
+    get_project_metadata_url("SCPCP000001", "mock-token-123"),
+    "No ScPCA metadata dataset is available for project `SCPCP000001`"
+  )
 })
 
 test_that("get_project_libraries reads data correctly", {
