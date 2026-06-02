@@ -451,6 +451,71 @@ test_that("get_dataset_detail errors when dataset is not a string or list", {
   )
 })
 
+# get_dataset_status tests
+
+test_that("get_dataset_status maps detail status fields to a status string", {
+  detail <- NULL
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) detail
+  )
+
+  detail <- list(is_started = FALSE)
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "pending")
+
+  detail <- list(is_started = TRUE)
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
+
+  detail <- list(is_processing = TRUE)
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
+
+  detail <- list(is_processing = TRUE, is_started = FALSE)
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
+
+  detail <- list(is_started = TRUE, is_succeeded = TRUE)
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "succeeded")
+
+  detail <- list(is_started = TRUE, is_failed = TRUE)
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "failed")
+
+  # a failed dataset is reported as failed even if is_succeeded is also set
+  detail <- list(is_succeeded = TRUE, is_failed = TRUE)
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "failed")
+})
+
+test_that("get_dataset_status passes the resolved auth_token to get_dataset_detail", {
+  captured_token <- NULL
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      captured_token <<- auth_token
+      list(is_started = TRUE, is_succeeded = TRUE)
+    }
+  )
+
+  get_dataset_status(DATASET_ID, auth_token = "my-token")
+  expect_equal(captured_token, "my-token")
+})
+
+test_that("get_dataset_status reads auth_token from the SCPCA_AUTH_TOKEN environment variable", {
+  withr::local_envvar(SCPCA_AUTH_TOKEN = "env-token")
+  captured_token <- NULL
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      captured_token <<- auth_token
+      list(is_started = TRUE, is_succeeded = TRUE)
+    }
+  )
+
+  get_dataset_status(DATASET_ID)
+  expect_equal(captured_token, "env-token")
+})
+
+test_that("get_dataset_status errors when auth_token is empty", {
+  expect_error(
+    get_dataset_status(DATASET_ID, auth_token = ""),
+    "Authorization token must be provided"
+  )
+})
+
 
 test_that("get_ccdl_dataset_detail returns dataset fields including download_url", {
   with_mock_dir("ccdl_dataset_detail", {
@@ -523,7 +588,7 @@ test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
   )
 
   expect_equal(captured_req$method, "PUT")
-  expect_match(captured_req$url, "datasets/00000000-0000-0000-0000-000000000001")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
   expect_null(result$format)
   expect_true("SCPCP000001" %in% names(result$data))
 })
@@ -545,7 +610,7 @@ test_that("set_dataset_email PUTs a new email", {
     email = "user@example.com"
   )
   expect_equal(captured_req$method, "PUT")
-  expect_match(captured_req$url, "datasets/00000000-0000-0000-0000-000000000001")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
   expect_equal(result$email, "user@example.com")
 })
 
@@ -557,6 +622,98 @@ test_that("set_dataset_email errors when email is not a single string", {
       email = c("a@b.com", "c@d.com")
     ),
     "email must be a single character string"
+  )
+})
+
+test_that("set_dataset_email surfaces the generic conflict error on a locked dataset", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_409", message = "Conflict")
+  )
+
+  expect_error(
+    set_dataset_email(
+      DATASET_ID,
+      email = "user@example.com",
+      auth_token = "token"
+    ),
+    "Cannot modify dataset"
+  )
+})
+
+# start_dataset_processing tests
+
+test_that("start_dataset_processing PUTs start = TRUE", {
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform = \(req, ...) {
+      captured_req <<- req
+      json_response(req$body$data)
+    }
+  )
+
+  result <- NULL
+  expect_message(
+    {
+      result <- start_dataset_processing(
+        DATASET_ID,
+        auth_token = "token"
+      )
+    },
+    "processing started"
+  )
+  expect_equal(captured_req$method, "PUT")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
+  expect_true(result$start)
+  expect_null(result$email)
+})
+
+test_that("start_dataset_processing includes email in the same request when provided", {
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform = \(req, ...) {
+      captured_req <<- req
+      json_response(req$body$data)
+    }
+  )
+
+  result <- suppressMessages(
+    start_dataset_processing(
+      DATASET_ID,
+      email = "user@example.com",
+      auth_token = "token"
+    )
+  )
+  expect_equal(captured_req$method, "PUT")
+  expect_true(result$start)
+  expect_equal(result$email, "user@example.com")
+})
+
+test_that("start_dataset_processing errors when email is not a single string", {
+  expect_error(
+    start_dataset_processing(
+      DATASET_ID,
+      email = c("a@b.com", "c@d.com"),
+      auth_token = "token"
+    ),
+    "email must be a single character string"
+  )
+})
+
+test_that("start_dataset_processing errors when auth_token is empty", {
+  expect_error(
+    start_dataset_processing(DATASET_ID, auth_token = ""),
+    "Authorization token must be provided"
+  )
+})
+
+test_that("start_dataset_processing gives a start-specific error when already processing", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_409", message = "Conflict")
+  )
+
+  expect_error(
+    start_dataset_processing(DATASET_ID, auth_token = "token"),
+    "Cannot start processing for dataset"
   )
 })
 

@@ -5,23 +5,23 @@
 \title{Create a custom dataset on the ScPCA Portal}
 \usage{
 create_dataset(
-  format = "sce",
   samples = NULL,
   projects = NULL,
+  format = "sce",
   include_bulk = FALSE,
   email = NULL,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 }
 \arguments{
-\item{format}{the desired file format: "sce" (SingleCellExperiment, default) or
-"anndata" (AnnData/H5AD). Spatial data is not a valid format option here;
-spatial samples are always returned in Space Ranger format.}
-
 \item{samples}{optional character vector of ScPCA sample IDs (e.g. "SCPCS000001")}
 
 \item{projects}{optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
 all samples from each project are included}
+
+\item{format}{the desired file format: "sce" (SingleCellExperiment, default) or
+"anndata" (AnnData/H5AD). Spatial data is not a valid format option here;
+spatial samples are always returned in Space Ranger format.}
 
 \item{include_bulk}{logical; whether to include bulk RNA-seq files. Default is FALSE.}
 
