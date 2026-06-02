@@ -17,7 +17,6 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Imports:
     cli,
-    curl,
     dplyr,
     glue,
     httr2 (>= 1.2.0),
