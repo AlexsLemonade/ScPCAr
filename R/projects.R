@@ -210,12 +210,10 @@ get_project_libraries <- function(project_id, auth_token = Sys.getenv("SCPCA_AUT
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
 #' @param auth_token An authorization token obtained from [get_auth()]
 #'
-#' @returns A signed download URL for the project metadata file, taken from the
-#'  project's pre-built ScPCA metadata dataset. Errors if no succeeded metadata
-#'  dataset is available for the project, and warns (using the first) if more
-#'  than one is found.
-#'
-#' @import httr2
+#' @returns A named character vector: the value is the signed download URL for
+#'  the project metadata file and the name is the download filename. Errors if no
+#'  metadata dataset is available for the project, and warns if more than one is found
+#'  (returning the first value).
 #'
 #' @keywords internal
 #'
@@ -247,5 +245,7 @@ get_project_metadata_url <- function(project_id, auth_token) {
     ))
   }
 
-  metadata_datasets[[1]]$download_url
+  # Fetch the url and filename from dataset detail endpoint
+  detail <- get_ccdl_dataset_detail(metadata_datasets[[1]]$id, auth_token)
+  setNames(detail$download_url, detail$download_filename)
 }
