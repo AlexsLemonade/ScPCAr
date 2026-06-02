@@ -1,19 +1,19 @@
 #' Warn about a misplaced auth token in the `destination` argument
 #'
-#' `auth_token` is the last argument of the download functions. If a caller
-#' passes a token positionally (as in earlier versions, where it came second),
-#' it would silently land in `destination`. Auth tokens are UUIDs, so a
-#' UUID-shaped `destination` almost certainly indicates this mistake; warn so the
-#' caller can spot it (the download itself will fail if the token is misplaced).
+#' `auth_token` was previously the second positional argument. If a caller
+#' passes a token positionally it would silently land in `destination`.
+#' Auth tokens are UUIDs, so a UUID-shaped `destination` almost certainly indicates
+#' this mistake; warn so the caller can spot it.
+#' (the download itself will fail if the token is misplaced).
 #'
 #' @param destination the `destination` argument to validate
 #'
 #' @noRd
-check_destination <- function(destination) {
+warn_destination_is_auth <- function(destination) {
   if (is_uuid(destination)) {
     warning(
       "`destination` looks like an authorization token (a UUID), not a directory path.",
-      " `auth_token` is now the last argument: pass your token with `auth_token = ...`",
+      " `auth_token` is no longer the second positional argument: pass your token with `auth_token = ...`",
       " or set the SCPCA_AUTH_TOKEN environment variable (see `get_auth()`).",
       call. = FALSE
     )
@@ -83,7 +83,7 @@ download_sample <- function(
   quiet = FALSE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  check_destination(destination)
+  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
@@ -193,7 +193,7 @@ download_project <- function(
   unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  check_destination(destination)
+  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id),
@@ -456,7 +456,7 @@ download_dataset <- function(
   unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  check_destination(destination)
+  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "unzip must be a logical value" = is.logical(unzip) && length(unzip) == 1,
@@ -533,7 +533,7 @@ wait_and_download_dataset <- function(
   unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  check_destination(destination)
+  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "poll_interval must be a single non-negative number of minutes" = is.numeric(poll_interval) &&

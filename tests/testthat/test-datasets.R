@@ -1,3 +1,6 @@
+DATASET_ID <- "00000000-0000-0000-0000-000000000001"
+DATASET_ID_404 <- "00000000-0000-0000-0000-000000000404"
+
 test_that("get_ccdl_datasets returns a list of dataset objects", {
   with_mock_dir("ccdl_datasets", {
     result <- get_ccdl_datasets()
@@ -342,7 +345,7 @@ test_that("get_dataset_detail returns dataset with data and status fields", {
   local_mocked_bindings(
     req_perform = \(req, ...) {
       json_response(list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         format = "SINGLE_CELL_EXPERIMENT",
         data = list(
           SCPCP000001 = list(
@@ -359,10 +362,10 @@ test_that("get_dataset_detail returns dataset with data and status fields", {
     }
   )
 
-  result <- get_dataset_detail("00000000-0000-0000-0000-000000000001", auth_token = "test-token")
+  result <- get_dataset_detail(DATASET_ID, auth_token = "test-token")
 
   expect_type(result, "list")
-  expect_equal(result$id, "00000000-0000-0000-0000-000000000001")
+  expect_equal(result$id, DATASET_ID)
   expect_equal(result$format, "SINGLE_CELL_EXPERIMENT")
   expect_false(result$is_started)
   expect_false(result$is_succeeded)
@@ -372,7 +375,7 @@ test_that("get_dataset_detail returns data field with project and sample structu
   local_mocked_bindings(
     req_perform = \(req, ...) {
       json_response(list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         format = "SINGLE_CELL_EXPERIMENT",
         data = list(
           SCPCP000001 = list(
@@ -385,7 +388,7 @@ test_that("get_dataset_detail returns data field with project and sample structu
     }
   )
 
-  result <- get_dataset_detail("00000000-0000-0000-0000-000000000001", auth_token = "test-token")
+  result <- get_dataset_detail(DATASET_ID, auth_token = "test-token")
 
   expect_type(result$data, "list")
   expect_true("SCPCP000001" %in% names(result$data))
@@ -399,14 +402,14 @@ test_that("get_dataset_detail includes api-key header when auth_token is provide
   local_mocked_bindings(
     req_perform = \(req, ...) {
       json_response(list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         data = list(),
         api_key = httr2::req_get_headers(req, "reveal")$`api-key`
       ))
     }
   )
 
-  result <- get_dataset_detail("00000000-0000-0000-0000-000000000001", auth_token = "my-token")
+  result <- get_dataset_detail(DATASET_ID, auth_token = "my-token")
   expect_equal(result$api_key, "my-token")
 })
 
@@ -417,7 +420,7 @@ test_that("get_dataset_detail handles 404 errors correctly", {
   )
 
   expect_error(
-    get_dataset_detail("00000000-0000-0000-0000-000000000404", auth_token = "test-token"),
+    get_dataset_detail(DATASET_ID_404, auth_token = "test-token"),
     "not found"
   )
 })
@@ -450,13 +453,13 @@ test_that("get_ccdl_datasets handles 403 errors with an authorization message", 
 test_that("get_dataset_detail accepts a list with $id in place of a string", {
   local_mocked_bindings(
     req_perform = \(req, ...) {
-      json_response(list(id = "00000000-0000-0000-0000-000000000001", data = list()))
+      json_response(list(id = DATASET_ID, data = list()))
     }
   )
 
-  dataset_list <- list(id = "00000000-0000-0000-0000-000000000001", data = list())
+  dataset_list <- list(id = DATASET_ID, data = list())
   result <- get_dataset_detail(dataset_list, auth_token = "test-token")
-  expect_equal(result$id, "00000000-0000-0000-0000-000000000001")
+  expect_equal(result$id, DATASET_ID)
 })
 
 test_that("get_dataset_detail errors when list has no $id element", {
@@ -480,36 +483,35 @@ test_that("get_dataset_status maps detail status fields to a status string", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) detail
   )
-  id <- "00000000-0000-0000-0000-000000000001"
 
   detail <- list(is_started = FALSE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "pending")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "pending")
 
   detail <- list(is_started = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
 
   detail <- list(is_processing = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
 
   detail <- list(is_processing = TRUE, is_started = FALSE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "processing")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "processing")
 
   detail <- list(is_started = TRUE, is_succeeded = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "succeeded")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "succeeded")
 
   detail <- list(is_started = TRUE, is_failed = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "failed")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "failed")
 
   # a failed dataset is reported as failed even if is_succeeded is also set
   detail <- list(is_succeeded = TRUE, is_failed = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "failed")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "failed")
 
   detail <- list(is_expired = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "expired")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "expired")
 
   # expired takes priority over succeeded (expired datasets likely still have is_succeeded = TRUE)
   detail <- list(is_succeeded = TRUE, is_expired = TRUE)
-  expect_equal(get_dataset_status(id, auth_token = "token"), "expired")
+  expect_equal(get_dataset_status(DATASET_ID, auth_token = "token"), "expired")
 })
 
 test_that("get_dataset_status passes the resolved auth_token to get_dataset_detail", {
@@ -521,7 +523,7 @@ test_that("get_dataset_status passes the resolved auth_token to get_dataset_deta
     }
   )
 
-  get_dataset_status("00000000-0000-0000-0000-000000000001", auth_token = "my-token")
+  get_dataset_status(DATASET_ID, auth_token = "my-token")
   expect_equal(captured_token, "my-token")
 })
 
@@ -535,13 +537,13 @@ test_that("get_dataset_status reads auth_token from the SCPCA_AUTH_TOKEN environ
     }
   )
 
-  get_dataset_status("00000000-0000-0000-0000-000000000001")
+  get_dataset_status(DATASET_ID)
   expect_equal(captured_token, "env-token")
 })
 
 test_that("get_dataset_status errors when auth_token is empty", {
   expect_error(
-    get_dataset_status("00000000-0000-0000-0000-000000000001", auth_token = ""),
+    get_dataset_status(DATASET_ID, auth_token = ""),
     "Authorization token must be provided"
   )
 })
@@ -562,12 +564,12 @@ test_that("get_ccdl_dataset_detail returns dataset fields including download_url
 
 test_that("resolve_dataset_id accepts a string and a list with $id", {
   expect_equal(
-    resolve_dataset_id("00000000-0000-0000-0000-000000000001"),
-    "00000000-0000-0000-0000-000000000001"
+    resolve_dataset_id(DATASET_ID),
+    DATASET_ID
   )
   expect_equal(
-    resolve_dataset_id(list(id = "00000000-0000-0000-0000-000000000001", data = list())),
-    "00000000-0000-0000-0000-000000000001"
+    resolve_dataset_id(list(id = DATASET_ID, data = list())),
+    DATASET_ID
   )
 })
 
@@ -588,7 +590,7 @@ test_that("resolve_dataset_id errors when id is not a valid UUID", {
 
 test_that("replace_dataset_data errors when neither samples nor projects are provided", {
   expect_error(
-    replace_dataset_data("00000000-0000-0000-0000-000000000001", auth_token = "token"),
+    replace_dataset_data(DATASET_ID, auth_token = "token"),
     "At least one of 'samples' or 'projects' must be provided"
   )
 })
@@ -612,13 +614,13 @@ test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
   )
 
   result <- replace_dataset_data(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token",
     samples = "SCPCS000001"
   )
 
   expect_equal(captured_req$method, "PUT")
-  expect_match(captured_req$url, "datasets/00000000-0000-0000-0000-000000000001")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
   expect_null(result$format)
   expect_true("SCPCP000001" %in% names(result$data))
 })
@@ -635,19 +637,19 @@ test_that("set_dataset_email PUTs a new email", {
   )
 
   result <- set_dataset_email(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token",
     email = "user@example.com"
   )
   expect_equal(captured_req$method, "PUT")
-  expect_match(captured_req$url, "datasets/00000000-0000-0000-0000-000000000001")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
   expect_equal(result$email, "user@example.com")
 })
 
 test_that("set_dataset_email errors when email is not a single string", {
   expect_error(
     set_dataset_email(
-      "00000000-0000-0000-0000-000000000001",
+      DATASET_ID,
       auth_token = "token",
       email = c("a@b.com", "c@d.com")
     ),
@@ -662,7 +664,7 @@ test_that("set_dataset_email surfaces the generic conflict error on a locked dat
 
   expect_error(
     set_dataset_email(
-      "00000000-0000-0000-0000-000000000001",
+      DATASET_ID,
       email = "user@example.com",
       auth_token = "token"
     ),
@@ -685,14 +687,14 @@ test_that("start_dataset_processing PUTs start = TRUE", {
   expect_message(
     {
       result <- start_dataset_processing(
-        "00000000-0000-0000-0000-000000000001",
+        DATASET_ID,
         auth_token = "token"
       )
     },
     "processing started"
   )
   expect_equal(captured_req$method, "PUT")
-  expect_match(captured_req$url, "datasets/00000000-0000-0000-0000-000000000001")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
   expect_true(result$start)
   expect_null(result$email)
 })
@@ -708,7 +710,7 @@ test_that("start_dataset_processing includes email in the same request when prov
 
   result <- suppressMessages(
     start_dataset_processing(
-      "00000000-0000-0000-0000-000000000001",
+      DATASET_ID,
       email = "user@example.com",
       auth_token = "token"
     )
@@ -721,7 +723,7 @@ test_that("start_dataset_processing includes email in the same request when prov
 test_that("start_dataset_processing errors when email is not a single string", {
   expect_error(
     start_dataset_processing(
-      "00000000-0000-0000-0000-000000000001",
+      DATASET_ID,
       email = c("a@b.com", "c@d.com"),
       auth_token = "token"
     ),
@@ -731,7 +733,7 @@ test_that("start_dataset_processing errors when email is not a single string", {
 
 test_that("start_dataset_processing errors when auth_token is empty", {
   expect_error(
-    start_dataset_processing("00000000-0000-0000-0000-000000000001", auth_token = ""),
+    start_dataset_processing(DATASET_ID, auth_token = ""),
     "Authorization token must be provided"
   )
 })
@@ -742,7 +744,7 @@ test_that("start_dataset_processing gives a start-specific error when already pr
   )
 
   expect_error(
-    start_dataset_processing("00000000-0000-0000-0000-000000000001", auth_token = "token"),
+    start_dataset_processing(DATASET_ID, auth_token = "token"),
     "Cannot start processing for dataset"
   )
 })
@@ -834,7 +836,7 @@ test_that("add_dataset_samples merges new samples into existing data and PUTs", 
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
       list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         data = list(
           SCPCP000001 = list(
             SINGLE_CELL = list("SCPCS000001"),
@@ -860,7 +862,7 @@ test_that("add_dataset_samples merges new samples into existing data and PUTs", 
   )
 
   result <- add_dataset_samples(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token",
     samples = "SCPCS000002"
   )
@@ -876,7 +878,7 @@ test_that("remove_dataset_samples removes a project and PUTs", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
       list(
-        id = "00000000-0000-0000-0000-000000000001",
+        id = DATASET_ID,
         data = list(
           SCPCP000001 = list(
             SINGLE_CELL = list("SCPCS000001"),
@@ -898,7 +900,7 @@ test_that("remove_dataset_samples removes a project and PUTs", {
   )
 
   result <- remove_dataset_samples(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token",
     projects = "SCPCP000002"
   )
