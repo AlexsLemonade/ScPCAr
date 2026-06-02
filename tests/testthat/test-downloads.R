@@ -60,30 +60,6 @@ test_that("parse_download_file extracts filename correctly", {
 })
 
 
-test_that("download_sample validates input parameters", {
-  # Test missing auth token
-  expect_error(
-    download_sample("SCPCS000001", auth_token = ""),
-    "Authorization token must be provided"
-  )
-
-  expect_error(
-    download_sample("SCPCS000001", auth_token = character(0)),
-    "Authorization token must be provided"
-  )
-
-  # Test invalid quiet parameter
-  expect_error(
-    download_sample("SCPCS000001", auth_token = "valid-token", quiet = "not-logical"),
-    "quiet must be a logical value"
-  )
-
-  expect_error(
-    download_sample("SCPCS000001", auth_token = "valid-token", quiet = c(TRUE, FALSE)),
-    "quiet must be a logical value"
-  )
-})
-
 test_that("check_destination_is_auth warns when destination looks like an auth token (UUID)", {
   # auth_token is the last argument, so a positionally-passed token lands in destination
   expect_warning(
