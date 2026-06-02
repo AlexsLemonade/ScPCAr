@@ -18,7 +18,6 @@ Roxygen: list(markdown = TRUE)
 Depends: R (>= 4.1.0)
 Imports:
     cli,
-    curl,
     dplyr,
     glue,
     httr2 (>= 1.2.0),
