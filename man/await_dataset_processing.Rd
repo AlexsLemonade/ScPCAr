@@ -33,7 +33,7 @@ the dataset ID string (invisibly)
 }
 \description{
 Polls the dataset processing status until it reaches "succeeded", then
-returns invisibly.
+returns the dataset ID invisibly.
 Errors if processing fails, expires unexpectedly, or the timeout is reached.
 }
 \details{
