@@ -750,8 +750,8 @@ test_that("start_dataset_processing emits a message and sends no request when al
     }
   )
 
-  result <- expect_message(
-    start_dataset_processing(DATASET_ID, auth_token = "token"),
+  expect_message(
+    result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
     "is already processing"
   )
   expect_null(result)
@@ -768,8 +768,8 @@ test_that("start_dataset_processing emits a message and sends no request when al
     }
   )
 
-  result <- expect_message(
-    start_dataset_processing(DATASET_ID, auth_token = "token"),
+  expect_message(
+    result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
     "has already completed processing"
   )
   expect_null(result)
