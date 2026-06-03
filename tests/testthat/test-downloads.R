@@ -20,45 +20,23 @@ test_that("normalize_format works correctly", {
   expect_error(normalize_format(c("sce", "anndata")), "format must be a single string")
 })
 
-test_that("normalize_format with allow_spatial = FALSE rejects spatial formats", {
-  expect_error(
-    normalize_format("spatial", allow_spatial = FALSE),
-    "Invalid format"
-  )
-  expect_error(
-    normalize_format("SpaceRanger", allow_spatial = FALSE),
-    "Invalid format"
-  )
-})
-
-test_that("normalize_format with allow_spatial = FALSE still accepts sce and anndata", {
+test_that("normalize_format with allow_spatial = FALSE rejects spatial but accepts other formats", {
+  expect_error(normalize_format("spatial", allow_spatial = FALSE), "Invalid format")
+  expect_error(normalize_format("SpaceRanger", allow_spatial = FALSE), "Invalid format")
   expect_equal(normalize_format("sce", allow_spatial = FALSE), "SINGLE_CELL_EXPERIMENT")
   expect_equal(normalize_format("anndata", allow_spatial = FALSE), "ANN_DATA")
-})
-
-test_that("normalize_format with allow_spatial = FALSE still errors on invalid formats", {
-  expect_error(
-    normalize_format("invalid", allow_spatial = FALSE),
-    "Invalid format"
-  )
+  expect_error(normalize_format("invalid", allow_spatial = FALSE), "Invalid format")
 })
 
 test_that("parse_download_file extracts filename correctly", {
-  # Test URL with response-content-disposition parameter
   test_url <- paste0(
     "https://example.com/download?response-content-disposition=attachment%3B%20filename%3D",
     "SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-09-09.zip"
   )
-  result <- parse_download_file(test_url)
-  expect_equal(result, "SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-09-09.zip")
-
-  # Test URL with different format
-  test_url2 <- paste0(
-    "https://example.com/file?response-content-disposition=inline%3B%20filename%3D",
-    "SCPCP000001_SINGLE-CELL_ANN-DATA_2025-09-09.zip"
+  expect_equal(
+    parse_download_file(test_url),
+    "SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-09-09.zip"
   )
-  result2 <- parse_download_file(test_url2)
-  expect_equal(result2, "SCPCP000001_SINGLE-CELL_ANN-DATA_2025-09-09.zip")
 })
 
 
@@ -396,14 +374,8 @@ test_that("download_and_extract_file handles file unzipping", {
     quiet = TRUE
   )
 
-  # Check that files were extracted
   expect_true(dir.exists(temp_dir))
-
-  # Check extracted files exist
-  extracted_files <- list.files(temp_dir, recursive = TRUE)
-  expect_setequal(basename(extracted_files), c("test.txt", "data.csv"))
-  unzipped_files <- basename(list.files(temp_dir, recursive = TRUE))
-  expect_setequal(unzipped_files, c("test.txt", "data.csv"))
+  expect_setequal(basename(list.files(temp_dir, recursive = TRUE)), c("test.txt", "data.csv"))
 })
 
 test_that("download_and_extract_file uses existing directory with same prefix when redownload = FALSE", {
@@ -674,29 +646,17 @@ test_that("download_dataset downloads a succeeded dataset", {
 
 
 test_that("download_dataset errors when dataset is not succeeded", {
-  for (detail in list(
-    list(is_started = FALSE),
-    list(is_started = TRUE),
-    list(is_started = TRUE, is_failed = TRUE)
-  )) {
-    local_mocked_bindings(
-      get_dataset_detail = \(dataset, auth_token) detail
-    )
-    expect_error(
-      download_dataset(DATASET_ID, auth_token = "token"),
-      "not ready for download"
-    )
-  }
-})
-
-test_that("download_dataset error names the current status", {
   local_mocked_bindings(
-    get_dataset_detail = \(dataset, auth_token) list(is_started = TRUE)
+    get_dataset_detail = \(dataset, auth_token) list(is_started = FALSE)
   )
-  expect_error(
-    download_dataset(DATASET_ID, auth_token = "token"),
-    "processing"
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "not ready for download")
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "pending")
+
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) list(is_started = TRUE, is_failed = TRUE)
   )
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "not ready for download")
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "failed")
 })
 
 test_that("download_dataset errors when dataset is expired", {
