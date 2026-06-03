@@ -93,19 +93,10 @@ resolve_dataset_id <- function(dataset) {
 #' @returns the API response as a list
 update_dataset <- function(dataset_id, body, auth_token) {
   # A 409 means the dataset is locked because processing has started.
-  # Give a start-specific message when the failed request was itself a
-  # request to start processing.
-  conflict_msg <- if (isTRUE(body$start)) {
-    glue::glue(
-      "Cannot start processing for dataset `{dataset_id}`:",
-      " it has already started processing or has completed."
-    )
-  } else {
-    glue::glue(
-      "Cannot modify ScPCA dataset `{dataset_id}`:",
-      " Datasets are locked once processing has started."
-    )
-  }
+  conflict_msg <- glue::glue(
+    "Cannot modify ScPCA dataset `{dataset_id}`:",
+    " Datasets are locked once processing has started."
+  )
 
   scpca_request(
     resource = paste0("datasets/", dataset_id),
@@ -231,17 +222,16 @@ get_dataset_detail <- function(dataset, auth_token) {
 #' Get the processing status of a custom dataset
 #'
 #' Returns a single string describing where a dataset is in the processing
-#' lifecycle, by fetching the dataset detail and translating its status fields
-#' (`is_started`, `is_succeeded`, `is_failed`). A dataset that has been started
-#' but has neither succeeded nor failed is reported as "processing".
+#' lifecycle.
 #'
 #' Possible values are:
-#' \describe{
-#'   \item{"pending"}{the dataset has not been started}
-#'   \item{"processing"}{the dataset has been started but is not yet finished}
-#'   \item{"succeeded"}{processing finished and the dataset is ready to download}
-#'   \item{"failed"}{processing failed}
-#' }
+#'
+#' * `"pending"`: the dataset has not been started
+#' * `"processing"`: the dataset has been started but is not yet finished
+#' * `"succeeded"`: processing finished and the dataset is ready to download
+#' * `"expired"`: processing completed but the generated download has since
+#'   expired and must be regenerated
+#' * `"failed"`: processing failed
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element,
 #'   such as the return value of [create_dataset()].
@@ -249,7 +239,7 @@ get_dataset_detail <- function(dataset, auth_token) {
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
 #' @returns a single character string: one of "pending", "processing",
-#'   "succeeded", or "failed".
+#'   "succeeded", "expired", or "failed".
 #'
 #' @import httr2
 #' @export
@@ -364,8 +354,13 @@ set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUT
 #' built for download, by sending a PUT request that sets `start = TRUE`.
 #' Optionally sets the notification email as part of the same request.
 #'
-#' Once processing has started a dataset is locked and can no longer be
-#' modified; attempting to modify or re-start it will raise an error.
+#' Before sending the request the current dataset status is checked via
+#' [get_dataset_status()]:
+#'
+#' * A `"pending"` or `"expired"` dataset is started normally.
+#' * A `"failed"` dataset is retried with a warning.
+#' * A `"processing"` or `"succeeded"` dataset is already underway or done;
+#'   a message is emitted and no request is sent.
 #'
 #' @param dataset the dataset UUID string, or a list with an `$id` element,
 #'   such as the return value of [create_dataset()].
@@ -374,7 +369,9 @@ set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUT
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly)
+#' @returns the updated dataset detail as a list (invisibly) when a request is
+#'   sent, or `NULL` (invisibly) when the dataset is already processing or
+#'   completed.
 #'
 #' @import httr2
 #' @export
@@ -391,14 +388,32 @@ start_dataset_processing <- function(
 ) {
   auth_token <- resolve_auth_token(auth_token)
   dataset_id <- resolve_dataset_id(dataset)
-
-  body <- list(start = TRUE)
   if (!is.null(email)) {
     stopifnot(
       "email must be a single character string" = is.character(email) &&
         length(email) == 1 &&
         nchar(email) > 0
     )
+  }
+
+  status <- get_dataset_status(dataset_id, auth_token = auth_token)
+  if (status == "processing") {
+    message(glue::glue("ScPCA dataset {dataset_id} is already processing."))
+    return(invisible(NULL))
+  }
+  if (status == "succeeded") {
+    message(glue::glue("ScPCA dataset {dataset_id} has already completed processing."))
+    return(invisible(NULL))
+  }
+  if (status == "failed") {
+    warning(
+      glue::glue("ScPCA dataset {dataset_id} previously failed to process; retrying."),
+      call. = FALSE
+    )
+  }
+
+  body <- list(start = TRUE)
+  if (!is.null(email)) {
     body$email <- email
   }
 
