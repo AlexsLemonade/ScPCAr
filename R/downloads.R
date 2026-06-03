@@ -402,11 +402,18 @@ parse_download_file <- function(scpca_url) {
 
 #' Download a custom dataset's files from the ScPCA Portal
 #'
-#' Downloads and extracts the files for a custom dataset that has finished
-#' processing. The dataset must have a status of "succeeded"; use
-#' [get_dataset_status()] to check before calling this function, or use
-#' [wait_and_download_dataset()] to wait for processing to complete and then
-#' download in a single call.
+#' Downloads and optionally extracts the files for a custom dataset.
+#' If the dataset has completed processing and has a status of "succeeded",
+#' as determined by [get_dataset_status()], then the download will proceed
+#' immediately.
+#'
+#' If the dataset is not yet ready, or if processing has not yet been initiated
+#' with [start_dataset_processing()], you can set `await_processing = TRUE`
+#' to have `download_dataset()` wait for processing to complete (starting processing
+#' if needed) before downloading.
+#' Note that processing can take many minutes, with a minimum wait of approximately 1
+#' minute for very small datasets. If you do not want to wait with a blocked R session,
+#' it may be better to manually handle checking [get_dataset_status()] before download.
 #'
 #' The downloaded files are saved in a subdirectory of `destination`, named
 #' from the dataset's download filename (which includes the dataset ID, format,
@@ -421,9 +428,17 @@ parse_download_file <- function(scpca_url) {
 #'   same name as one of the downloaded files will not be deleted. Default is FALSE.
 #' @param redownload Whether to re-download if files from the same dataset already
 #'   exist. If FALSE, existing files will be returned. Default is FALSE.
-#' @param quiet Whether to suppress download progress messages. Default is FALSE.
 #' @param unzip Whether to unzip the downloaded file. Default is TRUE. When FALSE,
 #'   the zip file is saved directly to `destination` and its path is returned.
+#' @param quiet Whether to suppress download progress messages. Default is FALSE.
+#' @param await_processing Whether to wait for dataset processing to complete
+#'   before downloading. If `TRUE` and the dataset has not yet been started,
+#'   processing will be started automatically. Default is FALSE.
+#' @param poll_interval Number of minutes to wait between status checks when
+#'   `await_processing = TRUE`. Default is 0.5 (30 seconds).
+#' @param timeout Maximum number of minutes to wait for processing to complete
+#'   when `await_processing = TRUE`. Use `Inf` to wait indefinitely.
+#'   Default is 60 (1 hour).
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
@@ -444,34 +459,55 @@ parse_download_file <- function(scpca_url) {
 #' get_dataset_status(ds)
 #' download_dataset(ds, destination = "scpca_data")
 #'
-#' # Or use wait_and_download_dataset() to do all of this in one call
-#' wait_and_download_dataset(ds, start = TRUE, email = "user@example.com")
+#' # Wait for processing to complete and then download in one call
+#' download_dataset(ds, await_processing = TRUE)
 #' }
 download_dataset <- function(
   dataset,
   destination = "scpca_data",
   overwrite = FALSE,
   redownload = FALSE,
-  quiet = FALSE,
   unzip = TRUE,
+  quiet = FALSE,
+  await_processing = FALSE,
+  poll_interval = 0.5,
+  timeout = 60,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
   warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
-    "unzip must be a logical value" = is.logical(unzip) && length(unzip) == 1,
     "overwrite must be a logical value" = is.logical(overwrite) && length(overwrite) == 1,
     "redownload must be a logical value" = is.logical(redownload) && length(redownload) == 1,
-    "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
+    "unzip must be a logical value" = is.logical(unzip) && length(unzip) == 1,
+    "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
+    "await_processing must be a logical value" = is.logical(await_processing) &&
+      length(await_processing) == 1
   )
   dataset_id <- resolve_dataset_id(dataset)
+
+  if (await_processing) {
+    if (get_dataset_status(dataset_id, auth_token = auth_token) %in% c("pending", "expired")) {
+      start_dataset_processing(dataset_id, auth_token = auth_token)
+    }
+    await_dataset_processing(
+      dataset_id,
+      poll_interval = poll_interval,
+      timeout = timeout,
+      quiet = quiet,
+      auth_token = auth_token
+    )
+  }
+
   detail <- get_dataset_detail(dataset_id, auth_token)
 
   if (isTRUE(detail$is_expired)) {
     stop(
       glue::glue(
         "ScPCA dataset `{dataset_id}` has expired and is no longer available for download.",
-        " Use `wait_and_download_dataset()` to regenerate it."
+        " Use `start_dataset_processing(\"{dataset_id}\")` to reprocess the dataset.",
+        " Alternatively, rerun `download_dataset() with `await_processing = TRUE` to",
+        " restart processing and download when complete."
       ),
       call. = FALSE
     )
@@ -488,7 +524,9 @@ download_dataset <- function(
     stop(
       glue::glue(
         "ScPCA dataset `{dataset_id}` is not ready for download (status: {status}).",
-        " Use `wait_and_download_dataset()` to wait for processing to complete."
+        " Use `get_dataset_status(\"{dataset_id}\")` to monitor progress.",
+        " Alternatively, rerun `download_dataset() with `await_processing = TRUE` to",
+        " wait for processing and download when complete."
       ),
       call. = FALSE
     )
@@ -512,28 +550,38 @@ download_dataset <- function(
 }
 
 
-#' @rdname download_dataset
+#' Wait for a custom dataset to finish processing
+#'
+#' Polls the dataset processing status until it reaches "succeeded", then
+#' returns the dataset ID invisibly.
+#' Errors if processing fails, expires unexpectedly, or the timeout is reached.
+#'
+#' This function only waits — it does not start processing or download data.
+#' To start processing, use [start_dataset_processing()] first, or call
+#' [download_dataset()] with `await_processing = TRUE` to start, wait, and
+#' download in one step.
+#'
+#' @inheritParams download_dataset
+#'
+#' @returns the dataset ID string (invisibly)
+#'
+#' @import httr2
 #' @export
 #'
-#' @param email optional email address for the download notification. Only used
-#'   when `start = TRUE`. Passed to [start_dataset_processing()].
-#' @param poll_interval Number of minutes to wait between status checks.
-#'   Default is 0.5 (30 seconds).
-#' @param timeout Maximum number of minutes to wait for processing to complete.
-#'   Use `Inf` to wait indefinitely. Default is 60 (1 hour).
-wait_and_download_dataset <- function(
+#' @examples
+#' \dontrun{
+#' ds <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
+#' start_dataset_processing(ds, email = "user@example.com")
+#' await_dataset_processing(ds)
+#' download_dataset(ds)
+#' }
+await_dataset_processing <- function(
   dataset,
-  destination = "scpca_data",
-  email = NULL,
-  overwrite = FALSE,
-  redownload = FALSE,
   poll_interval = 0.5,
   timeout = 60,
   quiet = FALSE,
-  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
-  warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
     "poll_interval must be a single non-negative number of minutes" = is.numeric(poll_interval) &&
@@ -545,10 +593,6 @@ wait_and_download_dataset <- function(
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
   dataset_id <- resolve_dataset_id(dataset)
-
-  if (get_dataset_status(dataset_id, auth_token = auth_token) %in% c("pending", "expired")) {
-    start_dataset_processing(dataset_id, email = email, auth_token = auth_token)
-  }
 
   start_time <- Sys.time()
   status <- get_dataset_status(dataset_id, auth_token = auth_token)
@@ -616,13 +660,5 @@ wait_and_download_dataset <- function(
     cli::cli_progress_done()
   }
 
-  download_dataset(
-    dataset_id,
-    destination = destination,
-    unzip = unzip,
-    overwrite = overwrite,
-    redownload = redownload,
-    quiet = quiet,
-    auth_token = auth_token
-  )
+  invisible(dataset_id)
 }
