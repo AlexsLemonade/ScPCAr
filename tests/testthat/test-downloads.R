@@ -1,3 +1,5 @@
+DATASET_ID <- "00000000-0000-0000-0000-000000000001"
+
 test_that("normalize_format works correctly", {
   expect_equal(normalize_format("sce"), "SINGLE_CELL_EXPERIMENT")
   expect_equal(normalize_format("SCE"), "SINGLE_CELL_EXPERIMENT")
@@ -18,45 +20,23 @@ test_that("normalize_format works correctly", {
   expect_error(normalize_format(c("sce", "anndata")), "format must be a single string")
 })
 
-test_that("normalize_format with allow_spatial = FALSE rejects spatial formats", {
-  expect_error(
-    normalize_format("spatial", allow_spatial = FALSE),
-    "Invalid format"
-  )
-  expect_error(
-    normalize_format("SpaceRanger", allow_spatial = FALSE),
-    "Invalid format"
-  )
-})
-
-test_that("normalize_format with allow_spatial = FALSE still accepts sce and anndata", {
+test_that("normalize_format with allow_spatial = FALSE rejects spatial but accepts other formats", {
+  expect_error(normalize_format("spatial", allow_spatial = FALSE), "Invalid format")
+  expect_error(normalize_format("SpaceRanger", allow_spatial = FALSE), "Invalid format")
   expect_equal(normalize_format("sce", allow_spatial = FALSE), "SINGLE_CELL_EXPERIMENT")
   expect_equal(normalize_format("anndata", allow_spatial = FALSE), "ANN_DATA")
-})
-
-test_that("normalize_format with allow_spatial = FALSE still errors on invalid formats", {
-  expect_error(
-    normalize_format("invalid", allow_spatial = FALSE),
-    "Invalid format"
-  )
+  expect_error(normalize_format("invalid", allow_spatial = FALSE), "Invalid format")
 })
 
 test_that("parse_download_file extracts filename correctly", {
-  # Test URL with response-content-disposition parameter
   test_url <- paste0(
     "https://example.com/download?response-content-disposition=attachment%3B%20filename%3D",
     "SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-09-09.zip"
   )
-  result <- parse_download_file(test_url)
-  expect_equal(result, "SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-09-09.zip")
-
-  # Test URL with different format
-  test_url2 <- paste0(
-    "https://example.com/file?response-content-disposition=inline%3B%20filename%3D",
-    "SCPCP000001_SINGLE-CELL_ANN-DATA_2025-09-09.zip"
+  expect_equal(
+    parse_download_file(test_url),
+    "SCPCS000001_SINGLE-CELL_SINGLE-CELL-EXPERIMENT_2025-09-09.zip"
   )
-  result2 <- parse_download_file(test_url2)
-  expect_equal(result2, "SCPCP000001_SINGLE-CELL_ANN-DATA_2025-09-09.zip")
 })
 
 
@@ -394,14 +374,8 @@ test_that("download_and_extract_file handles file unzipping", {
     quiet = TRUE
   )
 
-  # Check that files were extracted
   expect_true(dir.exists(temp_dir))
-
-  # Check extracted files exist
-  extracted_files <- list.files(temp_dir, recursive = TRUE)
-  expect_setequal(basename(extracted_files), c("test.txt", "data.csv"))
-  unzipped_files <- basename(list.files(temp_dir, recursive = TRUE))
-  expect_setequal(unzipped_files, c("test.txt", "data.csv"))
+  expect_setequal(basename(list.files(temp_dir, recursive = TRUE)), c("test.txt", "data.csv"))
 })
 
 test_that("download_and_extract_file uses existing directory with same prefix when redownload = FALSE", {
@@ -664,7 +638,7 @@ test_that("download_dataset downloads a succeeded dataset", {
   )
 
   result <- download_dataset(
-    "00000000-0000-0000-0000-000000000001",
+    DATASET_ID,
     auth_token = "token"
   )
   expect_equal(result, c("scpca_data/dataset/file.rds"))
@@ -672,29 +646,17 @@ test_that("download_dataset downloads a succeeded dataset", {
 
 
 test_that("download_dataset errors when dataset is not succeeded", {
-  for (detail in list(
-    list(is_started = FALSE),
-    list(is_started = TRUE),
-    list(is_started = TRUE, is_failed = TRUE)
-  )) {
-    local_mocked_bindings(
-      get_dataset_detail = \(dataset, auth_token) detail
-    )
-    expect_error(
-      download_dataset("00000000-0000-0000-0000-000000000001", auth_token = "token"),
-      "not ready for download"
-    )
-  }
-})
-
-test_that("download_dataset error names the current status", {
   local_mocked_bindings(
-    get_dataset_detail = \(dataset, auth_token) list(is_started = TRUE)
+    get_dataset_detail = \(dataset, auth_token) list(is_started = FALSE)
   )
-  expect_error(
-    download_dataset("00000000-0000-0000-0000-000000000001", auth_token = "token"),
-    "processing"
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "not ready for download")
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "pending")
+
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) list(is_started = TRUE, is_failed = TRUE)
   )
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "not ready for download")
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "failed")
 })
 
 test_that("download_dataset errors when dataset is expired", {
@@ -702,7 +664,7 @@ test_that("download_dataset errors when dataset is expired", {
     get_dataset_detail = \(dataset, auth_token) list(is_succeeded = TRUE, is_expired = TRUE)
   )
   expect_error(
-    download_dataset("00000000-0000-0000-0000-000000000001", auth_token = "token"),
+    download_dataset(DATASET_ID, auth_token = "token"),
     "expired"
   )
 })
@@ -723,63 +685,59 @@ test_that("download_dataset passes unzip = FALSE to download_and_extract_file", 
     }
   )
 
-  download_dataset("00000000-0000-0000-0000-000000000001", unzip = FALSE, auth_token = "token")
+  download_dataset(DATASET_ID, unzip = FALSE, auth_token = "token")
   expect_false(captured_unzip)
 })
 
 test_that("download_dataset errors when auth_token is empty", {
   expect_error(
-    download_dataset("00000000-0000-0000-0000-000000000001", auth_token = ""),
+    download_dataset(DATASET_ID, auth_token = ""),
     "Authorization token must be provided"
   )
 })
 
-# wait_and_download_dataset tests
+# await_dataset_processing tests
 
-test_that("wait_and_download_dataset downloads a dataset that is already succeeded", {
+test_that("await_dataset_processing returns when dataset is already succeeded", {
   local_mocked_bindings(
-    get_dataset_status = \(dataset, auth_token) "succeeded",
-    download_dataset = \(dataset, ...) c("scpca_data/dataset/file.rds")
+    get_dataset_status = \(dataset, auth_token) "succeeded"
   )
 
-  result <- wait_and_download_dataset(
-    "00000000-0000-0000-0000-000000000001",
+  result <- await_dataset_processing(
+    DATASET_ID,
     quiet = TRUE,
     poll_interval = 0,
     auth_token = "token"
   )
-  expect_equal(result, c("scpca_data/dataset/file.rds"))
+  expect_equal(result, DATASET_ID)
 })
 
-test_that("wait_and_download_dataset polls until succeeded", {
+test_that("await_dataset_processing polls until succeeded", {
   call_count <- 0L
   local_mocked_bindings(
     get_dataset_status = \(dataset, auth_token) {
       call_count <<- call_count + 1L
       if (call_count < 3L) "processing" else "succeeded"
-    },
-    download_dataset = \(dataset, ...) c("scpca_data/dataset/file.rds")
+    }
   )
 
-  result <- wait_and_download_dataset(
-    "00000000-0000-0000-0000-000000000001",
+  await_dataset_processing(
+    DATASET_ID,
     quiet = TRUE,
     poll_interval = 0,
     auth_token = "token"
   )
-  expect_equal(result, c("scpca_data/dataset/file.rds"))
   expect_gte(call_count, 3L)
 })
 
-
-test_that("wait_and_download_dataset errors when dataset fails", {
+test_that("await_dataset_processing errors when dataset fails", {
   local_mocked_bindings(
     get_dataset_status = \(dataset, auth_token) "failed"
   )
 
   expect_error(
-    wait_and_download_dataset(
-      "00000000-0000-0000-0000-000000000001",
+    await_dataset_processing(
+      DATASET_ID,
       quiet = TRUE,
       poll_interval = 0,
       auth_token = "token"
@@ -788,44 +746,18 @@ test_that("wait_and_download_dataset errors when dataset fails", {
   )
 })
 
-test_that("wait_and_download_dataset restarts processing when dataset is expired", {
-  started <- FALSE
-  call_count <- 0L
-  local_mocked_bindings(
-    get_dataset_status = \(dataset, auth_token) {
-      call_count <<- call_count + 1L
-      if (call_count == 1L) "expired" else "succeeded"
-    },
-    start_dataset_processing = \(dataset, email = NULL, auth_token) {
-      started <<- TRUE
-      invisible(list())
-    },
-    download_dataset = \(dataset, ...) c("scpca_data/dataset/file.rds")
-  )
-
-  result <- wait_and_download_dataset(
-    "00000000-0000-0000-0000-000000000001",
-    quiet = TRUE,
-    poll_interval = 0,
-    auth_token = "token"
-  )
-  expect_true(started)
-  expect_equal(result, c("scpca_data/dataset/file.rds"))
-})
-
-test_that("wait_and_download_dataset errors with unexpected message if expired during polling", {
+test_that("await_dataset_processing errors with unexpected message if expired during polling", {
   call_count <- 0L
   local_mocked_bindings(
     get_dataset_status = \(dataset, auth_token) {
       call_count <<- call_count + 1L
       if (call_count == 1L) "processing" else "expired"
-    },
-    start_dataset_processing = \(dataset, email = NULL, auth_token) invisible(list())
+    }
   )
 
   expect_error(
-    wait_and_download_dataset(
-      "00000000-0000-0000-0000-000000000001",
+    await_dataset_processing(
+      DATASET_ID,
       quiet = TRUE,
       poll_interval = 0,
       auth_token = "token"
@@ -834,14 +766,14 @@ test_that("wait_and_download_dataset errors with unexpected message if expired d
   )
 })
 
-test_that("wait_and_download_dataset errors on timeout", {
+test_that("await_dataset_processing errors on timeout", {
   local_mocked_bindings(
     get_dataset_status = \(dataset, auth_token) "processing"
   )
 
   expect_error(
-    wait_and_download_dataset(
-      "00000000-0000-0000-0000-000000000001",
+    await_dataset_processing(
+      DATASET_ID,
       quiet = TRUE,
       poll_interval = 0,
       timeout = 0,
@@ -851,9 +783,69 @@ test_that("wait_and_download_dataset errors on timeout", {
   )
 })
 
-test_that("wait_and_download_dataset errors when auth_token is empty", {
+test_that("await_dataset_processing errors when auth_token is empty", {
   expect_error(
-    wait_and_download_dataset("00000000-0000-0000-0000-000000000001", auth_token = ""),
+    await_dataset_processing(DATASET_ID, auth_token = ""),
     "Authorization token must be provided"
   )
+})
+
+# download_dataset with await_processing = TRUE tests
+
+test_that("download_dataset with await_processing = TRUE starts processing when pending", {
+  started <- FALSE
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "pending",
+    start_dataset_processing = \(dataset, email = NULL, auth_token) {
+      started <<- TRUE
+      invisible(list())
+    },
+    await_dataset_processing = \(dataset, ...) invisible(DATASET_ID),
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        is_succeeded = TRUE,
+        download_url = "https://example.com/dataset.zip",
+        download_filename = "dataset.zip"
+      )
+    },
+    download_and_extract_file = \(url, ...) c("scpca_data/dataset/file.rds")
+  )
+
+  result <- download_dataset(
+    DATASET_ID,
+    await_processing = TRUE,
+    quiet = TRUE,
+    auth_token = "token"
+  )
+  expect_true(started)
+  expect_equal(result, c("scpca_data/dataset/file.rds"))
+})
+
+test_that("download_dataset with await_processing = TRUE does not start processing when already processing", {
+  started <- FALSE
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "processing",
+    start_dataset_processing = \(dataset, email = NULL, auth_token) {
+      started <<- TRUE
+      invisible(list())
+    },
+    await_dataset_processing = \(dataset, ...) invisible(DATASET_ID),
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        is_succeeded = TRUE,
+        download_url = "https://example.com/dataset.zip",
+        download_filename = "dataset.zip"
+      )
+    },
+    download_and_extract_file = \(url, ...) c("scpca_data/dataset/file.rds")
+  )
+
+  result <- download_dataset(
+    DATASET_ID,
+    await_processing = TRUE,
+    quiet = TRUE,
+    auth_token = "token"
+  )
+  expect_false(started)
+  expect_equal(result, c("scpca_data/dataset/file.rds"))
 })

@@ -674,9 +674,10 @@ test_that("set_dataset_email surfaces the generic conflict error on a locked dat
 
 # start_dataset_processing tests
 
-test_that("start_dataset_processing PUTs start = TRUE", {
+test_that("start_dataset_processing PUTs start = TRUE for a pending dataset", {
   captured_req <- NULL
   local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "pending",
     req_perform = \(req, ...) {
       captured_req <<- req
       json_response(req$body$data)
@@ -702,6 +703,7 @@ test_that("start_dataset_processing PUTs start = TRUE", {
 test_that("start_dataset_processing includes email in the same request when provided", {
   captured_req <- NULL
   local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "pending",
     req_perform = \(req, ...) {
       captured_req <<- req
       json_response(req$body$data)
@@ -738,14 +740,88 @@ test_that("start_dataset_processing errors when auth_token is empty", {
   )
 })
 
-test_that("start_dataset_processing gives a start-specific error when already processing", {
+test_that("start_dataset_processing emits a message and sends no request when already processing", {
+  put_called <- FALSE
   local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "processing",
+    req_perform = \(req, ...) {
+      put_called <<- TRUE
+      json_response(list())
+    }
+  )
+
+  expect_message(
+    result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
+    "is already processing"
+  )
+  expect_null(result)
+  expect_false(put_called)
+})
+
+test_that("start_dataset_processing emits a message and sends no request when already succeeded", {
+  put_called <- FALSE
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "succeeded",
+    req_perform = \(req, ...) {
+      put_called <<- TRUE
+      json_response(list())
+    }
+  )
+
+  expect_message(
+    result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
+    "has already completed processing"
+  )
+  expect_null(result)
+  expect_false(put_called)
+})
+
+test_that("start_dataset_processing warns and retries when previously failed", {
+  captured_req <- NULL
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "failed",
+    req_perform = \(req, ...) {
+      captured_req <<- req
+      json_response(req$body$data)
+    }
+  )
+
+  expect_warning(
+    suppressMessages(
+      start_dataset_processing(DATASET_ID, auth_token = "token")
+    ),
+    "previously failed to process"
+  )
+  expect_equal(captured_req$method, "PUT")
+  expect_true(captured_req$body$data$start)
+})
+
+test_that("start_dataset_processing restarts an expired dataset", {
+  captured_req <- NULL
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "expired",
+    req_perform = \(req, ...) {
+      captured_req <<- req
+      json_response(req$body$data)
+    }
+  )
+
+  suppressMessages(
+    start_dataset_processing(DATASET_ID, auth_token = "token")
+  )
+  expect_equal(captured_req$method, "PUT")
+  expect_true(captured_req$body$data$start)
+})
+
+test_that("start_dataset_processing surfaces a locked-dataset error on a 409 race", {
+  local_mocked_bindings(
+    get_dataset_status = \(dataset, auth_token) "pending",
     req_perform = \(req, ...) rlang::abort(class = "httr2_http_409", message = "Conflict")
   )
 
   expect_error(
     start_dataset_processing(DATASET_ID, auth_token = "token"),
-    "Cannot start processing for dataset"
+    "Cannot modify ScPCA dataset"
   )
 })
 
