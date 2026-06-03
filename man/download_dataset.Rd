@@ -2,7 +2,6 @@
 % Please edit documentation in R/downloads.R
 \name{download_dataset}
 \alias{download_dataset}
-\alias{wait_and_download_dataset}
 \title{Download a custom dataset's files from the ScPCA Portal}
 \usage{
 download_dataset(
@@ -10,21 +9,11 @@ download_dataset(
   destination = "scpca_data",
   overwrite = FALSE,
   redownload = FALSE,
-  quiet = FALSE,
   unzip = TRUE,
-  auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
-)
-
-wait_and_download_dataset(
-  dataset,
-  destination = "scpca_data",
-  email = NULL,
-  overwrite = FALSE,
-  redownload = FALSE,
+  quiet = FALSE,
+  await_processing = FALSE,
   poll_interval = 0.5,
   timeout = 60,
-  quiet = FALSE,
-  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 }
@@ -42,34 +31,43 @@ same name as one of the downloaded files will not be deleted. Default is FALSE.}
 \item{redownload}{Whether to re-download if files from the same dataset already
 exist. If FALSE, existing files will be returned. Default is FALSE.}
 
-\item{quiet}{Whether to suppress download progress messages. Default is FALSE.}
-
 \item{unzip}{Whether to unzip the downloaded file. Default is TRUE. When FALSE,
 the zip file is saved directly to \code{destination} and its path is returned.}
 
+\item{quiet}{Whether to suppress download progress messages. Default is FALSE.}
+
+\item{await_processing}{Whether to wait for dataset processing to complete
+before downloading. If \code{TRUE} and the dataset has not yet been started,
+processing will be started automatically. Default is FALSE.}
+
+\item{poll_interval}{Number of minutes to wait between status checks when
+\code{await_processing = TRUE}. Default is 0.5 (30 seconds).}
+
+\item{timeout}{Maximum number of minutes to wait for processing to complete
+when \code{await_processing = TRUE}. Use \code{Inf} to wait indefinitely.
+Default is 60 (1 hour).}
+
 \item{auth_token}{an authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
-
-\item{email}{optional email address for the download notification. Only used
-when \code{start = TRUE}. Passed to \code{\link[=start_dataset_processing]{start_dataset_processing()}}.}
-
-\item{poll_interval}{Number of minutes to wait between status checks.
-Default is 0.5 (30 seconds).}
-
-\item{timeout}{Maximum number of minutes to wait for processing to complete.
-Use \code{Inf} to wait indefinitely. Default is 60 (1 hour).}
 }
 \value{
 a vector of file paths for the downloaded files (invisibly)
 }
 \description{
-Downloads and extracts the files for a custom dataset that has finished
-processing. The dataset must have a status of "succeeded"; use
-\code{\link[=get_dataset_status]{get_dataset_status()}} to check before calling this function, or use
-\code{\link[=wait_and_download_dataset]{wait_and_download_dataset()}} to wait for processing to complete and then
-download in a single call.
+Downloads and optionally extracts the files for a custom dataset.
+If the dataset has completed processing and has a status of "succeeded",
+as determined by \code{\link[=get_dataset_status]{get_dataset_status()}}, then the download will proceed
+immediately.
 }
 \details{
+If the dataset is not yet ready, or if processing has not yet been initiated
+with \code{\link[=start_dataset_processing]{start_dataset_processing()}}, you can set \code{await_processing = TRUE}
+to have \code{download_dataset()} wait for processing to complete (starting processing
+if needed) before downloading.
+Note that processing can take many minutes, with a minimum wait of approximately 1
+minute for very small datasets. If you do not want to wait with a blocked R session,
+it may be better to manually handle checking \code{\link[=get_dataset_status]{get_dataset_status()}} before download.
+
 The downloaded files are saved in a subdirectory of \code{destination}, named
 from the dataset's download filename (which includes the dataset ID, format,
 and date).
@@ -84,7 +82,7 @@ start_dataset_processing(ds, email = "user@example.com")
 get_dataset_status(ds)
 download_dataset(ds, destination = "scpca_data")
 
-# Or use wait_and_download_dataset() to do all of this in one call
-wait_and_download_dataset(ds, start = TRUE, email = "user@example.com")
+# Wait for processing to complete and then download in one call
+download_dataset(ds, await_processing = TRUE)
 }
 }
