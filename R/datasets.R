@@ -267,7 +267,7 @@ get_dataset_detail <- function(dataset, auth_token) {
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
 #' @returns a single character string: one of "pending", "processing",
-#'   "succeeded", or "failed".
+#'   "succeeded", "failed", or "expired".
 #'
 #' @import httr2
 #' @export
