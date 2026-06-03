@@ -15,7 +15,7 @@ such as the return value of \code{\link[=create_dataset]{create_dataset()}}.}
 }
 \value{
 a single character string: one of "pending", "processing",
-"succeeded", or "failed".
+"succeeded", "failed", or "expired".
 }
 \description{
 Returns a single string describing where a dataset is in the processing

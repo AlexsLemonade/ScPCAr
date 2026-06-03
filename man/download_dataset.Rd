@@ -74,15 +74,17 @@ and date).
 }
 \examples{
 \dontrun{
-# Create a dataset, start processing, then download once complete
+# Create a dataset
 ds <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
-start_dataset_processing(ds, email = "user@example.com")
 
-# Check status then download when ready
-get_dataset_status(ds)
+# Manually start processing, check status, and download
+# when the status is "succeeded"
+start_dataset_processing(ds, email = "user@example.com")
+get_dataset_status(ds) # or wait for an email after successful processing
 download_dataset(ds, destination = "scpca_data")
 
-# Wait for processing to complete and then download in one call
+# Alternatively, start processing (if needed), wait for processing
+# to complete, and download in a single call
 download_dataset(ds, await_processing = TRUE)
 }
 }
