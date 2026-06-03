@@ -477,9 +477,9 @@ download_dataset <- function(
   warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(
-    "unzip must be a logical value" = is.logical(unzip) && length(unzip) == 1,
     "overwrite must be a logical value" = is.logical(overwrite) && length(overwrite) == 1,
     "redownload must be a logical value" = is.logical(redownload) && length(redownload) == 1,
+    "unzip must be a logical value" = is.logical(unzip) && length(unzip) == 1,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1,
     "await_processing must be a logical value" = is.logical(await_processing) &&
       length(await_processing) == 1
@@ -504,8 +504,10 @@ download_dataset <- function(
   if (isTRUE(detail$is_expired)) {
     stop(
       glue::glue(
-        "Dataset `{dataset_id}` has expired and is no longer available for download.",
-        " Use `await_processing = TRUE` to regenerate it."
+        "ScPCA dataset `{dataset_id}` has expired and is no longer available for download.",
+        " Use `start_dataset_processing(\"{dataset_id}\")` to reprocess the dataset.",
+        " Alternatively, rerun `download_dataset() with `await_processing = TRUE` to",
+        " restart processing and download when complete."
       ),
       call. = FALSE
     )
@@ -521,8 +523,10 @@ download_dataset <- function(
     }
     stop(
       glue::glue(
-        "Dataset `{dataset_id}` is not ready for download (status: {status}).",
-        " Use `await_processing = TRUE` to wait for processing to complete."
+        "ScPCA dataset `{dataset_id}` is not ready for download (status: {status}).",
+        " Use `get_dataset_status(\"{dataset_id}\")` to monitor progress.",
+        " Alternatively, rerun `download_dataset() with `await_processing = TRUE` to",
+        " wait for processing and download when complete."
       ),
       call. = FALSE
     )
@@ -549,7 +553,7 @@ download_dataset <- function(
 #' Wait for a custom dataset to finish processing
 #'
 #' Polls the dataset processing status until it reaches "succeeded", then
-#' returns invisibly.
+#' returns the dataset ID invisibly.
 #' Errors if processing fails, expires unexpectedly, or the timeout is reached.
 #'
 #' This function only waits — it does not start processing or download data.
