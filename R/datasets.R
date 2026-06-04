@@ -47,15 +47,16 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 
 #' Resolve a dataset identifier to its ID string
 #'
-#' Accepts either a dataset UUID string or a list with an `$id` element (such as
-#' the return value of [create_dataset()] or [get_dataset_detail()]) and returns
-#' the ID string, after checking that it is a valid UUID.
+#' Accepts either a dataset UUID string (such as the value returned by
+#' [create_dataset()]) or a list with an `$id` element (such as the value returned
+#' by [get_dataset_detail()]) and returns the ID string, after checking that it is
+#' a valid UUID.
 #'
 #' @param dataset a dataset UUID string, or a list with an `$id` element
 #'
 #' @keywords internal
 #'
-#' @returns the dataset ID as a length-1 character string
+#' @returns the dataset ID as a character string
 resolve_dataset_id <- function(dataset) {
   if (is.list(dataset)) {
     stopifnot("dataset must be an id string or contain an $id element" = !is.null(dataset$id))
@@ -112,7 +113,9 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' Create a custom dataset on the ScPCA Portal
 #'
 #' Creates a new user dataset without starting processing.
-#' The returned list includes the dataset `$id` along with its current contents and status.
+#' Returns the new dataset's ID (invisibly), which you can pass to the other
+#' dataset functions such as [get_dataset_info()], [add_dataset_samples()], and
+#' [start_dataset_processing()].
 #'
 #' @param samples optional character vector of ScPCA sample IDs (e.g. "SCPCS000001")
 #' @param projects optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
@@ -125,7 +128,7 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the API response as a list (invisibly), including the dataset `$id`
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @import httr2
 #' @export
@@ -133,11 +136,11 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' @examples
 #' \dontrun{
 #' token <- get_auth("user@example.com", agree = TRUE)
-#' ds <- create_dataset(
+#' ds_id <- create_dataset(
 #'   auth_token = token,
 #'   samples = c("SCPCS000001", "SCPCS000002")
 #' )
-#' ds$id
+#' ds_id
 #' }
 create_dataset <- function(
   samples = NULL,
@@ -179,7 +182,7 @@ create_dataset <- function(
     resp_body_json()
 
   message(glue::glue("ScPCA dataset {response$id} created."))
-  invisible(response)
+  invisible(response$id)
 }
 
 
@@ -193,8 +196,9 @@ create_dataset <- function(
 #' it is also used by the dataset modification functions to fetch current
 #' contents before updating.
 #'
-#' @param dataset the dataset UUID string, or a list with an `$id` element
-#'   such as the return value of [create_dataset()].
+#' @param dataset the dataset UUID string (such as the value returned by
+#'   [create_dataset()]), or a list with an `$id` element (such as the value
+#'   returned by [get_dataset_detail()]).
 #' @param auth_token an authorization token obtained from [get_auth()];
 #'  must match the token used to create the dataset.
 #'
@@ -254,8 +258,9 @@ dataset_status_from_detail <- function(detail) {
 #'   expired and must be regenerated
 #' * `"failed"`: processing failed
 #'
-#' @param dataset the dataset UUID string, or a list with an `$id` element,
-#'   such as the return value of [create_dataset()].
+#' @param dataset the dataset UUID string (such as the value returned by
+#'   [create_dataset()]), or a list with an `$id` element (such as the value
+#'   returned by [get_dataset_detail()]).
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
@@ -294,13 +299,13 @@ get_dataset_status <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKE
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly)
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' replace_dataset_data(ds, samples = c("SCPCS000001", "SCPCS000002"))
+#' replace_dataset_data(ds_id, samples = c("SCPCS000001", "SCPCS000002"))
 #' }
 replace_dataset_data <- function(
   dataset,
@@ -319,8 +324,8 @@ replace_dataset_data <- function(
 
   data <- build_dataset_data(samples = samples, projects = projects, include_bulk = include_bulk)
 
-  response <- update_dataset(dataset_id, list(data = data), auth_token = auth_token)
-  invisible(response)
+  update_dataset(dataset_id, list(data = data), auth_token = auth_token)
+  invisible(dataset_id)
 }
 
 
@@ -337,13 +342,13 @@ replace_dataset_data <- function(
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly)
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' set_dataset_email(ds, email = "user@example.com")
+#' set_dataset_email(ds_id, email = "user@example.com")
 #' }
 set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
   auth_token <- resolve_auth_token(auth_token)
@@ -354,8 +359,8 @@ set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUT
   )
   dataset_id <- resolve_dataset_id(dataset)
 
-  response <- update_dataset(dataset_id, list(email = email), auth_token = auth_token)
-  invisible(response)
+  update_dataset(dataset_id, list(email = email), auth_token = auth_token)
+  invisible(dataset_id)
 }
 
 
@@ -373,24 +378,23 @@ set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUT
 #' * A `"processing"` or `"succeeded"` dataset is already underway or done;
 #'   a message is emitted and no request is sent.
 #'
-#' @param dataset the dataset UUID string, or a list with an `$id` element,
-#'   such as the return value of [create_dataset()].
+#' @param dataset the dataset UUID string (such as the value returned by
+#'   [create_dataset()]), or a list with an `$id` element (such as the value
+#'   returned by [get_dataset_detail()]).
 #' @param email optional email address for the download notification. When
 #'   supplied, it is set as part of the same request that starts processing.
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly) when a request is
-#'   sent, or `NULL` (invisibly) when the dataset is already processing or
-#'   completed.
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @import httr2
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ds <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
-#' start_dataset_processing(ds, email = "user@example.com")
+#' ds_id <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
+#' start_dataset_processing(ds_id, email = "user@example.com")
 #' }
 start_dataset_processing <- function(
   dataset,
@@ -410,11 +414,11 @@ start_dataset_processing <- function(
   status <- get_dataset_status(dataset_id, auth_token = auth_token)
   if (status == "processing") {
     message(glue::glue("ScPCA dataset {dataset_id} is already processing."))
-    return(invisible(NULL))
+    return(invisible(dataset_id))
   }
   if (status == "succeeded") {
     message(glue::glue("ScPCA dataset {dataset_id} has already completed processing."))
-    return(invisible(NULL))
+    return(invisible(dataset_id))
   }
   if (status == "failed") {
     warning(
@@ -428,9 +432,9 @@ start_dataset_processing <- function(
     body$email <- email
   }
 
-  response <- update_dataset(dataset_id, body, auth_token = auth_token)
+  update_dataset(dataset_id, body, auth_token = auth_token)
   message(glue::glue("ScPCA dataset {dataset_id} processing started."))
-  invisible(response)
+  invisible(dataset_id)
 }
 
 
@@ -549,7 +553,7 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly)
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @rdname modify_dataset_samples
 #' @export
@@ -585,8 +589,8 @@ add_dataset_samples <- function(
   )
   new_data <- merge_dataset_data(current$data, additions, include_bulk = include_bulk)
 
-  response <- update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
-  invisible(response)
+  update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
+  invisible(dataset_id)
 }
 
 
@@ -608,8 +612,8 @@ remove_dataset_samples <- function(
   current <- get_dataset_detail(dataset_id, auth_token = auth_token)
   new_data <- remove_from_dataset_data(current$data, samples = samples, projects = projects)
 
-  response <- update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
-  invisible(response)
+  update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
+  invisible(dataset_id)
 }
 
 

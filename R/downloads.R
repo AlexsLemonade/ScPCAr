@@ -433,8 +433,9 @@ parse_download_file <- function(scpca_url) {
 #' from the dataset's download filename (which includes the dataset ID, format,
 #' and date).
 #'
-#' @param dataset the dataset UUID string, or a list with an `$id` element,
-#'   such as the return value of [create_dataset()].
+#' @param dataset the dataset UUID string (such as the value returned by
+#'   [create_dataset()]), or a list with an `$id` element (such as the value
+#'   returned by [get_dataset_detail()]).
 #' @param destination The path to the directory where the unzipped file directory
 #'   should be saved. Default is "scpca_data".
 #' @param overwrite Whether to overwrite files in existing directories if they
