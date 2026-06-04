@@ -13,6 +13,7 @@ download_project(
   overwrite = FALSE,
   redownload = FALSE,
   quiet = FALSE,
+  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 }
@@ -43,6 +44,9 @@ If FALSE, existing files will be returned.
 Default is FALSE.}
 
 \item{quiet}{Whether to suppress download progress messages. Default is FALSE.}
+
+\item{unzip}{Whether to unzip the downloaded file. Default is TRUE. When FALSE,
+the zip file is saved directly to \code{destination} and its path is returned.}
 
 \item{auth_token}{An authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}

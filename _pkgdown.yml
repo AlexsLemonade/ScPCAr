@@ -31,8 +31,10 @@ reference:
   - subtitle: Custom datasets
     contents:
       - create_dataset
+      - get_dataset_status
+      - download_dataset
       - add_dataset_samples
       - replace_dataset_data
       - set_dataset_email
       - start_dataset_processing
-      - get_dataset_status
+      - await_dataset_processing
