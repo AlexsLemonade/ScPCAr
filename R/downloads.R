@@ -647,15 +647,15 @@ await_dataset_processing <- function(
       stop(
         glue::glue(
           "Timed out after {round(elapsed, 1)} minutes waiting for dataset `{dataset_id}`.",
-          " Use `timeout = Inf` to wait indefinitely."
+          " Processing is continuing on the ScPCA Portal; you can retry later."
         ),
         call. = FALSE
       )
     }
 
     if (!quiet) {
-      # keep the progress spinner updating every half second until the next poll
       next_loop <- Sys.time() + poll_interval * 60
+      # keep the progress spinner updating every half second until the next poll
       while (Sys.time() < next_loop) {
         cli::cli_progress_update(force = TRUE)
         Sys.sleep(0.5)
