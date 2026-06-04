@@ -31,19 +31,21 @@ spatial samples are always returned in Space Ranger format.}
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
-the API response as a list (invisibly), including the dataset \verb{$id}
+the dataset ID as a character string (invisibly)
 }
 \description{
 Creates a new user dataset without starting processing.
-The returned list includes the dataset \verb{$id} along with its current contents and status.
+Returns the new dataset's ID (invisibly), which you can pass to the other
+dataset functions such as \code{\link[=get_dataset_info]{get_dataset_info()}}, \code{\link[=add_dataset_samples]{add_dataset_samples()}}, and
+\code{\link[=start_dataset_processing]{start_dataset_processing()}}.
 }
 \examples{
 \dontrun{
 token <- get_auth("user@example.com", agree = TRUE)
-ds <- create_dataset(
+ds_id <- create_dataset(
   auth_token = token,
   samples = c("SCPCS000001", "SCPCS000002")
 )
-ds$id
+ds_id
 }
 }

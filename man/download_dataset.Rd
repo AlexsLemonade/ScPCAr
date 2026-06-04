@@ -18,8 +18,9 @@ download_dataset(
 )
 }
 \arguments{
-\item{dataset}{the dataset UUID string, or a list with an \verb{$id} element,
-such as the return value of \code{\link[=create_dataset]{create_dataset()}}.}
+\item{dataset}{the dataset UUID string (such as the value returned by
+\code{\link[=create_dataset]{create_dataset()}}), or a list with an \verb{$id} element (such as the value
+returned by \code{\link[=get_dataset_detail]{get_dataset_detail()}}).}
 
 \item{destination}{The path to the directory where the unzipped file directory
 should be saved. Default is "scpca_data".}

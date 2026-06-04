@@ -10,11 +10,12 @@ resolve_dataset_id(dataset)
 \item{dataset}{a dataset UUID string, or a list with an \verb{$id} element}
 }
 \value{
-the dataset ID as a length-1 character string
+the dataset ID as a character string
 }
 \description{
-Accepts either a dataset UUID string or a list with an \verb{$id} element (such as
-the return value of \code{\link[=create_dataset]{create_dataset()}} or \code{\link[=get_dataset_detail]{get_dataset_detail()}}) and returns
-the ID string, after checking that it is a valid UUID.
+Accepts either a dataset UUID string (such as the value returned by
+\code{\link[=create_dataset]{create_dataset()}}) or a list with an \verb{$id} element (such as the value returned
+by \code{\link[=get_dataset_detail]{get_dataset_detail()}}) and returns the ID string, after checking that it is
+a valid UUID.
 }
 \keyword{internal}
