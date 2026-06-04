@@ -45,7 +45,14 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">download_and_extract_file</span><span class="op">(</span><span class="va">url</span>, <span class="va">parent_dir</span>, <span class="va">overwrite</span>, <span class="va">redownload</span>, <span class="va">quiet</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">download_and_extract_file</span><span class="op">(</span></span>
+<span>  <span class="va">url</span>,</span>
+<span>  <span class="va">parent_dir</span>,</span>
+<span>  <span class="va">overwrite</span>,</span>
+<span>  <span class="va">redownload</span>,</span>
+<span>  <span class="va">quiet</span>,</span>
+<span>  unzip <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,10 +79,16 @@
 <dt id="arg-quiet">quiet<a class="anchor" aria-label="anchor" href="#arg-quiet"></a></dt>
 <dd><p>Whether to suppress progress messages</p></dd>
 
+
+<dt id="arg-unzip">unzip<a class="anchor" aria-label="anchor" href="#arg-unzip"></a></dt>
+<dd><p>Whether to unzip the downloaded file. Default is TRUE. When FALSE,
+the zip file is saved directly to <code>parent_dir</code> and its path is returned.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A character vector of extracted file paths</p>
+    <p>A character vector of extracted file paths, or the zip file path when
+<code>unzip = FALSE</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

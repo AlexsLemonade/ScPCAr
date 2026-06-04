@@ -32,6 +32,10 @@
 
 - [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md)
   : Create a custom dataset on the ScPCA Portal
+- [`get_dataset_status()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_status.md)
+  : Get the processing status of a custom dataset
+- [`download_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/download_dataset.md)
+  : Download a custom dataset's files from the ScPCA Portal
 - [`add_dataset_samples()`](https://alexslemonade.github.io/ScPCAr/reference/modify_dataset_samples.md)
   [`remove_dataset_samples()`](https://alexslemonade.github.io/ScPCAr/reference/modify_dataset_samples.md)
   : Add or remove samples and projects in a custom dataset
@@ -41,5 +45,5 @@
   : Set the notification email for a custom dataset
 - [`start_dataset_processing()`](https://alexslemonade.github.io/ScPCAr/reference/start_dataset_processing.md)
   : Start processing a custom dataset
-- [`get_dataset_status()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_status.md)
-  : Get the processing status of a custom dataset
+- [`await_dataset_processing()`](https://alexslemonade.github.io/ScPCAr/reference/await_dataset_processing.md)
+  : Wait for a custom dataset to finish processing

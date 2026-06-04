@@ -31,7 +31,7 @@ get_dataset_status(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"))
 ## Value
 
 a single character string: one of "pending", "processing", "succeeded",
-or "failed".
+"failed", or "expired".
 
 ## Details
 

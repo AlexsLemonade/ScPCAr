@@ -14,6 +14,7 @@ download_project(
   overwrite = FALSE,
   redownload = FALSE,
   quiet = FALSE,
+  unzip = TRUE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 )
 ```
@@ -61,6 +62,11 @@ download_project(
 - quiet:
 
   Whether to suppress download progress messages. Default is FALSE.
+
+- unzip:
+
+  Whether to unzip the downloaded file. Default is TRUE. When FALSE, the
+  zip file is saved directly to `destination` and its path is returned.
 
 - auth_token:
 
