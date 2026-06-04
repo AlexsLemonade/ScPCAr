@@ -503,6 +503,18 @@ download_dataset <- function(
 
   detail <- get_dataset_detail(dataset_id, auth_token)
 
+  if (isTRUE(detail$is_pending)) {
+    stop(
+      glue::glue(
+        "ScPCA dataset `{dataset_id}` has not been submitted for processing.",
+        " Use `start_dataset_processing(\"{dataset_id}\")` to start processing the dataset for download.",
+        " Alternatively, rerun `download_dataset() with `await_processing = TRUE` to",
+        " start processing and download when complete."
+      ),
+      call. = FALSE
+    )
+  }
+
   if (isTRUE(detail$is_expired)) {
     stop(
       glue::glue(
@@ -520,8 +532,6 @@ download_dataset <- function(
       "failed"
     } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {
       "processing"
-    } else {
-      "pending"
     }
     stop(
       glue::glue(

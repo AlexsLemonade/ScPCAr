@@ -647,10 +647,9 @@ test_that("download_dataset downloads a succeeded dataset", {
 
 test_that("download_dataset errors when dataset is not succeeded", {
   local_mocked_bindings(
-    get_dataset_detail = \(dataset, auth_token) list(is_started = FALSE)
+    get_dataset_detail = \(dataset, auth_token) list(is_pending = TRUE)
   )
-  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "not ready for download")
-  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "pending")
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "not been submitted")
 
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) list(is_started = TRUE, is_failed = TRUE)
