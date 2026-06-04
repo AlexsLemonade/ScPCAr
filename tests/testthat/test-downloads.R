@@ -375,7 +375,10 @@ test_that("download_and_extract_file handles file unzipping", {
   )
 
   expect_true(dir.exists(temp_dir))
-  expect_setequal(basename(list.files(temp_dir, recursive = TRUE)), c("test.txt", "data.csv"))
+  expect_setequal(
+    basename(list.files(temp_dir, recursive = TRUE)),
+    c("test.txt", "data.csv")
+  )
 })
 
 test_that("download_and_extract_file uses existing directory with same prefix when redownload = FALSE", {
