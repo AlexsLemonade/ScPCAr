@@ -375,7 +375,10 @@ test_that("download_and_extract_file handles file unzipping", {
   )
 
   expect_true(dir.exists(temp_dir))
-  expect_setequal(basename(list.files(temp_dir, recursive = TRUE)), c("test.txt", "data.csv"))
+  expect_setequal(
+    basename(list.files(temp_dir, recursive = TRUE)),
+    c("test.txt", "data.csv")
+  )
 })
 
 test_that("download_and_extract_file uses existing directory with same prefix when redownload = FALSE", {
@@ -647,10 +650,9 @@ test_that("download_dataset downloads a succeeded dataset", {
 
 test_that("download_dataset errors when dataset is not succeeded", {
   local_mocked_bindings(
-    get_dataset_detail = \(dataset, auth_token) list(is_started = FALSE)
+    get_dataset_detail = \(dataset, auth_token) list(is_pending = TRUE)
   )
-  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "not ready for download")
-  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "pending")
+  expect_error(download_dataset(DATASET_ID, auth_token = "token"), "not been submitted")
 
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) list(is_started = TRUE, is_failed = TRUE)
