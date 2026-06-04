@@ -589,7 +589,7 @@ await_dataset_processing <- function(
     "poll_interval must be a single non-negative number of minutes" = is.numeric(poll_interval) &&
       length(poll_interval) == 1 &&
       poll_interval >= 0,
-    "timeout must be a single positive number or Inf" = is.numeric(timeout) &&
+    "timeout must be a single positive number of minutes or Inf" = is.numeric(timeout) &&
       length(timeout) == 1 &&
       timeout >= 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
