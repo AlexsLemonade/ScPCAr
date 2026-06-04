@@ -267,22 +267,12 @@ dataset_status_from_detail <- function(detail) {
 #'
 #' @examples
 #' \dontrun{
-#' get_dataset_status(ds)
+#' get_dataset_status(ds_id)
 #' }
 get_dataset_status <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
   auth_token <- resolve_auth_token(auth_token)
   detail <- get_dataset_detail(dataset, auth_token)
-  if (isTRUE(detail$is_failed)) {
-    "failed"
-  } else if (isTRUE(detail$is_expired)) {
-    "expired"
-  } else if (isTRUE(detail$is_succeeded)) {
-    "succeeded"
-  } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {
-    "processing"
-  } else {
-    "pending"
-  }
+  dataset_status_from_detail(detail)
 }
 
 
