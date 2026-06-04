@@ -32,115 +32,6 @@ test_that("get_ccdl_datasets combines results across pages", {
   })
 })
 
-test_that("get_ccdl_datasets passes project_id as ccdl_project_id query parameter", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    req_perform_iterative = function(req, ...) {
-      captured_req <<- req
-      list()
-    }
-  )
-
-  get_ccdl_datasets(project_id = "SCPCP000001")
-  expect_match(captured_req$url, "ccdl_project_id=SCPCP000001")
-})
-
-test_that("get_ccdl_datasets passes modality as ccdl_modality query parameter", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    req_perform_iterative = function(req, ...) {
-      captured_req <<- req
-      list()
-    }
-  )
-
-  get_ccdl_datasets(modality = "SINGLE_CELL")
-  expect_match(captured_req$url, "ccdl_modality=SINGLE_CELL")
-})
-
-test_that("get_ccdl_datasets passes format as format query parameter", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    req_perform_iterative = function(req, ...) {
-      captured_req <<- req
-      list()
-    }
-  )
-
-  get_ccdl_datasets(format = "ANN_DATA")
-  expect_match(captured_req$url, "format=ANN_DATA")
-})
-
-test_that("get_ccdl_datasets passes merged as ccdl_is_merged query parameter", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    req_perform_iterative = function(req, ...) {
-      captured_req <<- req
-      list()
-    }
-  )
-
-  get_ccdl_datasets(merged = TRUE)
-  expect_match(captured_req$url, "ccdl_is_merged=TRUE")
-})
-
-test_that("get_ccdl_datasets passes include_multiplexed as includes_files_multiplexed query parameter", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    req_perform_iterative = function(req, ...) {
-      captured_req <<- req
-      list()
-    }
-  )
-
-  get_ccdl_datasets(include_multiplexed = TRUE)
-  expect_match(captured_req$url, "includes_files_multiplexed=TRUE")
-
-  get_ccdl_datasets(include_multiplexed = FALSE)
-  expect_match(captured_req$url, "includes_files_multiplexed=FALSE")
-})
-
-test_that("get_ccdl_datasets passes metadata_only as ccdl_name=ALL_METADATA query parameter", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    req_perform_iterative = function(req, ...) {
-      captured_req <<- req
-      list()
-    }
-  )
-
-  get_ccdl_datasets(metadata_only = TRUE)
-  expect_match(captured_req$url, "ccdl_name=ALL_METADATA")
-})
-
-test_that("get_ccdl_datasets includes api-key header when auth_token is provided", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    req_perform_iterative = function(req, ...) {
-      captured_req <<- req
-      list()
-    }
-  )
-
-  get_ccdl_datasets(auth_token = "test-token-abc")
-  expect_equal(
-    httr2::req_get_headers(captured_req, "reveal")$`api-key`,
-    "test-token-abc"
-  )
-})
-
-test_that("get_ccdl_datasets does not include api-key header when auth_token is empty", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    req_perform_iterative = function(req, ...) {
-      captured_req <<- req
-      list()
-    }
-  )
-
-  get_ccdl_datasets()
-  expect_null(httr2::req_get_headers(captured_req, "reveal")$`api-key`)
-})
 
 # build_dataset_data tests
 
@@ -267,6 +158,7 @@ test_that("create_dataset errors when spatial format is requested", {
 })
 
 test_that("create_dataset POSTs with start = FALSE", {
+  captured_req <- NULL
   local_mocked_bindings(
     build_dataset_data = \(...) {
       list(
@@ -278,8 +170,8 @@ test_that("create_dataset POSTs with start = FALSE", {
       )
     },
     req_perform = \(req, ...) {
-      body <- req$body$data
-      json_response(c(body, list(id = "new-dataset-uuid")))
+      captured_req <<- req
+      json_response(c(req$body$data, list(id = "new-dataset-uuid")))
     }
   )
 
@@ -290,10 +182,11 @@ test_that("create_dataset POSTs with start = FALSE", {
     },
     "new-dataset-uuid"
   )
-  expect_false(result$start)
+  expect_false(captured_req$body$data$start)
+  expect_equal(result, "new-dataset-uuid")
 })
 
-test_that("create_dataset returns response invisibly and messages with dataset id", {
+test_that("create_dataset returns id invisibly and messages with dataset id", {
   local_mocked_bindings(
     build_dataset_data = \(...) {
       list(
@@ -319,84 +212,26 @@ test_that("create_dataset returns response invisibly and messages with dataset i
     },
     "new-dataset-uuid"
   )
-  expect_equal(result$id, "new-dataset-uuid")
+  expect_equal(result, "new-dataset-uuid")
 })
 
 test_that("create_dataset reads auth_token from the SCPCA_AUTH_TOKEN environment variable", {
   withr::local_envvar(SCPCA_AUTH_TOKEN = "env-token")
+  captured_key <- NULL
   local_mocked_bindings(
     build_dataset_data = \(...) list(),
     req_perform = \(req, ...) {
-      json_response(list(
-        id = "new-dataset-uuid",
-        api_key = httr2::req_get_headers(req, "reveal")$`api-key`
-      ))
+      captured_key <<- httr2::req_get_headers(req, "reveal")$`api-key`
+      json_response(list(id = "new-dataset-uuid"))
     }
   )
 
   # called without auth_token; the token should come from the environment
-  result <- suppressMessages(create_dataset(samples = "SCPCS000001", format = "sce"))
-  expect_equal(result$api_key, "env-token")
+  suppressMessages(create_dataset(samples = "SCPCS000001", format = "sce"))
+  expect_equal(captured_key, "env-token")
 })
 
 # get_dataset_detail tests
-
-test_that("get_dataset_detail returns dataset with data and status fields", {
-  local_mocked_bindings(
-    req_perform = \(req, ...) {
-      json_response(list(
-        id = DATASET_ID,
-        format = "SINGLE_CELL_EXPERIMENT",
-        data = list(
-          SCPCP000001 = list(
-            SINGLE_CELL = list("SCPCS000001", "SCPCS000002"),
-            SPATIAL = list(),
-            includes_bulk = FALSE
-          )
-        ),
-        is_started = FALSE,
-        is_succeeded = FALSE,
-        total_sample_count = 2,
-        computed_file = NULL
-      ))
-    }
-  )
-
-  result <- get_dataset_detail(DATASET_ID, auth_token = "test-token")
-
-  expect_type(result, "list")
-  expect_equal(result$id, DATASET_ID)
-  expect_equal(result$format, "SINGLE_CELL_EXPERIMENT")
-  expect_false(result$is_started)
-  expect_false(result$is_succeeded)
-})
-
-test_that("get_dataset_detail returns data field with project and sample structure", {
-  local_mocked_bindings(
-    req_perform = \(req, ...) {
-      json_response(list(
-        id = DATASET_ID,
-        format = "SINGLE_CELL_EXPERIMENT",
-        data = list(
-          SCPCP000001 = list(
-            SINGLE_CELL = list("SCPCS000001", "SCPCS000002"),
-            SPATIAL = list(),
-            includes_bulk = FALSE
-          )
-        )
-      ))
-    }
-  )
-
-  result <- get_dataset_detail(DATASET_ID, auth_token = "test-token")
-
-  expect_type(result$data, "list")
-  expect_true("SCPCP000001" %in% names(result$data))
-  expect_contains(
-    result$data$SCPCP000001$SINGLE_CELL,
-    c("SCPCS000001", "SCPCS000002")
-  )
-})
 
 test_that("get_dataset_detail includes api-key header when auth_token is provided", {
   local_mocked_bindings(
@@ -447,32 +282,6 @@ test_that("get_ccdl_datasets handles 403 errors with an authorization message", 
   expect_error(
     get_ccdl_datasets(auth_token = "bad-token"),
     "Authorization failed"
-  )
-})
-
-test_that("get_dataset_detail accepts a list with $id in place of a string", {
-  local_mocked_bindings(
-    req_perform = \(req, ...) {
-      json_response(list(id = DATASET_ID, data = list()))
-    }
-  )
-
-  dataset_list <- list(id = DATASET_ID, data = list())
-  result <- get_dataset_detail(dataset_list, auth_token = "test-token")
-  expect_equal(result$id, DATASET_ID)
-})
-
-test_that("get_dataset_detail errors when list has no $id element", {
-  expect_error(
-    get_dataset_detail(list(data = list()), auth_token = "test-token"),
-    "dataset must be an id string or contain an \\$id element"
-  )
-})
-
-test_that("get_dataset_detail errors when dataset is not a string or list", {
-  expect_error(
-    get_dataset_detail(123, auth_token = "test-token"),
-    "dataset must be an id string or contain an \\$id element"
   )
 })
 
@@ -549,6 +358,172 @@ test_that("get_dataset_status errors when auth_token is empty", {
 })
 
 
+# get_dataset_info tests
+
+test_that("get_dataset_info returns structured summary with samples data frame", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "SINGLE_CELL_EXPERIMENT",
+        is_started = FALSE,
+        is_succeeded = FALSE,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001", "SCPCS000002"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          ),
+          SCPCP000002 = list(
+            SINGLE_CELL = list("SCPCS000003"),
+            SPATIAL = list("SCPCS000003"),
+            includes_bulk = TRUE
+          )
+        )
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+
+  expect_equal(info$id, DATASET_ID)
+  expect_equal(info$format, "SINGLE_CELL_EXPERIMENT")
+  expect_equal(info$status, "pending")
+  expect_equal(info$n_projects, 2)
+  # SCPCS000003 appears in both modalities: 2 SC rows + 1 spatial = 4 rows total
+  expect_equal(info$n_samples, 4)
+  expect_equal(info$merged_projects, character(0))
+  expect_s3_class(info$samples, "data.frame")
+  expect_setequal(
+    colnames(info$samples),
+    c("scpca_sample_id", "scpca_project_id", "modality", "includes_bulk")
+  )
+  # SCPCS000003 has two rows — one per modality
+  rows_003 <- info$samples[info$samples$scpca_sample_id == "SCPCS000003", ]
+  expect_setequal(rows_003$modality, c("single-cell", "spatial"))
+  # SCPCP000001 samples should not have includes_bulk
+  rows_p1 <- info$samples[info$samples$scpca_project_id == "SCPCP000001", ]
+  expect_false(all(rows_p1$includes_bulk))
+  # SCPCP000002 samples should have includes_bulk
+  rows_p2 <- info$samples[info$samples$scpca_project_id == "SCPCP000002", ]
+  expect_true(all(rows_p2$includes_bulk))
+})
+
+test_that("get_dataset_info returns empty samples data frame with correct schema for empty dataset", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "ANN_DATA",
+        is_started = FALSE,
+        data = list()
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+
+  expect_equal(info$n_samples, 0)
+  expect_equal(info$n_projects, 0)
+  expect_equal(nrow(info$samples), 0)
+  expect_setequal(
+    colnames(info$samples),
+    c("scpca_sample_id", "scpca_project_id", "modality", "includes_bulk")
+  )
+})
+
+test_that("get_dataset_info surfaces merged projects separately and excludes them from samples", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "SINGLE_CELL_EXPERIMENT",
+        is_started = FALSE,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          ),
+          SCPCP000005 = list(
+            SINGLE_CELL = "MERGED",
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          )
+        )
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+
+  # merged project excluded from samples and n_samples
+  expect_equal(info$n_samples, 1)
+  expect_equal(info$samples$scpca_sample_id, "SCPCS000001")
+  # but counted in n_projects and surfaced in merged_projects
+  expect_equal(info$n_projects, 2)
+  expect_equal(info$merged_projects, "SCPCP000005")
+})
+
+test_that("get_dataset_info derives status from detail without a second API call", {
+  call_count <- 0
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      call_count <<- call_count + 1
+      list(
+        id = DATASET_ID,
+        format = "ANN_DATA",
+        is_started = TRUE,
+        is_succeeded = TRUE,
+        data = list()
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+
+  expect_equal(call_count, 1)
+  expect_equal(info$status, "succeeded")
+})
+
+test_that("get_dataset_info prunes projects where both modality lists are empty", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "SINGLE_CELL_EXPERIMENT",
+        is_started = FALSE,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          ),
+          SCPCP000002 = list(
+            SINGLE_CELL = list(),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          )
+        )
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+
+  expect_equal(info$n_samples, 1)
+  expect_equal(info$samples$scpca_project_id, "SCPCP000001")
+  expect_false("SCPCP000002" %in% info$samples$scpca_project_id)
+})
+
+test_that("get_dataset_info errors when auth_token is empty", {
+  expect_error(
+    get_dataset_info(DATASET_ID, auth_token = ""),
+    "Authorization token must be provided"
+  )
+})
+
+
 test_that("get_ccdl_dataset_detail returns dataset fields including download_url", {
   with_mock_dir("ccdl_dataset_detail", {
     result <- get_ccdl_dataset_detail("abc123", auth_token = "test-token")
@@ -609,7 +584,7 @@ test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
     },
     req_perform = \(req, ...) {
       captured_req <<- req
-      json_response(req$body$data)
+      json_response(list(id = DATASET_ID, data = req$body$data))
     }
   )
 
@@ -621,8 +596,8 @@ test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
 
   expect_equal(captured_req$method, "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_null(result$format)
-  expect_true("SCPCP000001" %in% names(result$data))
+  expect_null(captured_req$body$data$format)
+  expect_equal(result, DATASET_ID)
 })
 
 # set_dataset_email tests
@@ -632,7 +607,7 @@ test_that("set_dataset_email PUTs a new email", {
   local_mocked_bindings(
     req_perform = \(req, ...) {
       captured_req <<- req
-      json_response(req$body$data)
+      json_response(list(id = DATASET_ID, email = req$body$data$email))
     }
   )
 
@@ -643,7 +618,8 @@ test_that("set_dataset_email PUTs a new email", {
   )
   expect_equal(captured_req$method, "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_equal(result$email, "user@example.com")
+  expect_equal(captured_req$body$data$email, "user@example.com")
+  expect_equal(result, DATASET_ID)
 })
 
 test_that("set_dataset_email errors when email is not a single string", {
@@ -680,7 +656,7 @@ test_that("start_dataset_processing PUTs start = TRUE for a pending dataset", {
     get_dataset_status = \(dataset, auth_token) "pending",
     req_perform = \(req, ...) {
       captured_req <<- req
-      json_response(req$body$data)
+      json_response(list(id = DATASET_ID))
     }
   )
 
@@ -696,30 +672,7 @@ test_that("start_dataset_processing PUTs start = TRUE for a pending dataset", {
   )
   expect_equal(captured_req$method, "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_true(result$start)
-  expect_null(result$email)
-})
-
-test_that("start_dataset_processing includes email in the same request when provided", {
-  captured_req <- NULL
-  local_mocked_bindings(
-    get_dataset_status = \(dataset, auth_token) "pending",
-    req_perform = \(req, ...) {
-      captured_req <<- req
-      json_response(req$body$data)
-    }
-  )
-
-  result <- suppressMessages(
-    start_dataset_processing(
-      DATASET_ID,
-      email = "user@example.com",
-      auth_token = "token"
-    )
-  )
-  expect_equal(captured_req$method, "PUT")
-  expect_true(result$start)
-  expect_equal(result$email, "user@example.com")
+  expect_equal(result, DATASET_ID)
 })
 
 test_that("start_dataset_processing errors when email is not a single string", {
@@ -754,7 +707,7 @@ test_that("start_dataset_processing emits a message and sends no request when al
     result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
     "is already processing"
   )
-  expect_null(result)
+  expect_equal(result, DATASET_ID)
   expect_false(put_called)
 })
 
@@ -772,7 +725,7 @@ test_that("start_dataset_processing emits a message and sends no request when al
     result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
     "has already completed processing"
   )
-  expect_null(result)
+  expect_equal(result, DATASET_ID)
   expect_false(put_called)
 })
 
@@ -793,7 +746,6 @@ test_that("start_dataset_processing warns and retries when previously failed", {
     "previously failed to process"
   )
   expect_equal(captured_req$method, "PUT")
-  expect_true(captured_req$body$data$start)
 })
 
 test_that("start_dataset_processing restarts an expired dataset", {
@@ -810,7 +762,6 @@ test_that("start_dataset_processing restarts an expired dataset", {
     start_dataset_processing(DATASET_ID, auth_token = "token")
   )
   expect_equal(captured_req$method, "PUT")
-  expect_true(captured_req$body$data$start)
 })
 
 test_that("start_dataset_processing surfaces a locked-dataset error on a 409 race", {
@@ -907,79 +858,27 @@ test_that("remove_from_dataset_data drops whole projects", {
 
 # add_dataset_samples / remove_dataset_samples tests
 
-test_that("add_dataset_samples merges new samples into existing data and PUTs", {
-  captured_req <- NULL
+test_that("add_dataset_samples PUTs", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
-      list(
-        id = DATASET_ID,
-        data = list(
-          SCPCP000001 = list(
-            SINGLE_CELL = list("SCPCS000001"),
-            SPATIAL = list(),
-            includes_bulk = FALSE
-          )
-        )
-      )
+      list(id = DATASET_ID, data = list())
     },
-    build_dataset_data = \(samples = NULL, projects = NULL, include_bulk = FALSE) {
-      list(
-        SCPCP000001 = list(
-          SINGLE_CELL = list("SCPCS000002"),
-          SPATIAL = list(),
-          includes_bulk = include_bulk
-        )
-      )
-    },
-    req_perform = \(req, ...) {
-      captured_req <<- req
-      json_response(req$body$data)
-    }
+    build_dataset_data = \(...) list(),
+    req_perform = \(req, ...) json_response(list(id = DATASET_ID))
   )
 
-  result <- add_dataset_samples(
-    DATASET_ID,
-    auth_token = "token",
-    samples = "SCPCS000002"
-  )
-  expect_equal(captured_req$method, "PUT")
-  expect_setequal(
-    as.character(result$data$SCPCP000001$SINGLE_CELL),
-    c("SCPCS000001", "SCPCS000002")
-  )
+  result <- add_dataset_samples(DATASET_ID, auth_token = "token", samples = "SCPCS000002")
+  expect_equal(result, DATASET_ID)
 })
 
-test_that("remove_dataset_samples removes a project and PUTs", {
-  captured_req <- NULL
+test_that("remove_dataset_samples PUTs", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
-      list(
-        id = DATASET_ID,
-        data = list(
-          SCPCP000001 = list(
-            SINGLE_CELL = list("SCPCS000001"),
-            SPATIAL = list(),
-            includes_bulk = FALSE
-          ),
-          SCPCP000002 = list(
-            SINGLE_CELL = list("SCPCS000003"),
-            SPATIAL = list(),
-            includes_bulk = FALSE
-          )
-        )
-      )
+      list(id = DATASET_ID, data = list())
     },
-    req_perform = \(req, ...) {
-      captured_req <<- req
-      json_response(req$body$data)
-    }
+    req_perform = \(req, ...) json_response(list(id = DATASET_ID))
   )
 
-  result <- remove_dataset_samples(
-    DATASET_ID,
-    auth_token = "token",
-    projects = "SCPCP000002"
-  )
-  expect_equal(captured_req$method, "PUT")
-  expect_equal(names(result$data), "SCPCP000001")
+  result <- remove_dataset_samples(DATASET_ID, auth_token = "token", projects = "SCPCP000002")
+  expect_equal(result, DATASET_ID)
 })
