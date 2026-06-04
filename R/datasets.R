@@ -218,6 +218,27 @@ get_dataset_detail <- function(dataset, auth_token) {
     resp_body_json()
 }
 
+#' Map dataset detail status flags to a status string
+#'
+#' @param detail the dataset detail list returned by [get_dataset_detail()]
+#'
+#' @keywords internal
+#'
+#' @returns a single character string: one of "pending", "processing",
+#'   "succeeded", "failed", or "expired"
+dataset_status_from_detail <- function(detail) {
+  if (isTRUE(detail$is_failed)) {
+    "failed"
+  } else if (isTRUE(detail$is_expired)) {
+    "expired"
+  } else if (isTRUE(detail$is_succeeded)) {
+    "succeeded"
+  } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {
+    "processing"
+  } else {
+    "pending"
+  }
+}
 
 #' Get the processing status of a custom dataset
 #'
