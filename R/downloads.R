@@ -517,6 +517,18 @@ download_dataset <- function(
 
   detail <- get_dataset_detail(dataset_id, auth_token)
 
+  if (isTRUE(detail$is_pending)) {
+    stop(
+      glue::glue(
+        "ScPCA dataset `{dataset_id}` has not been submitted for processing.",
+        " Use `start_dataset_processing(\"{dataset_id}\")` to start processing the dataset for download.",
+        " Alternatively, rerun `download_dataset() with `await_processing = TRUE` to",
+        " start processing and download when complete."
+      ),
+      call. = FALSE
+    )
+  }
+
   if (isTRUE(detail$is_expired)) {
     stop(
       glue::glue(
@@ -534,8 +546,6 @@ download_dataset <- function(
       "failed"
     } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {
       "processing"
-    } else {
-      "pending"
     }
     stop(
       glue::glue(
@@ -603,7 +613,7 @@ await_dataset_processing <- function(
     "poll_interval must be a single non-negative number of minutes" = is.numeric(poll_interval) &&
       length(poll_interval) == 1 &&
       poll_interval >= 0,
-    "timeout must be a single positive number or Inf" = is.numeric(timeout) &&
+    "timeout must be a single positive number of minutes or Inf" = is.numeric(timeout) &&
       length(timeout) == 1 &&
       timeout >= 0,
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
@@ -651,15 +661,15 @@ await_dataset_processing <- function(
       stop(
         glue::glue(
           "Timed out after {round(elapsed, 1)} minutes waiting for dataset `{dataset_id}`.",
-          " Use `timeout = Inf` to wait indefinitely."
+          " Processing is continuing on the ScPCA Portal; you can retry later."
         ),
         call. = FALSE
       )
     }
 
     if (!quiet) {
-      # keep the progress spinner updating every half second until the next poll
       next_loop <- Sys.time() + poll_interval * 60
+      # keep the progress spinner updating every half second until the next poll
       while (Sys.time() < next_loop) {
         cli::cli_progress_update(force = TRUE)
         Sys.sleep(0.5)
