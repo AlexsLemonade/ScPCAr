@@ -21,8 +21,10 @@ get_project_metadata_url(project_id, auth_token)
 
 ## Value
 
-A signed download URL for the project metadata file as would be found
-from the ScPCA Portal.
+A named character vector: the value is the signed download URL for the
+project metadata file and the name is the download filename. Errors if
+no metadata dataset is available for the project, and warns if more than
+one is found (returning the first value).
 
 ## Examples
 
