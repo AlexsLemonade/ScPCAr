@@ -17,7 +17,7 @@ remotes::install_github("AlexsLemonade/ScPCAr")
 ## Usage
 
 The package provides functions to get metadata and download data from the ScPCA Portal from within R. 
-The code chunk below shows an example of how to authenticate and download a single sample from the portal.
+The code chunk below shows an example of how to authenticate and download data for an ScPCA project.
 
 ```r
 library(ScPCAr)
@@ -33,13 +33,13 @@ get_auth(email = "your.email@example.com", agree = TRUE)
 # Get the sample metadata for a project
 sample_metadata <- get_sample_metadata(project_id = "SCPCP000001")
 
-# Download data for a sample
+# Download the data files for the project (warning, large!)
 # this function returns a vector of the downloaded file paths
-file_paths <- download_sample(
-  sample_id = "SCPCS000001",
+file_paths <- download_project(
+  project_id = "SCPCP000001",
   destination = "scpca_data",
   format = "sce"
 )
 ```
 
-For detailed usage instructions, please refer to the [package documentation](https://alexslemonade.github.io/ScPCAr/).
+For detailed usage instructions, including instructions on creating and downloading custom datasets, please refer to the [package documentation](https://alexslemonade.github.io/ScPCAr/).
