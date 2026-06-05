@@ -393,8 +393,8 @@ download_and_extract_file <- function(url, parent_dir, overwrite, redownload, qu
 #'
 #' @keywords internal
 parse_download_file <- function(scpca_url) {
-  params <- curl::curl_parse_url(scpca_url)$params
-  params["response-content-disposition"] |>
+  query <- httr2::url_parse(scpca_url)$query
+  query[["response-content-disposition"]] |>
     stringr::str_extract("SCPC[^\\s]+\\.zip") |>
     unname()
 }

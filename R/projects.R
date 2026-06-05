@@ -210,10 +210,10 @@ get_project_libraries <- function(project_id, auth_token = Sys.getenv("SCPCA_AUT
 #' @param project_id The ScPCA project ID (e.g. "SCPCP000001")
 #' @param auth_token An authorization token obtained from [get_auth()]
 #'
-#' @returns A signed download URL for the project metadata file as would be found
-#'  from the ScPCA Portal.
-#'
-#' @import httr2
+#' @returns A named character vector: the value is the signed download URL for
+#'  the project metadata file and the name is the download filename. Errors if no
+#'  metadata dataset is available for the project, and warns if more than one is found
+#'  (returning the first value).
 #'
 #' @keywords internal
 #'
@@ -225,29 +225,27 @@ get_project_libraries <- function(project_id, auth_token = Sys.getenv("SCPCA_AUT
 #' project_info <- get_project_metadata_url("SCPCP000001", token)
 #' }
 get_project_metadata_url <- function(project_id, auth_token) {
-  project_info <- get_project_info(project_id, simplifyVector = FALSE)
-  metadata_id <- project_info$computed_files |>
-    purrr::keep(\(file) file$metadata_only) |>
-    purrr::map_chr(\(f) as.character(f$id))
-
-  if (length(metadata_id) == 0) {
-    stop(glue::glue("No metadata file found for project `{project_id}`."))
-  }
-  if (length(metadata_id) > 1) {
-    warning(glue::glue(
-      "Multiple metadata files found for project `{project_id}`.",
-      " Using the first one."
-    ))
-    metadata_id <- metadata_id[1]
-  }
-
-  download_url <- scpca_request(
-    resource = paste0("computed-files/", metadata_id),
+  metadata_datasets <- get_ccdl_datasets(
+    project_id = project_id,
+    metadata_only = TRUE,
     auth_token = auth_token
   ) |>
-    scpca_perform() |>
-    resp_body_json() |>
-    purrr::pluck("download_url")
+    purrr::keep(\(dataset) isTRUE(dataset$is_succeeded))
 
-  download_url
+  if (length(metadata_datasets) == 0) {
+    stop(
+      glue::glue("No ScPCA metadata dataset is available for project `{project_id}`."),
+      call. = FALSE
+    )
+  }
+  if (length(metadata_datasets) > 1) {
+    warning(glue::glue(
+      "Multiple ScPCA metadata datasets found for project `{project_id}`.",
+      " Using the first one."
+    ))
+  }
+
+  # Fetch the url and filename from dataset detail endpoint
+  detail <- get_ccdl_dataset_detail(metadata_datasets[[1]]$id, auth_token)
+  setNames(detail$download_url, detail$download_filename)
 }
