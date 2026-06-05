@@ -37,10 +37,12 @@
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/replace_dataset_data.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/resolve_auth_token.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/resolve_dataset_id.html</loc></url>
+<url><loc>https://alexslemonade.github.io/ScPCAr/reference/scpca_perform.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/scpca_projects.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/scpca_request.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/set_dataset_email.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/start_dataset_processing.html</loc></url>
 <url><loc>https://alexslemonade.github.io/ScPCAr/reference/update_dataset.html</loc></url>
+<url><loc>https://alexslemonade.github.io/ScPCAr/reference/with_scpca_errors.html</loc></url>
 </urlset>
 
