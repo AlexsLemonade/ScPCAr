@@ -42,12 +42,16 @@ Default is FALSE.}
 a vector of file paths for the downloaded files (invisibly)
 }
 \description{
+\strong{Deprecated.} The computed-files endpoint that \code{download_sample()} relied on is being removed
+from the API.
+Use \code{\link[=create_dataset]{create_dataset()}} to submit a request, then \code{\link[=get_dataset_status]{get_dataset_status()}} and \code{\link[=download_dataset]{download_dataset()}}
+to retrieve files.
+
 This function downloads the data files for a specified sample from the ScPCA Portal.
 The downloaded files are saved in a subdirectory of the specified path, named
 by the base filename of the downloaded zip file, which includes the sample ID, modality,
 format, and date.
-}
-\details{
+
 For single-cell and single-nuclei data, files can be downloaded in either
 SingleCellExperiment ("sce") or AnnData ("anndata") format,
 and all downloads include the unfiltered, filtered, and processed data objects, as well as

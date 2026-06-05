@@ -24,6 +24,12 @@ warn_destination_is_auth <- function(destination) {
 
 #' Download a sample's data files from the ScPCA Portal
 #'
+#' @description
+#' **Deprecated.** The computed-files endpoint that `download_sample()` relied on is being removed
+#' from the API.
+#' Use [create_dataset()] to submit a request, then [get_dataset_status()] and [download_dataset()]
+#' to retrieve files.
+#'
 #' This function downloads the data files for a specified sample from the ScPCA Portal.
 #' The downloaded files are saved in a subdirectory of the specified path, named
 #' by the base filename of the downloaded zip file, which includes the sample ID, modality,
@@ -83,6 +89,14 @@ download_sample <- function(
   quiet = FALSE,
   auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")
 ) {
+  .Deprecated(
+    msg = paste(
+      "download_sample() is deprecated;",
+      "the computed-files endpoint is being removed from the API.",
+      "Use create_dataset(samples = sample_id) to submit a request,",
+      "then get_dataset_status() and download_dataset() to retrieve files."
+    )
+  )
   warn_destination_is_auth(destination)
   auth_token <- resolve_auth_token(auth_token)
   stopifnot(

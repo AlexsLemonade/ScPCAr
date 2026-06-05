@@ -1,5 +1,8 @@
 #' Get computed file ids from a sample info list, optionally filtered by criteria
 #'
+#' @description
+#' **Deprecated.** The computed-files endpoint is being removed from the API.
+#'
 #' @param info_list A list object that includes a "computed_files" element,
 #'  such as returned by [get_sample_info()] or [get_project_info()]
 #' @param filters A named list of filtering criteria, where names are fields in
@@ -14,6 +17,9 @@
 #'
 #'
 get_computed_file_ids <- function(info_list, filters = list()) {
+  .Deprecated(
+    msg = "get_computed_file_ids() is deprecated; the computed-files endpoint is being removed from the API."
+  )
   stopifnot(
     "info_list must contain a computed_files element" = "computed_files" %in% names(info_list),
     "no computed files found in info_list" = length(info_list$computed_files) > 0,
@@ -49,6 +55,9 @@ get_computed_file_ids <- function(info_list, filters = list()) {
 
 #' Helper function to create a filtering list for computed files by format
 #'
+#' @description
+#' **Deprecated.** The computed-files endpoint is being removed from the API.
+#'
 #' @param format_str a string indicating the desired format
 #'
 #' @keywords internal
@@ -57,6 +66,9 @@ get_computed_file_ids <- function(info_list, filters = list()) {
 computed_files_filter <- function(
   format_str = c("SINGLE_CELL_EXPERIMENT", "ANN_DATA", "SPATIAL")
 ) {
+  .Deprecated(
+    msg = "computed_files_filter() is deprecated; the computed-files endpoint is being removed from the API."
+  )
   format_str <- match.arg(format_str)
   filter_list <- if (format_str == "SPATIAL") {
     list(modality = "SPATIAL")
