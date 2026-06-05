@@ -65,6 +65,32 @@ test_that("get_auth stores the token in the SCPCA_AUTH_TOKEN environment variabl
   })
 })
 
+test_that("get_auth surfaces the email-specific message from a 400 response", {
+  # scpca_perform() lets a 400 propagate; get_auth() reads the field-specific
+  # error out of the response body via last_response().
+  withr::local_envvar(SCPCA_AUTH_TOKEN = "")
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_400", message = "Bad Request"),
+    last_response = \() json_response(list(email = "Enter a valid email address."), status = 400L)
+  )
+  expect_error(
+    get_auth("bogus@nope.example", agree = TRUE),
+    "Enter a valid email address"
+  )
+})
+
+test_that("get_auth falls back to a generic 400 message when no email field is present", {
+  withr::local_envvar(SCPCA_AUTH_TOKEN = "")
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_400", message = "Bad Request"),
+    last_response = \() json_response(list(detail = "nope"), status = 400L)
+  )
+  expect_error(
+    get_auth("bogus@nope.example", agree = TRUE),
+    "Please check the email address"
+  )
+})
+
 test_that("resolve_auth_token falls back to the environment and validates", {
   # an explicit token is returned unchanged
   expect_equal(resolve_auth_token("explicit-token"), "explicit-token")

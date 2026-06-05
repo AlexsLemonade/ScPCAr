@@ -34,20 +34,20 @@ get_auth <- function(email, agree = FALSE) {
 
   req <- scpca_request("tokens", body = list(email = email, is_activated = agree))
 
+  # scpca_perform() centralizes handling of 403/404/409 and lets a 400 propagate.
+  # A 400 from the tokens endpoint usually means the email was rejected, so catch
+  # it here and surface the field-specific message from the response body.
   response <- withCallingHandlers(
-    req_perform(req) |> resp_body_json(simplifyVector = TRUE),
-    # if we get a 400 error, it is probably a fake email address
+    scpca_perform(req) |> resp_body_json(simplifyVector = TRUE),
     httr2_http_400 = \(cnd) {
       resp <- last_response() |> resp_body_json(simplifyVector = TRUE)
-      if (!is.null(resp[["email"]])) {
-        stop(
-          "get_auth() failed to get token: ",
-          paste(resp[["email"]], collapse = " "),
-          call. = FALSE
-        )
-      }
+      email_error <- ifelse(
+        !is.null(resp[["email"]]),
+        paste(resp[["email"]], collapse = " "),
+        "Please check the email address and try again."
+      )
       stop(
-        "get_auth() failed to get token: Please check the email address and try again.",
+        paste("get_auth() failed to get token:", email_error),
         call. = FALSE
       )
     }

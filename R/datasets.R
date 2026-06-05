@@ -412,6 +412,8 @@ start_dataset_processing <- function(
   }
 
   status <- get_dataset_status(dataset_id, auth_token = auth_token)
+  # don't submit for processing or succeeded, warn for previous failures,
+  # continue without message for "pending" or "expired"
   if (status == "processing") {
     message(glue::glue("ScPCA dataset {dataset_id} is already processing."))
     return(invisible(dataset_id))

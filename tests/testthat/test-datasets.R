@@ -267,7 +267,7 @@ test_that("get_dataset_detail handles 403 errors with an authorization message",
   )
 
   expect_error(
-    get_dataset_detail("00000000-0000-0000-0000-000000000001", auth_token = "bad-token"),
+    get_dataset_detail(DATASET_ID, auth_token = "bad-token"),
     "Authorization failed"
   )
 })
