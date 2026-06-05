@@ -26,8 +26,10 @@
 #' project_df_full <- scpca_projects(simplify = FALSE)
 #' }
 scpca_projects <- function(simplify = TRUE) {
-  responses <- scpca_request("projects", limit = 50) |>
-    req_perform_iterative(iterate_scpca)
+  responses <- with_scpca_errors(
+    scpca_request("projects", limit = 50) |>
+      req_perform_iterative(iterate_scpca) # no httr2:: prefix to allow mocking in tests
+  )
 
   project_df <- responses |>
     resps_data(\(resp) {
@@ -79,20 +81,9 @@ get_project_info <- function(project_id, simplifyVector = TRUE) {
     "Invalid project_id." = grepl("^SCPCP\\d{6}$", project_id)
   )
 
-  response <- tryCatch(
-    {
-      scpca_request(paste0("projects/", project_id)) |>
-        req_perform()
-    },
-    # return NULL if 404 and the API is reachable (check_api will raise error if not)
-    httr2_http_404 = \(cnd) if (check_api()) NULL
-  )
-  # if we get a 404, check if the API then give project error if not found
-  if (is.null(response)) {
-    stop(glue::glue("Project `{project_id}` not found."))
-  }
-
-  resp_body_json(response, simplifyVector = simplifyVector)
+  scpca_request(paste0("projects/", project_id)) |>
+    scpca_perform(not_found_msg = glue::glue("Project `{project_id}` not found.")) |>
+    resp_body_json(simplifyVector = simplifyVector)
 }
 
 #' Get a data frame of all samples in a given project
@@ -254,7 +245,7 @@ get_project_metadata_url <- function(project_id, auth_token) {
     resource = paste0("computed-files/", metadata_id),
     auth_token = auth_token
   ) |>
-    req_perform() |>
+    scpca_perform() |>
     resp_body_json() |>
     purrr::pluck("download_url")
 

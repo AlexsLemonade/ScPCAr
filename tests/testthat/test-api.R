@@ -64,3 +64,99 @@ test_that("check_api works as expected", {
     expect_error(check_api())
   )
 })
+
+# scpca_perform and with_scpca_errors tests
+
+test_that("scpca_perform passes a successful response through unchanged", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) json_response(list(id = "abc123"))
+  )
+  req <- scpca_request("datasets")
+  resp <- scpca_perform(req)
+  expect_s3_class(resp, "httr2_response")
+  expect_equal(resp_body_json(resp)$id, "abc123")
+})
+
+test_that("scpca_perform surfaces a generic 403 message by default", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_403", message = "Forbidden")
+  )
+  expect_error(
+    scpca_perform(scpca_request("datasets")),
+    "Authorization failed"
+  )
+})
+
+test_that("scpca_perform uses a custom forbidden_msg for 403", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_403", message = "Forbidden")
+  )
+  expect_error(
+    scpca_perform(scpca_request("datasets"), forbidden_msg = "custom 403 message"),
+    "custom 403 message"
+  )
+})
+
+test_that("scpca_perform surfaces a not_found_msg on 404 when API is reachable", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_404", message = "Not Found"),
+    check_api = function() TRUE
+  )
+  expect_error(
+    scpca_perform(scpca_request("projects/SCPCP999999"), not_found_msg = "Project not found."),
+    "Project not found."
+  )
+})
+
+test_that("scpca_perform propagates the API-down error from check_api on 404", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_404", message = "Not Found"),
+    check_api = function() stop("The API may be down or unreachable.")
+  )
+  expect_error(
+    scpca_perform(scpca_request("projects/SCPCP999999")),
+    "API may be down"
+  )
+})
+
+test_that("scpca_perform surfaces a generic 404 message when not_found_msg is NULL", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_404", message = "Not Found"),
+    check_api = function() TRUE
+  )
+  expect_error(
+    scpca_perform(scpca_request("projects/SCPCP999999")),
+    "not found"
+  )
+})
+
+test_that("scpca_perform surfaces a conflict_msg on 409", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_409", message = "Conflict")
+  )
+  expect_error(
+    scpca_perform(scpca_request("datasets"), conflict_msg = "custom conflict"),
+    "custom conflict"
+  )
+})
+
+test_that("scpca_perform surfaces a generic 409 message when conflict_msg is NULL", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_409", message = "Conflict")
+  )
+  expect_error(
+    scpca_perform(scpca_request("datasets")),
+    "locked"
+  )
+})
+
+test_that("scpca_perform lets unhandled statuses (e.g. 400) propagate unchanged", {
+  local_mocked_bindings(
+    req_perform = \(req, ...) rlang::abort(class = "httr2_http_400", message = "Bad Request")
+  )
+  # 400 should propagate as httr2_http_400, not be swallowed by the wrapper
+  expect_error(
+    scpca_perform(scpca_request("tokens")),
+    class = "httr2_http_400"
+  )
+})

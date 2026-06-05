@@ -624,7 +624,7 @@ await_dataset_processing <- function(
       if (!quiet) {
         cli::cli_progress_done()
       }
-      stop(glue::glue("Dataset `{dataset_id}` processing failed."), call. = FALSE)
+      stop(glue::glue("ScPCA dataset `{dataset_id}` processing failed."), call. = FALSE)
     }
     if (status == "expired") {
       if (!quiet) {
@@ -632,7 +632,7 @@ await_dataset_processing <- function(
       }
       stop(
         glue::glue(
-          "Dataset `{dataset_id}` unexpectedly expired during processing.",
+          "ScPCA dataset `{dataset_id}` unexpectedly expired during processing.",
           " Please report this as a bug."
         ),
         call. = FALSE

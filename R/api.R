@@ -63,6 +63,114 @@ iterate_scpca <- function(resp, req) {
 }
 
 
+#' Centralized error handler for ScPCA API requests
+#'
+#' Wraps an expression that performs an httr2 request and converts common HTTP
+#' error statuses into informative messages. All three statuses can be
+#' overridden with a custom message via the corresponding argument.
+#'
+#' @param expr An expression that performs an httr2 request, evaluated lazily
+#'   inside `tryCatch()`.
+#' @param not_found_msg Character string to use when the API returns 404.
+#'   Defaults to a generic "not found" message.
+#' @param conflict_msg Character string to use when the API returns 409.
+#'   Defaults to a generic "conflict" message.
+#' @param forbidden_msg Character string to use when the API returns 403.
+#'   Defaults to a generic authorization-failure message.
+#'
+#' @returns The value of `expr` if the request succeeds (i.e. an httr2
+#'   response object, or whatever the expression returns on success).
+#'
+#' @keywords internal
+#'
+#' @import httr2
+with_scpca_errors <- function(
+  expr,
+  not_found_msg = NULL,
+  conflict_msg = NULL,
+  forbidden_msg = NULL
+) {
+  tryCatch(
+    expr,
+    httr2_http_403 = \(cnd) {
+      msg <- if (is.null(forbidden_msg)) {
+        paste0(
+          "Authorization failed (HTTP 403): your token may be invalid",
+          " or not permitted to access this resource.",
+          " Check your token or use `get_auth()` to obtain a new token."
+        )
+      } else {
+        forbidden_msg
+      }
+      stop(msg, call. = FALSE)
+    },
+    httr2_http_404 = \(cnd) {
+      # check_api() will raise "API may be down" if the API is unreachable;
+      # if it returns TRUE the resource itself was not found.
+      check_api()
+      msg <- if (is.null(not_found_msg)) {
+        "The requested resource was not found."
+      } else {
+        not_found_msg
+      }
+      stop(msg, call. = FALSE)
+    },
+    httr2_http_409 = \(cnd) {
+      msg <- if (is.null(conflict_msg)) {
+        paste0(
+          "The request could not be completed because the resource is locked or in conflict.",
+          " Datasets are locked once processing has started."
+        )
+      } else {
+        conflict_msg
+      }
+      stop(msg, call. = FALSE)
+    }
+  )
+}
+
+
+#' Perform an ScPCA API request with centralized error handling
+#'
+#' A pipe-friendly drop-in for [httr2::req_perform()] that centralizes handling
+#' of common HTTP error statuses (403, 404, 409). Returns the httr2 response
+#' object on success so downstream `resp_body_json()` calls are unaffected.
+#'
+#' @param req An httr2 request object, typically built with [scpca_request()].
+#' @param not_found_msg Character string to use when the API returns 404.
+#' @param conflict_msg Character string to use when the API returns 409.
+#' @param forbidden_msg Character string to use when the API returns 403.
+#' @param ... Additional arguments forwarded to [httr2::req_perform()].
+#'
+#' @returns An httr2 response object.
+#'
+#' @keywords internal
+#'
+#' @import httr2
+scpca_perform <- function(
+  req,
+  not_found_msg = NULL,
+  conflict_msg = NULL,
+  forbidden_msg = NULL,
+  ...
+) {
+  # req_perform() is called unqualified (no httr2:: prefix) so that
+  # testthat::local_mocked_bindings(req_perform = ...) can intercept it in tests.
+  with_scpca_errors(
+    req_perform(req, ...),
+    not_found_msg = not_found_msg,
+    conflict_msg = conflict_msg,
+    forbidden_msg = forbidden_msg
+  )
+}
+
+
+# NOTE: check_api() must NOT be migrated to use scpca_perform() or
+# with_scpca_errors(). scpca_perform()'s 404 handler calls check_api() to
+# distinguish "resource not found" from "API down", so routing check_api()
+# through scpca_perform() would cause infinite recursion:
+#   404 -> check_api() -> scpca_perform() -> 404 -> check_api() -> ...
+#
 #' Check if the ScPCA API is reachable
 #'
 #' This function performs a simple GET request to the ScPCA API to verify that it is reachable.
@@ -71,7 +179,6 @@ iterate_scpca <- function(resp, req) {
 #' @import httr2
 #'
 #' @keywords internal
-#'
 check_api <- function() {
   status <- tryCatch(
     {
