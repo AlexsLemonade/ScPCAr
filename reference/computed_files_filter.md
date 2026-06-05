@@ -1,6 +1,7 @@
 # Helper function to create a filtering list for computed files by format
 
-Helper function to create a filtering list for computed files by format
+**Deprecated.** The computed-files endpoint is being removed from the
+API.
 
 ## Usage
 

@@ -1,9 +1,34 @@
 # Download a sample's data files from the ScPCA Portal
 
+**Deprecated.** The computed-files endpoint that `download_sample()`
+relied on is being removed from the API. Use
+[`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md)
+to submit a request, then
+[`get_dataset_status()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_status.md)
+and
+[`download_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/download_dataset.md)
+to retrieve files.
+
 This function downloads the data files for a specified sample from the
 ScPCA Portal. The downloaded files are saved in a subdirectory of the
 specified path, named by the base filename of the downloaded zip file,
 which includes the sample ID, modality, format, and date.
+
+For single-cell and single-nuclei data, files can be downloaded in
+either SingleCellExperiment ("sce") or AnnData ("anndata") format, and
+all downloads include the unfiltered, filtered, and processed data
+objects, as well as associated metadata and QC files.
+
+Spatial data, if present, can be downloaded in Space Ranger format using
+the "spatial" format option.
+
+The function returns a vector of file paths for the downloaded files
+(invisibly).
+
+Note that downloading data requires an authorization token, which can be
+obtained using the
+[`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
+function.
 
 ## Usage
 
@@ -64,24 +89,6 @@ download_sample(
 ## Value
 
 a vector of file paths for the downloaded files (invisibly)
-
-## Details
-
-For single-cell and single-nuclei data, files can be downloaded in
-either SingleCellExperiment ("sce") or AnnData ("anndata") format, and
-all downloads include the unfiltered, filtered, and processed data
-objects, as well as associated metadata and QC files.
-
-Spatial data, if present, can be downloaded in Space Ranger format using
-the "spatial" format option.
-
-The function returns a vector of file paths for the downloaded files
-(invisibly).
-
-Note that downloading data requires an authorization token, which can be
-obtained using the
-[`get_auth()`](https://alexslemonade.github.io/ScPCAr/reference/get_auth.md)
-function.
 
 ## Examples
 

@@ -1,7 +1,7 @@
 # Get computed file ids from a sample info list, optionally filtered by criteria
 
-Get computed file ids from a sample info list, optionally filtered by
-criteria
+**Deprecated.** The computed-files endpoint is being removed from the
+API.
 
 ## Usage
 
