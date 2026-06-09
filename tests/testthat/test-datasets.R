@@ -570,7 +570,7 @@ test_that("get_dataset_info returns structured summary with samples data frame",
           ),
           SCPCP000002 = list(
             SINGLE_CELL = list("SCPCS000003"),
-            SPATIAL = list("SCPCS000003"),
+            SPATIAL = list("SCPCS000004"),
             includes_bulk = TRUE
           )
         )
@@ -584,7 +584,7 @@ test_that("get_dataset_info returns structured summary with samples data frame",
   expect_equal(info$format, "SINGLE_CELL_EXPERIMENT")
   expect_equal(info$status, "pending")
   expect_equal(info$n_projects, 2)
-  # SCPCS000003 appears in both modalities: 2 SC rows + 1 spatial = 4 rows total
+  # 4 sample rows: 2 single-cell in the first project, 1 single-cell + 1 spatial in the second
   expect_equal(info$n_samples, 4)
   expect_equal(info$merged_projects, character(0))
   expect_s3_class(info$samples, "data.frame")
@@ -592,9 +592,15 @@ test_that("get_dataset_info returns structured summary with samples data frame",
     colnames(info$samples),
     c("scpca_sample_id", "scpca_project_id", "modality", "includes_bulk")
   )
-  # SCPCS000003 has two rows — one per modality
-  rows_003 <- info$samples[info$samples$scpca_sample_id == "SCPCS000003", ]
-  expect_setequal(rows_003$modality, c("single-cell", "spatial"))
+  # single-cell and spatial samples are distinct, each with its own modality row
+  expect_equal(
+    info$samples$modality[info$samples$scpca_sample_id == "SCPCS000003"],
+    "single-cell"
+  )
+  expect_equal(
+    info$samples$modality[info$samples$scpca_sample_id == "SCPCS000004"],
+    "spatial"
+  )
   # SCPCP000001 samples should not have includes_bulk
   rows_p1 <- info$samples[info$samples$scpca_project_id == "SCPCP000001", ]
   expect_false(all(rows_p1$includes_bulk))
