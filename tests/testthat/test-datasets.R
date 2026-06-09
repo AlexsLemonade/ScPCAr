@@ -554,7 +554,7 @@ test_that("get_dataset_status errors when auth_token is empty", {
 
 # get_dataset_info tests
 
-test_that("get_dataset_info returns structured summary with samples data frame", {
+test_that("get_dataset_info builds a per-sample table from project sample data", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
       list(
@@ -576,6 +576,32 @@ test_that("get_dataset_info returns structured summary with samples data frame",
         ),
         total_sample_count = 4
       )
+    },
+    get_project_samples = \(project_id, simplify = TRUE) {
+      if (project_id == "SCPCP000001") {
+        # SCPCS000099 belongs to the project but is not in the dataset request
+        tibble::tibble(
+          scpca_sample_id = c("SCPCS000001", "SCPCS000002", "SCPCS000099"),
+          scpca_project_id = project_id,
+          has_single_cell_data = TRUE,
+          has_spatial_data = FALSE,
+          has_bulk_rna_seq = FALSE,
+          has_cite_seq_data = FALSE,
+          has_multiplexed_data = FALSE,
+          seq_units = list("cell", "cell", "cell")
+        )
+      } else {
+        tibble::tibble(
+          scpca_sample_id = c("SCPCS000003", "SCPCS000004"),
+          scpca_project_id = project_id,
+          has_single_cell_data = c(TRUE, FALSE),
+          has_spatial_data = c(FALSE, TRUE),
+          has_bulk_rna_seq = c(TRUE, FALSE),
+          has_cite_seq_data = c(TRUE, FALSE),
+          has_multiplexed_data = c(FALSE, FALSE),
+          seq_units = list(c("cell", "bulk"), "spot")
+        )
+      }
     }
   )
 
@@ -585,25 +611,83 @@ test_that("get_dataset_info returns structured summary with samples data frame",
   expect_equal(info$format, "SINGLE_CELL_EXPERIMENT")
   expect_equal(info$status, "pending")
   expect_equal(info$n_projects, 2)
-  # n_samples comes from the API total_sample_count (here equal to the 4 enumerated rows)
   expect_equal(info$n_samples, 4)
   expect_equal(info$merged_projects, character(0))
+  expect_null(info$bulk_projects)
   expect_s3_class(info$samples, "data.frame")
   expect_setequal(
     colnames(info$samples),
-    c("scpca_sample_id", "scpca_project_id", "modality")
+    c(
+      "scpca_sample_id",
+      "scpca_project_id",
+      "seq_unit",
+      "has_spatial",
+      "has_bulk",
+      "has_cite_seq",
+      "has_multiplexed"
+    )
   )
-  # single-cell and spatial samples are distinct, each with its own modality row
-  expect_equal(
-    info$samples$modality[info$samples$scpca_sample_id == "SCPCS000003"],
-    "single-cell"
+  # one row per included sample; the unrequested SCPCS000099 is filtered out
+  expect_equal(nrow(info$samples), 4)
+  expect_false("SCPCS000099" %in% info$samples$scpca_sample_id)
+
+  field <- \(col, id) info$samples[[col]][info$samples$scpca_sample_id == id]
+  # seq_unit is the single-cell unit, or NA for a spatial-only sample
+  expect_equal(field("seq_unit", "SCPCS000001"), "cell")
+  expect_equal(field("seq_unit", "SCPCS000003"), "cell")
+  expect_true(is.na(field("seq_unit", "SCPCS000004")))
+
+  # only requested modalities are reported
+  expect_true(field("has_spatial", "SCPCS000004"))
+  expect_false(field("has_spatial", "SCPCS000001"))
+
+  expect_true(field("has_cite_seq", "SCPCS000003"))
+  expect_false(field("has_cite_seq", "SCPCS000001"))
+
+  # has_bulk reflects the request AND availability
+  expect_true(field("has_bulk", "SCPCS000003")) # requested + available
+  expect_false(field("has_bulk", "SCPCS000001")) # project did not request bulk
+  expect_false(field("has_bulk", "SCPCS000004")) # requested but sample has none
+  expect_false(any(info$samples$has_multiplexed))
+})
+
+test_that("get_dataset_info combines modalities for a sample included as single-cell and spatial", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "SINGLE_CELL_EXPERIMENT",
+        is_started = FALSE,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001"),
+            SPATIAL = list("SCPCS000001"),
+            includes_bulk = FALSE
+          )
+        ),
+        total_sample_count = 1
+      )
+    },
+    get_project_samples = \(project_id, simplify = TRUE) {
+      tibble::tibble(
+        scpca_sample_id = "SCPCS000001",
+        scpca_project_id = project_id,
+        has_single_cell_data = TRUE,
+        has_spatial_data = TRUE,
+        has_bulk_rna_seq = FALSE,
+        has_cite_seq_data = FALSE,
+        has_multiplexed_data = FALSE,
+        seq_units = list(c("cell", "spot"))
+      )
+    }
   )
-  expect_equal(
-    info$samples$modality[info$samples$scpca_sample_id == "SCPCS000004"],
-    "spatial"
-  )
-  # bulk inclusion is reported per project, not per sample
-  expect_equal(info$bulk_projects, "SCPCP000002")
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+
+  # one row for the sample: single-cell unit plus spatial
+  expect_equal(nrow(info$samples), 1)
+  expect_equal(info$samples$seq_unit, "cell")
+  expect_true(info$samples$has_spatial)
 })
 
 test_that("get_dataset_info returns empty samples data frame with correct schema for empty dataset", {
@@ -624,14 +708,22 @@ test_that("get_dataset_info returns empty samples data frame with correct schema
   expect_equal(info$n_samples, 0)
   expect_equal(info$n_projects, 0)
   expect_equal(nrow(info$samples), 0)
-  expect_equal(info$bulk_projects, character(0))
+  expect_null(info$bulk_projects)
   expect_setequal(
     colnames(info$samples),
-    c("scpca_sample_id", "scpca_project_id", "modality")
+    c(
+      "scpca_sample_id",
+      "scpca_project_id",
+      "seq_unit",
+      "has_spatial",
+      "has_bulk",
+      "has_cite_seq",
+      "has_multiplexed"
+    )
   )
 })
 
-test_that("get_dataset_info surfaces merged projects separately and excludes them from samples", {
+test_that("get_dataset_info expands merged projects to all their single-cell samples", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
       list(
@@ -650,23 +742,55 @@ test_that("get_dataset_info surfaces merged projects separately and excludes the
             includes_bulk = FALSE
           )
         ),
-        # SCPCP000001 contributes 1 enumerated sample; the merged SCPCP000005
-        # contributes 3 samples that are not enumerated in `data`
         total_sample_count = 4
       )
+    },
+    get_project_samples = \(project_id, simplify = TRUE) {
+      if (project_id == "SCPCP000001") {
+        tibble::tibble(
+          scpca_sample_id = "SCPCS000001",
+          scpca_project_id = project_id,
+          has_single_cell_data = TRUE,
+          has_spatial_data = FALSE,
+          has_bulk_rna_seq = FALSE,
+          has_cite_seq_data = FALSE,
+          has_multiplexed_data = FALSE,
+          seq_units = list("cell")
+        )
+      } else {
+        # merged project: all single-cell samples are included; the
+        # non-single-cell SCPCS000053 is not
+        tibble::tibble(
+          scpca_sample_id = c("SCPCS000050", "SCPCS000051", "SCPCS000052", "SCPCS000053"),
+          scpca_project_id = project_id,
+          has_single_cell_data = c(TRUE, TRUE, TRUE, FALSE),
+          has_spatial_data = c(FALSE, FALSE, FALSE, TRUE),
+          has_bulk_rna_seq = FALSE,
+          has_cite_seq_data = FALSE,
+          has_multiplexed_data = FALSE,
+          seq_units = list("cell", "cell", "nucleus", "spot")
+        )
+      }
     }
   )
 
   info <- get_dataset_info(DATASET_ID, auth_token = "token")
 
-  # merged project's samples are not enumerated in the samples table
-  expect_equal(nrow(info$samples), 1)
-  expect_equal(info$samples$scpca_sample_id, "SCPCS000001")
-  # but n_samples uses the API total_sample_count, which counts them
-  expect_equal(info$n_samples, 4)
-  # merged project counted in n_projects and surfaced in merged_projects
-  expect_equal(info$n_projects, 2)
+  # merged project still surfaced in merged_projects
   expect_equal(info$merged_projects, "SCPCP000005")
+  # its single-cell samples are expanded into the table; SCPCS000053 is excluded
+  expect_setequal(
+    info$samples$scpca_sample_id,
+    c("SCPCS000001", "SCPCS000050", "SCPCS000051", "SCPCS000052")
+  )
+  expect_false("SCPCS000053" %in% info$samples$scpca_sample_id)
+  # the nucleus seq_unit is reported for that sample
+  expect_equal(
+    info$samples$seq_unit[info$samples$scpca_sample_id == "SCPCS000052"],
+    "nucleus"
+  )
+  expect_equal(info$n_projects, 2)
+  expect_equal(info$n_samples, 4)
 })
 
 test_that("get_dataset_info derives status from detail without a second API call", {
@@ -691,7 +815,7 @@ test_that("get_dataset_info derives status from detail without a second API call
   expect_equal(info$status, "succeeded")
 })
 
-test_that("get_dataset_info prunes projects where both modality lists are empty", {
+test_that("get_dataset_info prunes projects where nothing is requested", {
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
       list(
@@ -711,6 +835,19 @@ test_that("get_dataset_info prunes projects where both modality lists are empty"
           )
         ),
         total_sample_count = 1
+      )
+    },
+    # only SCPCP000001 should be queried; SCPCP000002 requests nothing
+    get_project_samples = \(project_id, simplify = TRUE) {
+      tibble::tibble(
+        scpca_sample_id = "SCPCS000001",
+        scpca_project_id = project_id,
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE,
+        has_bulk_rna_seq = FALSE,
+        has_cite_seq_data = FALSE,
+        has_multiplexed_data = FALSE,
+        seq_units = list("cell")
       )
     }
   )
