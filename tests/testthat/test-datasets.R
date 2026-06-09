@@ -573,7 +573,8 @@ test_that("get_dataset_info returns structured summary with samples data frame",
             SPATIAL = list("SCPCS000004"),
             includes_bulk = TRUE
           )
-        )
+        ),
+        total_sample_count = 4
       )
     }
   )
@@ -584,13 +585,13 @@ test_that("get_dataset_info returns structured summary with samples data frame",
   expect_equal(info$format, "SINGLE_CELL_EXPERIMENT")
   expect_equal(info$status, "pending")
   expect_equal(info$n_projects, 2)
-  # 4 sample rows: 2 single-cell in the first project, 1 single-cell + 1 spatial in the second
+  # n_samples comes from the API total_sample_count (here equal to the 4 enumerated rows)
   expect_equal(info$n_samples, 4)
   expect_equal(info$merged_projects, character(0))
   expect_s3_class(info$samples, "data.frame")
   expect_setequal(
     colnames(info$samples),
-    c("scpca_sample_id", "scpca_project_id", "modality", "includes_bulk")
+    c("scpca_sample_id", "scpca_project_id", "modality")
   )
   # single-cell and spatial samples are distinct, each with its own modality row
   expect_equal(
@@ -601,12 +602,8 @@ test_that("get_dataset_info returns structured summary with samples data frame",
     info$samples$modality[info$samples$scpca_sample_id == "SCPCS000004"],
     "spatial"
   )
-  # SCPCP000001 samples should not have includes_bulk
-  rows_p1 <- info$samples[info$samples$scpca_project_id == "SCPCP000001", ]
-  expect_false(all(rows_p1$includes_bulk))
-  # SCPCP000002 samples should have includes_bulk
-  rows_p2 <- info$samples[info$samples$scpca_project_id == "SCPCP000002", ]
-  expect_true(all(rows_p2$includes_bulk))
+  # bulk inclusion is reported per project, not per sample
+  expect_equal(info$bulk_projects, "SCPCP000002")
 })
 
 test_that("get_dataset_info returns empty samples data frame with correct schema for empty dataset", {
@@ -616,7 +613,8 @@ test_that("get_dataset_info returns empty samples data frame with correct schema
         id = DATASET_ID,
         format = "ANN_DATA",
         is_started = FALSE,
-        data = list()
+        data = list(),
+        total_sample_count = 0
       )
     }
   )
@@ -626,9 +624,10 @@ test_that("get_dataset_info returns empty samples data frame with correct schema
   expect_equal(info$n_samples, 0)
   expect_equal(info$n_projects, 0)
   expect_equal(nrow(info$samples), 0)
+  expect_equal(info$bulk_projects, character(0))
   expect_setequal(
     colnames(info$samples),
-    c("scpca_sample_id", "scpca_project_id", "modality", "includes_bulk")
+    c("scpca_sample_id", "scpca_project_id", "modality")
   )
 })
 
@@ -650,17 +649,22 @@ test_that("get_dataset_info surfaces merged projects separately and excludes the
             SPATIAL = list(),
             includes_bulk = FALSE
           )
-        )
+        ),
+        # SCPCP000001 contributes 1 enumerated sample; the merged SCPCP000005
+        # contributes 3 samples that are not enumerated in `data`
+        total_sample_count = 4
       )
     }
   )
 
   info <- get_dataset_info(DATASET_ID, auth_token = "token")
 
-  # merged project excluded from samples and n_samples
-  expect_equal(info$n_samples, 1)
+  # merged project's samples are not enumerated in the samples table
+  expect_equal(nrow(info$samples), 1)
   expect_equal(info$samples$scpca_sample_id, "SCPCS000001")
-  # but counted in n_projects and surfaced in merged_projects
+  # but n_samples uses the API total_sample_count, which counts them
+  expect_equal(info$n_samples, 4)
+  # merged project counted in n_projects and surfaced in merged_projects
   expect_equal(info$n_projects, 2)
   expect_equal(info$merged_projects, "SCPCP000005")
 })
@@ -675,7 +679,8 @@ test_that("get_dataset_info derives status from detail without a second API call
         format = "ANN_DATA",
         is_started = TRUE,
         is_succeeded = TRUE,
-        data = list()
+        data = list(),
+        total_sample_count = 0
       )
     }
   )
@@ -704,14 +709,15 @@ test_that("get_dataset_info prunes projects where both modality lists are empty"
             SPATIAL = list(),
             includes_bulk = FALSE
           )
-        )
+        ),
+        total_sample_count = 1
       )
     }
   )
 
   info <- get_dataset_info(DATASET_ID, auth_token = "token")
 
-  expect_equal(info$n_samples, 1)
+  expect_equal(nrow(info$samples), 1)
   expect_equal(info$samples$scpca_project_id, "SCPCP000001")
   expect_false("SCPCP000002" %in% info$samples$scpca_project_id)
 })

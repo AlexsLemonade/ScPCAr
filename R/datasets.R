@@ -631,13 +631,12 @@ remove_dataset_samples <- function(
 #' @importFrom dplyr .data
 #'
 #' @returns a data frame with columns `scpca_sample_id`, `scpca_project_id`,
-#'   `modality`, and `includes_bulk`
+#'   and `modality`
 make_dataset_data_df <- function(data) {
   empty <- data.frame(
     scpca_sample_id = character(),
     scpca_project_id = character(),
-    modality = character(),
-    includes_bulk = logical()
+    modality = character()
   )
   if (length(data) == 0) {
     return(empty)
@@ -645,7 +644,6 @@ make_dataset_data_df <- function(data) {
 
   result <- data |>
     purrr::imap(\(project, project_id) {
-      includes_bulk <- isTRUE(project$includes_bulk)
       single_cell_ids <- project$SINGLE_CELL
       # Datasets created outside this package may be merged.
       # projects are excluded here and surfaced via `merged_projects` in
@@ -665,8 +663,7 @@ make_dataset_data_df <- function(data) {
         modality = rep(
           c("single-cell", "spatial"),
           times = c(length(sc_ids), length(sp_ids))
-        ),
-        includes_bulk = includes_bulk
+        )
       )
     }) |>
     purrr::list_rbind() |>
@@ -697,14 +694,20 @@ make_dataset_data_df <- function(data) {
 #'   * `format`: the dataset file format (e.g. "SINGLE_CELL_EXPERIMENT", "ANN_DATA")
 #'   * `status`: the processing status — one of "pending", "processing",
 #'     "succeeded", "failed", or "expired" (see [get_dataset_status()])
-#'   * `n_samples`: the number of rows in `samples` (one per sample-modality
-#'     combination; merged-single-cell projects are not counted)
+#'   * `n_samples`: the total number of samples in the dataset, taken from the
+#'     API's `total_sample_count`. This includes samples in merged projects,
+#'     which are not enumerated in `samples`, so `n_samples` can exceed
+#'     `nrow(samples)`.
 #'   * `n_projects`: the number of projects in the dataset
 #'   * `samples`: a data frame with one row per sample-modality combination and
-#'     columns `scpca_sample_id`, `scpca_project_id`, `modality` (character:
-#'     "single-cell" or "spatial"), and `includes_bulk` (logical)
+#'     columns `scpca_sample_id`, `scpca_project_id`, and `modality` (character:
+#'     "single-cell" or "spatial")
 #'   * `merged_projects`: a character vector of project IDs whose single-cell
 #'     data is merged; `character(0)` when none
+#'   * `bulk_projects`: a character vector of project IDs that include bulk
+#'     RNA-seq data; `character(0)` when none. Bulk inclusion is recorded per
+#'     project rather than per sample, so it is reported here rather than in
+#'     `samples`.
 #'
 #' @import httr2
 #' @export
@@ -725,15 +728,22 @@ get_dataset_info <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"
     purrr::keep(\(p) identical(p$SINGLE_CELL, "MERGED")) |>
     names() |>
     as.character()
+  bulk_projects <- detail$data |>
+    purrr::keep(\(p) isTRUE(p$includes_bulk)) |>
+    names() |>
+    as.character()
 
   list(
     id = detail$id,
     format = detail$format,
     status = dataset_status_from_detail(detail),
-    n_samples = nrow(samples),
+    # total_sample_count comes from the API and counts all samples, including
+    # those in merged projects that are not enumerated in `samples`.
+    n_samples = detail$total_sample_count,
     n_projects = length(detail$data),
     samples = samples,
-    merged_projects = merged_projects
+    merged_projects = merged_projects,
+    bulk_projects = bulk_projects
   )
 }
 
