@@ -10,9 +10,9 @@ vignette: >
 ```{r knitr-opts}
 #| include: FALSE
 knitr::opts_chunk$set(
-  fig.width = 6, 
-  fig.height = 4, 
-  dpi = 300, 
+  fig.width = 6,
+  fig.height = 4,
+  dpi = 300,
   fig.path = "scpcar-"
 )
 ```
@@ -143,9 +143,9 @@ sample_detail$modalities
 
 # Authentication
 
-To download actual data files, you need an agree to the terms of service and obtain an authentication token.
-To view the terms of service in a web browser, run `view_terms()`.
-Then you can use the `get_auth()` function, providing your email address and agreeing to the terms of service:
+To download full data files, or to create a custom dataset, you must agree to the terms of service and obtain an authentication token.
+To view the terms of service in a web browser, run `ScPCAr::view_terms()`.
+Then you can use the `ScPCAr::get_auth()` function, providing your email address and agreeing to the terms of service:
 
 ```{r auth}
 #| eval: FALSE
@@ -155,19 +155,16 @@ my_email <- "your.email@example.com"
 auth_token <- ScPCAr::get_auth(email = my_email, agree = TRUE)
 ```
 
-```{r auth_hidden}
-#| eval: TRUE
-#| include: FALSE
-
-# Get a real token for the vignette
-auth_token <- ScPCAr::get_auth("scpca@alexslemonade.org", agree = TRUE)
-```
+In addition to saving your authorization token to `auth_token` (or whatever variable name you set), the `ScPCAr::get_auth()` function will store the token in the environment variable `SCPCA_AUTH_TOKEN` so it can be accessed by other `ScPCAr` functions automatically.
+If you have a saved token from a previous session, you can populate the environment with a command like: `Sys.setenv("SCPCA_AUTH_TOKEN" = auth_token)` or by setting the environment variable in your shell before launching `R`.
 
 **Important Notes:**
 
 - You must set `agree = TRUE` to indicate you accept the terms of service
 - Replace `"your.email@example.com"` with your actual email address
 - Keep your token secure and don't share it publicly
+- If you create a custom dataset using `ScPCAr::create_dataset()`, you will need to use the same token to access that dataset later, so be sure to save it somewhere safe (e.g., a password manager).
+  - In a later session, you can use `Sys.setenv(SCPCA_AUTH_TOKEN = saved_token)` to set the environment variable with your saved token.
 
 # Downloading data for an ScPCA sample
 
