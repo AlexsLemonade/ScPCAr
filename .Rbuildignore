@@ -2,6 +2,7 @@
 ^LICENSE\.md$
 ^ScPCAr\.Rproj$
 ^\.Rproj\.user$
+^\.claude$
 ^\.github$
 ^\.pre-commit-config\.yaml$
 ^_pkgdown\.yml$
