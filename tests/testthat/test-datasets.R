@@ -267,6 +267,7 @@ test_that("create_dataset errors when spatial format is requested", {
 })
 
 test_that("create_dataset POSTs with start = FALSE", {
+  captured_req <- NULL
   local_mocked_bindings(
     build_dataset_data = \(...) {
       list(
@@ -278,8 +279,8 @@ test_that("create_dataset POSTs with start = FALSE", {
       )
     },
     req_perform = \(req, ...) {
-      body <- req$body$data
-      json_response(c(body, list(id = "new-dataset-uuid")))
+      captured_req <<- req
+      json_response(list(id = "new-dataset-uuid"))
     }
   )
 
@@ -290,10 +291,12 @@ test_that("create_dataset POSTs with start = FALSE", {
     },
     "new-dataset-uuid"
   )
-  expect_false(result$start)
+  expect_equal(httr2::req_get_method(captured_req), "POST")
+  expect_false(captured_req$body$data$start)
+  expect_equal(result, "new-dataset-uuid")
 })
 
-test_that("create_dataset returns response invisibly and messages with dataset id", {
+test_that("create_dataset returns the dataset id invisibly and messages with dataset id", {
   local_mocked_bindings(
     build_dataset_data = \(...) {
       list(
@@ -319,24 +322,24 @@ test_that("create_dataset returns response invisibly and messages with dataset i
     },
     "new-dataset-uuid"
   )
-  expect_equal(result$id, "new-dataset-uuid")
+  expect_equal(result, "new-dataset-uuid")
 })
 
 test_that("create_dataset reads auth_token from the SCPCA_AUTH_TOKEN environment variable", {
   withr::local_envvar(SCPCA_AUTH_TOKEN = "env-token")
+  captured_req <- NULL
   local_mocked_bindings(
     build_dataset_data = \(...) list(),
     req_perform = \(req, ...) {
-      json_response(list(
-        id = "new-dataset-uuid",
-        api_key = httr2::req_get_headers(req, "reveal")$`api-key`
-      ))
+      captured_req <<- req
+      json_response(list(id = "new-dataset-uuid"))
     }
   )
 
   # called without auth_token; the token should come from the environment
   result <- suppressMessages(create_dataset(samples = "SCPCS000001", format = "sce"))
-  expect_equal(result$api_key, "env-token")
+  expect_equal(httr2::req_get_headers(captured_req, "reveal")$`api-key`, "env-token")
+  expect_equal(result, "new-dataset-uuid")
 })
 
 # get_dataset_detail tests
@@ -785,10 +788,11 @@ test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
     samples = "SCPCS000001"
   )
 
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_null(result$format)
-  expect_true("SCPCP000001" %in% names(result$data))
+  expect_null(captured_req$body$data$format)
+  expect_true("SCPCP000001" %in% names(captured_req$body$data$data))
+  expect_equal(result, DATASET_ID)
 })
 
 # set_dataset_email tests
@@ -807,9 +811,10 @@ test_that("set_dataset_email PUTs a new email", {
     auth_token = "token",
     email = "user@example.com"
   )
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_equal(result$email, "user@example.com")
+  expect_equal(captured_req$body$data$email, "user@example.com")
+  expect_equal(result, DATASET_ID)
 })
 
 test_that("set_dataset_email errors when email is not a single string", {
@@ -860,10 +865,11 @@ test_that("start_dataset_processing PUTs start = TRUE for a pending dataset", {
     },
     "processing started"
   )
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_true(result$start)
-  expect_null(result$email)
+  expect_true(captured_req$body$data$start)
+  expect_null(captured_req$body$data$email)
+  expect_equal(result, DATASET_ID)
 })
 
 test_that("start_dataset_processing includes email in the same request when provided", {
@@ -883,9 +889,10 @@ test_that("start_dataset_processing includes email in the same request when prov
       auth_token = "token"
     )
   )
-  expect_equal(captured_req$method, "PUT")
-  expect_true(result$start)
-  expect_equal(result$email, "user@example.com")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
+  expect_true(captured_req$body$data$start)
+  expect_equal(captured_req$body$data$email, "user@example.com")
+  expect_equal(result, DATASET_ID)
 })
 
 test_that("start_dataset_processing errors when email is not a single string", {
@@ -920,7 +927,7 @@ test_that("start_dataset_processing emits a message and sends no request when al
     result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
     "is already processing"
   )
-  expect_null(result)
+  expect_equal(result, DATASET_ID)
   expect_false(put_called)
 })
 
@@ -958,7 +965,7 @@ test_that("start_dataset_processing warns and retries when previously failed", {
     ),
     "previously failed to process"
   )
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_true(captured_req$body$data$start)
 })
 
@@ -975,7 +982,7 @@ test_that("start_dataset_processing restarts an expired dataset", {
   suppressMessages(
     start_dataset_processing(DATASET_ID, auth_token = "token")
   )
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_true(captured_req$body$data$start)
 })
 
