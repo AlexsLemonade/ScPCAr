@@ -748,12 +748,14 @@ make_dataset_data_df <- function(data) {
 #'   * `n_samples`: the total number of samples in the dataset, taken from the
 #'     API's `total_sample_count`
 #'   * `n_projects`: the number of projects in the dataset
-#'   * `samples`: a data frame with one row per included sample and columns
-#'     `scpca_sample_id`, `scpca_project_id`, `seq_unit` (character; the
-#'     single-cell sequencing unit "cell" or "nucleus", or `NA` when the sample
-#'     is not included as single-cell), `has_spatial`, `has_bulk` (whether the
-#'     dataset request includes bulk for that sample), `has_cite_seq`, and
-#'     `has_multiplexed` (all logical)
+#'   * `samples`: a data frame with one row per included sample and the following columns:
+#'     - `scpca_sample_id`
+#'     - `scpca_project_id`
+#'     - `seq_unit` ("cell" or "nucleus", or `NA` if the sample is not included as single-cell)
+#'     - `has_spatial`
+#'     - `has_bulk`
+#'     - `has_cite_seq`
+#'     - `has_multiplexed`
 #'   * `merged_projects`: a character vector of project IDs whose single-cell
 #'     data is merged; `character(0)` when none
 #'

@@ -21,25 +21,34 @@ a named list with the following elements:
 \item \code{format}: the dataset file format (e.g. "SINGLE_CELL_EXPERIMENT", "ANN_DATA")
 \item \code{status}: the processing status — one of "pending", "processing",
 "succeeded", "failed", or "expired" (see \code{\link[=get_dataset_status]{get_dataset_status()}})
-\item \code{n_samples}: the number of rows in \code{samples} (one per sample-modality
-combination; merged-single-cell projects are not counted)
+\item \code{n_samples}: the total number of samples in the dataset, taken from the
+API's \code{total_sample_count}
 \item \code{n_projects}: the number of projects in the dataset
-\item \code{samples}: a data frame with one row per sample-modality combination and
-columns \code{scpca_sample_id}, \code{scpca_project_id}, \code{modality} (character:
-"single-cell" or "spatial"), and \code{includes_bulk} (logical)
+\item \code{samples}: a data frame with one row per included sample and the following columns:
+\itemize{
+\item \code{scpca_sample_id}
+\item \code{scpca_project_id}
+\item \code{seq_unit} ("cell" or "nucleus", or \code{NA} if the sample is not included as single-cell)
+\item \code{has_spatial}
+\item \code{has_bulk}
+\item \code{has_cite_seq}
+\item \code{has_multiplexed}
+}
 \item \code{merged_projects}: a character vector of project IDs whose single-cell
 data is merged; \code{character(0)} when none
 }
 }
 \description{
 Fetches a custom dataset and returns a structured summary of its contents,
-including its processing status and a per-sample table describing the modality for
-each sample.
+including its processing status and a per-sample table describing the modality
+of each sample.
 }
 \details{
-Projects with merged single-cell data (where individual sample IDs are not
-enumerated in the dataset record) are excluded from \code{samples} and listed in
-\code{merged_projects} instead.
+For each project, the included samples and their modality details are looked
+up from the project's sample records (one request per project), so merged
+projects (whose individual sample IDs are not enumerated in the dataset
+record) are expanded to all of their single-cell samples. Projects whose
+single-cell data is merged are also listed in \code{merged_projects}.
 }
 \examples{
 \dontrun{
