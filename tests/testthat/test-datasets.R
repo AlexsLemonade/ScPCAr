@@ -1227,29 +1227,127 @@ test_that("remove_from_dataset_data drops whole projects", {
   expect_equal(names(result), "SCPCP000001")
 })
 
-# add_dataset_samples / remove_dataset_samples tests
-
-test_that("add_dataset_samples PUTs", {
-  local_mocked_bindings(
-    get_dataset_detail = \(dataset, auth_token) {
-      list(id = DATASET_ID, data = list())
-    },
-    build_dataset_data = \(...) list(),
-    req_perform = \(req, ...) json_response(list(id = DATASET_ID))
+test_that("remove_from_dataset_data errors when removing a sample from a merged project", {
+  existing <- list(
+    SCPCP000001 = list(SINGLE_CELL = "MERGED", SPATIAL = list(), includes_bulk = FALSE)
   )
 
-  result <- add_dataset_samples(DATASET_ID, auth_token = "token", samples = "SCPCS000002")
+  expect_error(
+    remove_from_dataset_data(existing, samples = "SCPCS000001"),
+    "merged single-cell data"
+  )
+})
+
+test_that("remove_from_dataset_data can drop a merged project wholesale", {
+  existing <- list(
+    SCPCP000001 = list(SINGLE_CELL = "MERGED", SPATIAL = list(), includes_bulk = FALSE),
+    SCPCP000002 = list(SINGLE_CELL = list("SCPCS000003"), SPATIAL = list(), includes_bulk = FALSE)
+  )
+
+  result <- remove_from_dataset_data(existing, projects = "SCPCP000001")
+  expect_equal(names(result), "SCPCP000002")
+})
+
+# add_dataset_samples / remove_dataset_samples tests
+
+test_that("add_dataset_samples PUTs the merged data", {
+  captured_req <- NULL
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          )
+        )
+      )
+    },
+    # additions: one sample for the existing project, plus a brand-new project
+    build_dataset_data = \(samples = NULL, projects = NULL, include_bulk = FALSE) {
+      list(
+        SCPCP000001 = list(
+          SINGLE_CELL = list("SCPCS000002"),
+          SPATIAL = list(),
+          includes_bulk = include_bulk
+        ),
+        SCPCP000002 = list(
+          SINGLE_CELL = list("SCPCS000003"),
+          SPATIAL = list(),
+          includes_bulk = include_bulk
+        )
+      )
+    },
+    req_perform = \(req, ...) {
+      captured_req <<- req
+      json_response(req$body$data)
+    }
+  )
+
+  result <- add_dataset_samples(
+    DATASET_ID,
+    auth_token = "token",
+    samples = c("SCPCS000002", "SCPCS000003"),
+    include_bulk = TRUE
+  )
+
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
+
+  sent_data <- captured_req$body$data$data
+  expect_setequal(names(sent_data), c("SCPCP000001", "SCPCP000002"))
+  # existing project gains the new sample as a union of old and added IDs
+  expect_setequal(
+    as.character(sent_data$SCPCP000001$SINGLE_CELL),
+    c("SCPCS000001", "SCPCS000002")
+  )
+  # include_bulk applies to the newly added project but not the existing one
+  expect_false(sent_data$SCPCP000001$includes_bulk)
+  expect_true(sent_data$SCPCP000002$includes_bulk)
   expect_equal(result, DATASET_ID)
 })
 
-test_that("remove_dataset_samples PUTs", {
+test_that("remove_dataset_samples PUTs the reduced data", {
+  captured_req <- NULL
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
-      list(id = DATASET_ID, data = list())
+      list(
+        id = DATASET_ID,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001", "SCPCS000002"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          ),
+          SCPCP000002 = list(
+            SINGLE_CELL = list("SCPCS000003"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          )
+        )
+      )
     },
-    req_perform = \(req, ...) json_response(list(id = DATASET_ID))
+    req_perform = \(req, ...) {
+      captured_req <<- req
+      json_response(req$body$data)
+    }
   )
 
-  result <- remove_dataset_samples(DATASET_ID, auth_token = "token", projects = "SCPCP000002")
+  result <- remove_dataset_samples(
+    DATASET_ID,
+    auth_token = "token",
+    samples = "SCPCS000002",
+    projects = "SCPCP000002"
+  )
+
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
+
+  # SCPCP000002 dropped wholesale; SCPCP000001 keeps only the un-removed sample
+  sent_data <- captured_req$body$data$data
+  expect_equal(names(sent_data), "SCPCP000001")
+  expect_equal(as.character(sent_data$SCPCP000001$SINGLE_CELL), "SCPCS000001")
   expect_equal(result, DATASET_ID)
 })
