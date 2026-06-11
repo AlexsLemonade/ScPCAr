@@ -24,7 +24,7 @@ a named list with the following elements:
 \item \code{n_samples}: the total number of samples in the dataset, taken from the
 API's \code{total_sample_count}
 \item \code{n_projects}: the number of projects in the dataset
-\item \code{samples}: a data frame with one row per included sample and the following columns:
+\item \code{sample_info}: a data frame with one row per included sample and the following columns:
 \itemize{
 \item \code{scpca_sample_id}
 \item \code{scpca_project_id}
@@ -55,6 +55,6 @@ single-cell data is merged are also listed in \code{merged_projects}.
 ds_id <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
 info <- get_dataset_info(ds_id)
 info$status
-info$samples
+info$sample_info
 }
 }

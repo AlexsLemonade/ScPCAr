@@ -17,15 +17,18 @@ a data frame with one row per included sample and columns
 }
 \description{
 For each project in the dataset \verb{$data} list, fetches the project's sample
-metadata with \code{\link[=get_project_samples]{get_project_samples()}} and keeps only the samples the dataset includes:
-for a "regular" project the IDs listed under \code{SINGLE_CELL}/\code{SPATIAL},
+metadata with \code{\link[=get_project_samples]{get_project_samples()}} and keeps only the samples that the dataset includes:
+For a "regular" project the IDs listed under \code{SINGLE_CELL}/\code{SPATIAL},
 and for a merged project, all of the project's single-cell samples.
-Each modality is reported only when it is requested for the sample:
-\code{seq_unit} gives the single-cell sequencing unit ("cell" or "nucleus", or \code{NA} when the
-sample is not included as single-cell),
-\code{has_spatial} marks spatial inclusion
-\code{has_bulk} reflects the project's \code{includes_bulk} request
-intersected with whether the sample actually has bulk data.
-\code{has_cite_seq} and \code{has_multiplexed} come from the sample records.
+Each modality flag is reported only as TRUE for samples that are both included in the dataset
+and actually have that modality available:
+\itemize{
+\item \code{seq_unit} gives the single-cell sequencing unit ("cell" or "nucleus", or \code{NA} when the
+sample is not included as single-cell)
+\item \code{has_spatial} marks spatial inclusion, if requested, for the sample or project
+\item \code{has_bulk} indicates that the sample is present in the bulk data table, if requested for a project.
+\item \code{has_cite_seq} and \code{has_multiplexed} come from the sample records
+and do not depend on the specific request
+}
 }
 \keyword{internal}

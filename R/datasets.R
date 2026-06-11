@@ -625,13 +625,14 @@ remove_dataset_samples <- function(
 #' metadata with [get_project_samples()] and keeps only the samples that the dataset includes:
 #' For a "regular" project the IDs listed under `SINGLE_CELL`/`SPATIAL`,
 #' and for a merged project, all of the project's single-cell samples.
-#' Each modality is reported only when it is requested for the sample:
+#' Each modality flag is reported only as TRUE for samples that are both included in the dataset
+#' and actually have that modality available:
 #' - `seq_unit` gives the single-cell sequencing unit ("cell" or "nucleus", or `NA` when the
-#' sample is not included as single-cell),
-#' - `has_spatial` marks spatial inclusion
-#' - `has_bulk` reflects the project's `includes_bulk` request
-#'    intersected with whether the sample actually has bulk data.
-#' - `has_cite_seq` and `has_multiplexed` come from the sample records.
+#' sample is not included as single-cell)
+#' - `has_spatial` marks spatial inclusion, if requested, for the sample or project
+#' - `has_bulk` indicates that the sample is present in the bulk data table, if requested for a project.
+#' - `has_cite_seq` and `has_multiplexed` come from the sample records
+#'    and do not depend on the specific request
 #'
 #' @param data the project-keyed `$data` list from [get_dataset_detail()]
 #'
