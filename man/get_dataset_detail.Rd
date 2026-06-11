@@ -7,8 +7,9 @@
 get_dataset_detail(dataset, auth_token)
 }
 \arguments{
-\item{dataset}{the dataset UUID string, or a list with an \verb{$id} element
-such as the return value of \code{\link[=create_dataset]{create_dataset()}}.}
+\item{dataset}{the dataset UUID string (such as the value returned by
+\code{\link[=create_dataset]{create_dataset()}}), or a list with an \verb{$id} element (such as the value
+returned by \code{\link[=get_dataset_detail]{get_dataset_detail()}}).}
 
 \item{auth_token}{an authorization token obtained from \code{\link[=get_auth]{get_auth()}};
 must match the token used to create the dataset.}

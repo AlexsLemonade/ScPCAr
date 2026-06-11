@@ -15,7 +15,7 @@ set_dataset_email(dataset, email, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"))
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
-the updated dataset detail as a list (invisibly)
+the dataset ID as a character string (invisibly)
 }
 \description{
 Updates the email address the ScPCA Portal will use to notify you when the
@@ -27,6 +27,6 @@ A dataset that has already been started cannot be modified.
 }
 \examples{
 \dontrun{
-set_dataset_email(ds, email = "user@example.com")
+set_dataset_email(ds_id, email = "user@example.com")
 }
 }

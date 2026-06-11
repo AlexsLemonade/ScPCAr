@@ -267,6 +267,7 @@ test_that("create_dataset errors when spatial format is requested", {
 })
 
 test_that("create_dataset POSTs with start = FALSE", {
+  captured_req <- NULL
   local_mocked_bindings(
     build_dataset_data = \(...) {
       list(
@@ -278,8 +279,8 @@ test_that("create_dataset POSTs with start = FALSE", {
       )
     },
     req_perform = \(req, ...) {
-      body <- req$body$data
-      json_response(c(body, list(id = "new-dataset-uuid")))
+      captured_req <<- req
+      json_response(list(id = "new-dataset-uuid"))
     }
   )
 
@@ -290,10 +291,12 @@ test_that("create_dataset POSTs with start = FALSE", {
     },
     "new-dataset-uuid"
   )
-  expect_false(result$start)
+  expect_equal(httr2::req_get_method(captured_req), "POST")
+  expect_false(captured_req$body$data$start)
+  expect_equal(result, "new-dataset-uuid")
 })
 
-test_that("create_dataset returns response invisibly and messages with dataset id", {
+test_that("create_dataset returns the dataset id invisibly and messages with dataset id", {
   local_mocked_bindings(
     build_dataset_data = \(...) {
       list(
@@ -319,24 +322,24 @@ test_that("create_dataset returns response invisibly and messages with dataset i
     },
     "new-dataset-uuid"
   )
-  expect_equal(result$id, "new-dataset-uuid")
+  expect_equal(result, "new-dataset-uuid")
 })
 
 test_that("create_dataset reads auth_token from the SCPCA_AUTH_TOKEN environment variable", {
   withr::local_envvar(SCPCA_AUTH_TOKEN = "env-token")
+  captured_req <- NULL
   local_mocked_bindings(
     build_dataset_data = \(...) list(),
     req_perform = \(req, ...) {
-      json_response(list(
-        id = "new-dataset-uuid",
-        api_key = httr2::req_get_headers(req, "reveal")$`api-key`
-      ))
+      captured_req <<- req
+      json_response(list(id = "new-dataset-uuid"))
     }
   )
 
   # called without auth_token; the token should come from the environment
   result <- suppressMessages(create_dataset(samples = "SCPCS000001", format = "sce"))
-  expect_equal(result$api_key, "env-token")
+  expect_equal(httr2::req_get_headers(captured_req, "reveal")$`api-key`, "env-token")
+  expect_equal(result, "new-dataset-uuid")
 })
 
 # get_dataset_detail tests
@@ -549,6 +552,326 @@ test_that("get_dataset_status errors when auth_token is empty", {
 })
 
 
+# get_dataset_info tests
+
+test_that("get_dataset_info builds a per-sample table from project sample data", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "SINGLE_CELL_EXPERIMENT",
+        is_started = FALSE,
+        is_succeeded = FALSE,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001", "SCPCS000002"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          ),
+          SCPCP000002 = list(
+            SINGLE_CELL = list("SCPCS000003"),
+            SPATIAL = list("SCPCS000004"),
+            includes_bulk = TRUE
+          )
+        ),
+        total_sample_count = 4
+      )
+    },
+    get_project_samples = \(project_id, simplify = TRUE) {
+      if (project_id == "SCPCP000001") {
+        # SCPCS000099 belongs to the project but is not in the dataset request
+        tibble::tibble(
+          scpca_sample_id = c("SCPCS000001", "SCPCS000002", "SCPCS000099"),
+          scpca_project_id = project_id,
+          has_single_cell_data = TRUE,
+          has_spatial_data = FALSE,
+          has_bulk_rna_seq = FALSE,
+          has_cite_seq_data = FALSE,
+          has_multiplexed_data = FALSE,
+          seq_units = list("cell", "cell", "cell")
+        )
+      } else {
+        tibble::tibble(
+          scpca_sample_id = c("SCPCS000003", "SCPCS000004"),
+          scpca_project_id = project_id,
+          has_single_cell_data = c(TRUE, FALSE),
+          has_spatial_data = c(FALSE, TRUE),
+          has_bulk_rna_seq = c(TRUE, FALSE),
+          has_cite_seq_data = c(TRUE, FALSE),
+          has_multiplexed_data = c(FALSE, FALSE),
+          seq_units = list(c("cell", "bulk"), "spot")
+        )
+      }
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
+
+  expect_equal(info$id, DATASET_ID)
+  expect_equal(info$format, "SINGLE_CELL_EXPERIMENT")
+  expect_equal(info$status, "pending")
+  expect_equal(info$n_projects, 2)
+  expect_equal(info$n_samples, 4)
+  expect_equal(info$merged_projects, character(0))
+  expect_null(info$bulk_projects)
+  expect_s3_class(sample_info, "data.frame")
+  expect_setequal(
+    colnames(sample_info),
+    c(
+      "scpca_sample_id",
+      "scpca_project_id",
+      "seq_unit",
+      "has_spatial",
+      "has_bulk",
+      "has_cite_seq",
+      "has_multiplexed"
+    )
+  )
+  # one row per included sample; the unrequested SCPCS000099 is filtered out
+  expect_equal(nrow(sample_info), 4)
+  expect_false("SCPCS000099" %in% sample_info$scpca_sample_id)
+
+  field <- \(col, id) sample_info[[col]][sample_info$scpca_sample_id == id]
+  # seq_unit is the single-cell unit, or NA for a spatial-only sample
+  expect_equal(field("seq_unit", "SCPCS000001"), "cell")
+  expect_equal(field("seq_unit", "SCPCS000003"), "cell")
+  expect_true(is.na(field("seq_unit", "SCPCS000004")))
+
+  # only requested modalities are reported
+  expect_true(field("has_spatial", "SCPCS000004"))
+  expect_false(field("has_spatial", "SCPCS000001"))
+
+  expect_true(field("has_cite_seq", "SCPCS000003"))
+  expect_false(field("has_cite_seq", "SCPCS000001"))
+
+  # has_bulk reflects the request AND availability
+  expect_true(field("has_bulk", "SCPCS000003")) # requested + available
+  expect_false(field("has_bulk", "SCPCS000001")) # project did not request bulk
+  expect_false(field("has_bulk", "SCPCS000004")) # requested but sample has none
+  expect_false(any(sample_info$has_multiplexed))
+})
+
+test_that("get_dataset_info combines modalities for a sample included as single-cell and spatial", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "SINGLE_CELL_EXPERIMENT",
+        is_started = FALSE,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001"),
+            SPATIAL = list("SCPCS000001"),
+            includes_bulk = FALSE
+          )
+        ),
+        total_sample_count = 1
+      )
+    },
+    get_project_samples = \(project_id, simplify = TRUE) {
+      tibble::tibble(
+        scpca_sample_id = "SCPCS000001",
+        scpca_project_id = project_id,
+        has_single_cell_data = TRUE,
+        has_spatial_data = TRUE,
+        has_bulk_rna_seq = FALSE,
+        has_cite_seq_data = FALSE,
+        has_multiplexed_data = FALSE,
+        seq_units = list(c("cell", "spot"))
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
+
+  # one row for the sample: single-cell unit plus spatial
+  expect_equal(nrow(sample_info), 1)
+  expect_equal(sample_info$seq_unit, "cell")
+  expect_true(sample_info$has_spatial)
+})
+
+test_that("get_dataset_info returns empty samples data frame with correct schema for empty dataset", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "ANN_DATA",
+        is_started = FALSE,
+        data = list(),
+        total_sample_count = 0
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
+
+  expect_equal(info$n_samples, 0)
+  expect_equal(info$n_projects, 0)
+  expect_equal(nrow(sample_info), 0)
+  expect_null(info$bulk_projects)
+  expect_setequal(
+    colnames(sample_info),
+    c(
+      "scpca_sample_id",
+      "scpca_project_id",
+      "seq_unit",
+      "has_spatial",
+      "has_bulk",
+      "has_cite_seq",
+      "has_multiplexed"
+    )
+  )
+})
+
+test_that("get_dataset_info expands merged projects to all their single-cell samples", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "SINGLE_CELL_EXPERIMENT",
+        is_started = FALSE,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          ),
+          SCPCP000005 = list(
+            SINGLE_CELL = "MERGED",
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          )
+        ),
+        total_sample_count = 4
+      )
+    },
+    get_project_samples = \(project_id, simplify = TRUE) {
+      if (project_id == "SCPCP000001") {
+        tibble::tibble(
+          scpca_sample_id = "SCPCS000001",
+          scpca_project_id = project_id,
+          has_single_cell_data = TRUE,
+          has_spatial_data = FALSE,
+          has_bulk_rna_seq = FALSE,
+          has_cite_seq_data = FALSE,
+          has_multiplexed_data = FALSE,
+          seq_units = list("cell")
+        )
+      } else {
+        # merged project: all single-cell samples are included; the
+        # non-single-cell SCPCS000053 is not
+        tibble::tibble(
+          scpca_sample_id = c("SCPCS000050", "SCPCS000051", "SCPCS000052", "SCPCS000053"),
+          scpca_project_id = project_id,
+          has_single_cell_data = c(TRUE, TRUE, TRUE, FALSE),
+          has_spatial_data = c(FALSE, FALSE, FALSE, TRUE),
+          has_bulk_rna_seq = FALSE,
+          has_cite_seq_data = FALSE,
+          has_multiplexed_data = FALSE,
+          seq_units = list("cell", "cell", "nucleus", "spot")
+        )
+      }
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
+
+  # merged project still surfaced in merged_projects
+  expect_equal(info$merged_projects, "SCPCP000005")
+  # its single-cell samples are expanded into the table; SCPCS000053 is excluded
+  expect_setequal(
+    sample_info$scpca_sample_id,
+    c("SCPCS000001", "SCPCS000050", "SCPCS000051", "SCPCS000052")
+  )
+  expect_false("SCPCS000053" %in% sample_info$scpca_sample_id)
+  # the nucleus seq_unit is reported for that sample
+  expect_equal(
+    sample_info$seq_unit[sample_info$scpca_sample_id == "SCPCS000052"],
+    "nucleus"
+  )
+  expect_equal(info$n_projects, 2)
+  expect_equal(info$n_samples, 4)
+})
+
+test_that("get_dataset_info derives status from detail without a second API call", {
+  call_count <- 0
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      call_count <<- call_count + 1
+      list(
+        id = DATASET_ID,
+        format = "ANN_DATA",
+        is_started = TRUE,
+        is_succeeded = TRUE,
+        data = list(),
+        total_sample_count = 0
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+
+  expect_equal(call_count, 1)
+  expect_equal(info$status, "succeeded")
+})
+
+test_that("get_dataset_info prunes projects where nothing is requested", {
+  local_mocked_bindings(
+    get_dataset_detail = \(dataset, auth_token) {
+      list(
+        id = DATASET_ID,
+        format = "SINGLE_CELL_EXPERIMENT",
+        is_started = FALSE,
+        data = list(
+          SCPCP000001 = list(
+            SINGLE_CELL = list("SCPCS000001"),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          ),
+          SCPCP000002 = list(
+            SINGLE_CELL = list(),
+            SPATIAL = list(),
+            includes_bulk = FALSE
+          )
+        ),
+        total_sample_count = 1
+      )
+    },
+    # only SCPCP000001 should be queried; SCPCP000002 requests nothing
+    get_project_samples = \(project_id, simplify = TRUE) {
+      tibble::tibble(
+        scpca_sample_id = "SCPCS000001",
+        scpca_project_id = project_id,
+        has_single_cell_data = TRUE,
+        has_spatial_data = FALSE,
+        has_bulk_rna_seq = FALSE,
+        has_cite_seq_data = FALSE,
+        has_multiplexed_data = FALSE,
+        seq_units = list("cell")
+      )
+    }
+  )
+
+  info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
+
+  expect_equal(nrow(sample_info), 1)
+  expect_equal(sample_info$scpca_project_id, "SCPCP000001")
+  expect_false("SCPCP000002" %in% sample_info$scpca_project_id)
+})
+
+test_that("get_dataset_info errors when auth_token is empty", {
+  expect_error(
+    get_dataset_info(DATASET_ID, auth_token = ""),
+    "Authorization token must be provided"
+  )
+})
+
+
 test_that("get_ccdl_dataset_detail returns dataset fields including download_url", {
   with_mock_dir("ccdl_dataset_detail", {
     result <- get_ccdl_dataset_detail("abc123", auth_token = "test-token")
@@ -619,10 +942,11 @@ test_that("replace_dataset_data PUTs a rebuilt data field without a format", {
     samples = "SCPCS000001"
   )
 
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_null(result$format)
-  expect_true("SCPCP000001" %in% names(result$data))
+  expect_null(captured_req$body$data$format)
+  expect_true("SCPCP000001" %in% names(captured_req$body$data$data))
+  expect_equal(result, DATASET_ID)
 })
 
 # set_dataset_email tests
@@ -641,9 +965,10 @@ test_that("set_dataset_email PUTs a new email", {
     auth_token = "token",
     email = "user@example.com"
   )
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_equal(result$email, "user@example.com")
+  expect_equal(captured_req$body$data$email, "user@example.com")
+  expect_equal(result, DATASET_ID)
 })
 
 test_that("set_dataset_email errors when email is not a single string", {
@@ -694,10 +1019,11 @@ test_that("start_dataset_processing PUTs start = TRUE for a pending dataset", {
     },
     "processing started"
   )
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
-  expect_true(result$start)
-  expect_null(result$email)
+  expect_true(captured_req$body$data$start)
+  expect_null(captured_req$body$data$email)
+  expect_equal(result, DATASET_ID)
 })
 
 test_that("start_dataset_processing includes email in the same request when provided", {
@@ -717,9 +1043,10 @@ test_that("start_dataset_processing includes email in the same request when prov
       auth_token = "token"
     )
   )
-  expect_equal(captured_req$method, "PUT")
-  expect_true(result$start)
-  expect_equal(result$email, "user@example.com")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
+  expect_true(captured_req$body$data$start)
+  expect_equal(captured_req$body$data$email, "user@example.com")
+  expect_equal(result, DATASET_ID)
 })
 
 test_that("start_dataset_processing errors when email is not a single string", {
@@ -754,7 +1081,7 @@ test_that("start_dataset_processing emits a message and sends no request when al
     result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
     "is already processing"
   )
-  expect_null(result)
+  expect_equal(result, DATASET_ID)
   expect_false(put_called)
 })
 
@@ -772,7 +1099,7 @@ test_that("start_dataset_processing emits a message and sends no request when al
     result <- start_dataset_processing(DATASET_ID, auth_token = "token"),
     "has already completed processing"
   )
-  expect_null(result)
+  expect_equal(result, DATASET_ID)
   expect_false(put_called)
 })
 
@@ -792,7 +1119,7 @@ test_that("start_dataset_processing warns and retries when previously failed", {
     ),
     "previously failed to process"
   )
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_true(captured_req$body$data$start)
 })
 
@@ -809,7 +1136,7 @@ test_that("start_dataset_processing restarts an expired dataset", {
   suppressMessages(
     start_dataset_processing(DATASET_ID, auth_token = "token")
   )
-  expect_equal(captured_req$method, "PUT")
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
   expect_true(captured_req$body$data$start)
 })
 
@@ -905,9 +1232,30 @@ test_that("remove_from_dataset_data drops whole projects", {
   expect_equal(names(result), "SCPCP000001")
 })
 
+test_that("remove_from_dataset_data errors when removing a sample from a merged project", {
+  existing <- list(
+    SCPCP000001 = list(SINGLE_CELL = "MERGED", SPATIAL = list(), includes_bulk = FALSE)
+  )
+
+  expect_error(
+    remove_from_dataset_data(existing, samples = "SCPCS000001"),
+    "merged single-cell data"
+  )
+})
+
+test_that("remove_from_dataset_data can drop a merged project wholesale", {
+  existing <- list(
+    SCPCP000001 = list(SINGLE_CELL = "MERGED", SPATIAL = list(), includes_bulk = FALSE),
+    SCPCP000002 = list(SINGLE_CELL = list("SCPCS000003"), SPATIAL = list(), includes_bulk = FALSE)
+  )
+
+  result <- remove_from_dataset_data(existing, projects = "SCPCP000001")
+  expect_equal(names(result), "SCPCP000002")
+})
+
 # add_dataset_samples / remove_dataset_samples tests
 
-test_that("add_dataset_samples merges new samples into existing data and PUTs", {
+test_that("add_dataset_samples PUTs the merged data", {
   captured_req <- NULL
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
@@ -922,10 +1270,16 @@ test_that("add_dataset_samples merges new samples into existing data and PUTs", 
         )
       )
     },
+    # additions: one sample for the existing project, plus a brand-new project
     build_dataset_data = \(samples = NULL, projects = NULL, include_bulk = FALSE) {
       list(
         SCPCP000001 = list(
           SINGLE_CELL = list("SCPCS000002"),
+          SPATIAL = list(),
+          includes_bulk = include_bulk
+        ),
+        SCPCP000002 = list(
+          SINGLE_CELL = list("SCPCS000003"),
           SPATIAL = list(),
           includes_bulk = include_bulk
         )
@@ -940,16 +1294,27 @@ test_that("add_dataset_samples merges new samples into existing data and PUTs", 
   result <- add_dataset_samples(
     DATASET_ID,
     auth_token = "token",
-    samples = "SCPCS000002"
+    samples = c("SCPCS000002", "SCPCS000003"),
+    include_bulk = TRUE
   )
-  expect_equal(captured_req$method, "PUT")
+
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
+
+  sent_data <- captured_req$body$data$data
+  expect_setequal(names(sent_data), c("SCPCP000001", "SCPCP000002"))
+  # existing project gains the new sample as a union of old and added IDs
   expect_setequal(
-    as.character(result$data$SCPCP000001$SINGLE_CELL),
+    as.character(sent_data$SCPCP000001$SINGLE_CELL),
     c("SCPCS000001", "SCPCS000002")
   )
+  # include_bulk applies to the newly added project but not the existing one
+  expect_false(sent_data$SCPCP000001$includes_bulk)
+  expect_true(sent_data$SCPCP000002$includes_bulk)
+  expect_equal(result, DATASET_ID)
 })
 
-test_that("remove_dataset_samples removes a project and PUTs", {
+test_that("remove_dataset_samples PUTs the reduced data", {
   captured_req <- NULL
   local_mocked_bindings(
     get_dataset_detail = \(dataset, auth_token) {
@@ -957,7 +1322,7 @@ test_that("remove_dataset_samples removes a project and PUTs", {
         id = DATASET_ID,
         data = list(
           SCPCP000001 = list(
-            SINGLE_CELL = list("SCPCS000001"),
+            SINGLE_CELL = list("SCPCS000001", "SCPCS000002"),
             SPATIAL = list(),
             includes_bulk = FALSE
           ),
@@ -978,8 +1343,16 @@ test_that("remove_dataset_samples removes a project and PUTs", {
   result <- remove_dataset_samples(
     DATASET_ID,
     auth_token = "token",
+    samples = "SCPCS000002",
     projects = "SCPCP000002"
   )
-  expect_equal(captured_req$method, "PUT")
-  expect_equal(names(result$data), "SCPCP000001")
+
+  expect_equal(httr2::req_get_method(captured_req), "PUT")
+  expect_match(captured_req$url, paste0("datasets/", DATASET_ID))
+
+  # SCPCP000002 dropped wholesale; SCPCP000001 keeps only the un-removed sample
+  sent_data <- captured_req$body$data$data
+  expect_equal(names(sent_data), "SCPCP000001")
+  expect_equal(as.character(sent_data$SCPCP000001$SINGLE_CELL), "SCPCS000001")
+  expect_equal(result, DATASET_ID)
 })

@@ -26,7 +26,7 @@ all samples from each project are included.}
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
-the updated dataset detail as a list (invisibly)
+the dataset ID as a character string (invisibly)
 }
 \description{
 Replaces the samples and/or projects in an existing dataset with a new
@@ -40,6 +40,6 @@ A dataset that has already started processing cannot be updated.
 }
 \examples{
 \dontrun{
-replace_dataset_data(ds, samples = c("SCPCS000001", "SCPCS000002"))
+replace_dataset_data(ds_id, samples = c("SCPCS000001", "SCPCS000002"))
 }
 }

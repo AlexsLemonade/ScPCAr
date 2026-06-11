@@ -7,8 +7,9 @@
 get_dataset_status(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"))
 }
 \arguments{
-\item{dataset}{the dataset UUID string, or a list with an \verb{$id} element,
-such as the return value of \code{\link[=create_dataset]{create_dataset()}}.}
+\item{dataset}{the dataset UUID string (such as the value returned by
+\code{\link[=create_dataset]{create_dataset()}}), or a list with an \verb{$id} element (such as the value
+returned by \code{\link[=get_dataset_detail]{get_dataset_detail()}}).}
 
 \item{auth_token}{an authorization token from \code{\link[=get_auth]{get_auth()}}. Defaults to the
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
@@ -19,21 +20,21 @@ a single character string: one of "pending", "processing",
 }
 \description{
 Returns a single string describing where a dataset is in the processing
-lifecycle, by fetching the dataset detail and translating its status fields
-(\code{is_started}, \code{is_succeeded}, \code{is_failed}). A dataset that has been started
-but has neither succeeded nor failed is reported as "processing".
+lifecycle.
 }
 \details{
 Possible values are:
-\describe{
-\item{"pending"}{the dataset has not been started}
-\item{"processing"}{the dataset has been started but is not yet finished}
-\item{"succeeded"}{processing finished and the dataset is ready to download}
-\item{"failed"}{processing failed}
+\itemize{
+\item \code{"pending"}: the dataset has not been started
+\item \code{"processing"}: the dataset has been started but is not yet finished
+\item \code{"succeeded"}: processing finished and the dataset is ready to download
+\item \code{"expired"}: processing completed but the generated download has since
+expired and must be regenerated
+\item \code{"failed"}: processing failed
 }
 }
 \examples{
 \dontrun{
-get_dataset_status(ds)
+get_dataset_status(ds_id)
 }
 }

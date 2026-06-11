@@ -13,8 +13,9 @@ await_dataset_processing(
 )
 }
 \arguments{
-\item{dataset}{the dataset UUID string, or a list with an \verb{$id} element,
-such as the return value of \code{\link[=create_dataset]{create_dataset()}}.}
+\item{dataset}{the dataset UUID string (such as the value returned by
+\code{\link[=create_dataset]{create_dataset()}}), or a list with an \verb{$id} element (such as the value
+returned by \code{\link[=get_dataset_detail]{get_dataset_detail()}}).}
 
 \item{poll_interval}{Number of minutes to wait between status checks when
 \code{await_processing = TRUE}. Default is 0.5 (30 seconds).}

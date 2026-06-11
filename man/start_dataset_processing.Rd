@@ -11,8 +11,9 @@ start_dataset_processing(
 )
 }
 \arguments{
-\item{dataset}{the dataset UUID string, or a list with an \verb{$id} element,
-such as the return value of \code{\link[=create_dataset]{create_dataset()}}.}
+\item{dataset}{the dataset UUID string (such as the value returned by
+\code{\link[=create_dataset]{create_dataset()}}), or a list with an \verb{$id} element (such as the value
+returned by \code{\link[=get_dataset_detail]{get_dataset_detail()}}).}
 
 \item{email}{optional email address for the download notification. When
 supplied, it is set as part of the same request that starts processing.}
@@ -21,7 +22,7 @@ supplied, it is set as part of the same request that starts processing.}
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
-the updated dataset detail as a list (invisibly)
+the dataset ID as a character string (invisibly)
 }
 \description{
 Starts processing of an existing custom dataset so that its files can be
@@ -29,12 +30,18 @@ built for download, by sending a PUT request that sets \code{start = TRUE}.
 Optionally sets the notification email as part of the same request.
 }
 \details{
-Once processing has started a dataset is locked and can no longer be
-modified; attempting to modify or re-start it will raise an error.
+Before sending the request the current dataset status is checked via
+\code{\link[=get_dataset_status]{get_dataset_status()}}:
+\itemize{
+\item A \code{"pending"} or \code{"expired"} dataset is started normally.
+\item A \code{"failed"} dataset is retried with a warning.
+\item A \code{"processing"} or \code{"succeeded"} dataset is already underway or done;
+a message is emitted and no request is sent.
+}
 }
 \examples{
 \dontrun{
-ds <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
-start_dataset_processing(ds, email = "user@example.com")
+ds_id <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
+start_dataset_processing(ds_id, email = "user@example.com")
 }
 }

@@ -36,7 +36,7 @@ projects keep their current value. Default is FALSE.}
 \code{SCPCA_AUTH_TOKEN} environment variable, which \code{\link[=get_auth]{get_auth()}} sets automatically.}
 }
 \value{
-the updated dataset detail as a list (invisibly)
+the dataset ID as a character string (invisibly)
 }
 \description{
 \code{add_dataset_samples()} adds the given samples and/or all samples from the

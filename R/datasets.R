@@ -47,15 +47,16 @@ build_dataset_data <- function(samples = NULL, projects = NULL, include_bulk = F
 
 #' Resolve a dataset identifier to its ID string
 #'
-#' Accepts either a dataset UUID string or a list with an `$id` element (such as
-#' the return value of [create_dataset()] or [get_dataset_detail()]) and returns
-#' the ID string, after checking that it is a valid UUID.
+#' Accepts either a dataset UUID string (such as the value returned by
+#' [create_dataset()]) or a list with an `$id` element (such as the value returned
+#' by [get_dataset_detail()]) and returns the ID string, after checking that it is
+#' a valid UUID.
 #'
 #' @param dataset a dataset UUID string, or a list with an `$id` element
 #'
 #' @keywords internal
 #'
-#' @returns the dataset ID as a length-1 character string
+#' @returns the dataset ID as a character string
 resolve_dataset_id <- function(dataset) {
   if (is.list(dataset)) {
     stopifnot("dataset must be an id string or contain an $id element" = !is.null(dataset$id))
@@ -112,7 +113,9 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' Create a custom dataset on the ScPCA Portal
 #'
 #' Creates a new user dataset without starting processing.
-#' The returned list includes the dataset `$id` along with its current contents and status.
+#' Returns the new dataset's ID (invisibly), which you can pass to the other
+#' dataset functions such as [get_dataset_info()], [add_dataset_samples()], and
+#' [start_dataset_processing()].
 #'
 #' @param samples optional character vector of ScPCA sample IDs (e.g. "SCPCS000001")
 #' @param projects optional character vector of ScPCA project IDs (e.g. "SCPCP000001");
@@ -125,7 +128,7 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the API response as a list (invisibly), including the dataset `$id`
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @import httr2
 #' @export
@@ -133,11 +136,11 @@ update_dataset <- function(dataset_id, body, auth_token) {
 #' @examples
 #' \dontrun{
 #' token <- get_auth("user@example.com", agree = TRUE)
-#' ds <- create_dataset(
+#' ds_id <- create_dataset(
 #'   auth_token = token,
 #'   samples = c("SCPCS000001", "SCPCS000002")
 #' )
-#' ds$id
+#' ds_id
 #' }
 create_dataset <- function(
   samples = NULL,
@@ -179,7 +182,7 @@ create_dataset <- function(
     resp_body_json()
 
   message(glue::glue("ScPCA dataset {response$id} created."))
-  invisible(response)
+  invisible(response$id)
 }
 
 
@@ -193,8 +196,9 @@ create_dataset <- function(
 #' it is also used by the dataset modification functions to fetch current
 #' contents before updating.
 #'
-#' @param dataset the dataset UUID string, or a list with an `$id` element
-#'   such as the return value of [create_dataset()].
+#' @param dataset the dataset UUID string (such as the value returned by
+#'   [create_dataset()]), or a list with an `$id` element (such as the value
+#'   returned by [get_dataset_detail()]).
 #' @param auth_token an authorization token obtained from [get_auth()];
 #'  must match the token used to create the dataset.
 #'
@@ -218,6 +222,27 @@ get_dataset_detail <- function(dataset, auth_token) {
     resp_body_json()
 }
 
+#' Map dataset detail status flags to a status string
+#'
+#' @param detail the dataset detail list returned by [get_dataset_detail()]
+#'
+#' @keywords internal
+#'
+#' @returns a single character string: one of "pending", "processing",
+#'   "succeeded", "failed", or "expired"
+dataset_status_from_detail <- function(detail) {
+  if (isTRUE(detail$is_failed)) {
+    "failed"
+  } else if (isTRUE(detail$is_expired)) {
+    "expired"
+  } else if (isTRUE(detail$is_succeeded)) {
+    "succeeded"
+  } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {
+    "processing"
+  } else {
+    "pending"
+  }
+}
 
 #' Get the processing status of a custom dataset
 #'
@@ -233,8 +258,9 @@ get_dataset_detail <- function(dataset, auth_token) {
 #'   expired and must be regenerated
 #' * `"failed"`: processing failed
 #'
-#' @param dataset the dataset UUID string, or a list with an `$id` element,
-#'   such as the return value of [create_dataset()].
+#' @param dataset the dataset UUID string (such as the value returned by
+#'   [create_dataset()]), or a list with an `$id` element (such as the value
+#'   returned by [get_dataset_detail()]).
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
@@ -246,22 +272,12 @@ get_dataset_detail <- function(dataset, auth_token) {
 #'
 #' @examples
 #' \dontrun{
-#' get_dataset_status(ds)
+#' get_dataset_status(ds_id)
 #' }
 get_dataset_status <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
   auth_token <- resolve_auth_token(auth_token)
   detail <- get_dataset_detail(dataset, auth_token)
-  if (isTRUE(detail$is_failed)) {
-    "failed"
-  } else if (isTRUE(detail$is_expired)) {
-    "expired"
-  } else if (isTRUE(detail$is_succeeded)) {
-    "succeeded"
-  } else if (isTRUE(detail$is_processing) || isTRUE(detail$is_started)) {
-    "processing"
-  } else {
-    "pending"
-  }
+  dataset_status_from_detail(detail)
 }
 
 
@@ -283,13 +299,13 @@ get_dataset_status <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKE
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly)
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' replace_dataset_data(ds, samples = c("SCPCS000001", "SCPCS000002"))
+#' replace_dataset_data(ds_id, samples = c("SCPCS000001", "SCPCS000002"))
 #' }
 replace_dataset_data <- function(
   dataset,
@@ -308,8 +324,8 @@ replace_dataset_data <- function(
 
   data <- build_dataset_data(samples = samples, projects = projects, include_bulk = include_bulk)
 
-  response <- update_dataset(dataset_id, list(data = data), auth_token = auth_token)
-  invisible(response)
+  update_dataset(dataset_id, list(data = data), auth_token = auth_token)
+  invisible(dataset_id)
 }
 
 
@@ -326,13 +342,13 @@ replace_dataset_data <- function(
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly)
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' set_dataset_email(ds, email = "user@example.com")
+#' set_dataset_email(ds_id, email = "user@example.com")
 #' }
 set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
   auth_token <- resolve_auth_token(auth_token)
@@ -343,8 +359,8 @@ set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUT
   )
   dataset_id <- resolve_dataset_id(dataset)
 
-  response <- update_dataset(dataset_id, list(email = email), auth_token = auth_token)
-  invisible(response)
+  update_dataset(dataset_id, list(email = email), auth_token = auth_token)
+  invisible(dataset_id)
 }
 
 
@@ -362,24 +378,23 @@ set_dataset_email <- function(dataset, email, auth_token = Sys.getenv("SCPCA_AUT
 #' * A `"processing"` or `"succeeded"` dataset is already underway or done;
 #'   a message is emitted and no request is sent.
 #'
-#' @param dataset the dataset UUID string, or a list with an `$id` element,
-#'   such as the return value of [create_dataset()].
+#' @param dataset the dataset UUID string (such as the value returned by
+#'   [create_dataset()]), or a list with an `$id` element (such as the value
+#'   returned by [get_dataset_detail()]).
 #' @param email optional email address for the download notification. When
 #'   supplied, it is set as part of the same request that starts processing.
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly) when a request is
-#'   sent, or `NULL` (invisibly) when the dataset is already processing or
-#'   completed.
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @import httr2
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' ds <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
-#' start_dataset_processing(ds, email = "user@example.com")
+#' ds_id <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
+#' start_dataset_processing(ds_id, email = "user@example.com")
 #' }
 start_dataset_processing <- function(
   dataset,
@@ -401,11 +416,11 @@ start_dataset_processing <- function(
   # continue without message for "pending" or "expired"
   if (status == "processing") {
     message(glue::glue("ScPCA dataset {dataset_id} is already processing."))
-    return(invisible(NULL))
+    return(invisible(dataset_id))
   }
   if (status == "succeeded") {
     message(glue::glue("ScPCA dataset {dataset_id} has already completed processing."))
-    return(invisible(NULL))
+    return(invisible(dataset_id))
   }
   if (status == "failed") {
     warning(
@@ -419,9 +434,9 @@ start_dataset_processing <- function(
     body$email <- email
   }
 
-  response <- update_dataset(dataset_id, body, auth_token = auth_token)
+  update_dataset(dataset_id, body, auth_token = auth_token)
   message(glue::glue("ScPCA dataset {dataset_id} processing started."))
-  invisible(response)
+  invisible(dataset_id)
 }
 
 
@@ -540,7 +555,7 @@ remove_from_dataset_data <- function(existing, samples = NULL, projects = NULL) 
 #' @param auth_token an authorization token from [get_auth()]. Defaults to the
 #'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
 #'
-#' @returns the updated dataset detail as a list (invisibly)
+#' @returns the dataset ID as a character string (invisibly)
 #'
 #' @rdname modify_dataset_samples
 #' @export
@@ -576,8 +591,8 @@ add_dataset_samples <- function(
   )
   new_data <- merge_dataset_data(current$data, additions, include_bulk = include_bulk)
 
-  response <- update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
-  invisible(response)
+  update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
+  invisible(dataset_id)
 }
 
 
@@ -599,8 +614,182 @@ remove_dataset_samples <- function(
   current <- get_dataset_detail(dataset_id, auth_token = auth_token)
   new_data <- remove_from_dataset_data(current$data, samples = samples, projects = projects)
 
-  response <- update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
-  invisible(response)
+  update_dataset(dataset_id, list(data = new_data), auth_token = auth_token)
+  invisible(dataset_id)
+}
+
+
+#' Build the per-sample data frame for a dataset
+#'
+#' For each project in the dataset `$data` list, fetches the project's sample
+#' metadata with [get_project_samples()] and keeps only the samples that the dataset includes:
+#' For a "regular" project the IDs listed under `SINGLE_CELL`/`SPATIAL`,
+#' and for a merged project, all of the project's single-cell samples.
+#' Each modality flag is reported only as TRUE for samples that are both included in the dataset
+#' and actually have that modality available:
+#' - `seq_unit` gives the single-cell sequencing unit ("cell" or "nucleus", or `NA` when the
+#' sample is not included as single-cell)
+#' - `has_spatial` marks spatial inclusion, if requested, for the sample or project
+#' - `has_bulk` indicates that the sample is present in the bulk data table, if requested for a project.
+#' - `has_cite_seq` and `has_multiplexed` come from the sample records
+#'    and do not depend on the specific request
+#'
+#' @param data the project-keyed `$data` list from [get_dataset_detail()]
+#'
+#' @keywords internal
+#' @importFrom dplyr .data
+#'
+#' @returns a data frame with one row per included sample and columns
+#'   `scpca_sample_id`, `scpca_project_id`, `seq_unit` (character: "cell",
+#'   "nucleus", or `NA`), `has_spatial`, `has_bulk`, `has_cite_seq`, and
+#'   `has_multiplexed` (all logical)
+make_dataset_data_df <- function(data) {
+  empty <- tibble::tibble(
+    scpca_sample_id = character(),
+    scpca_project_id = character(),
+    seq_unit = character(),
+    has_spatial = logical(),
+    has_bulk = logical(),
+    has_cite_seq = logical(),
+    has_multiplexed = logical()
+  )
+  if (length(data) == 0) {
+    return(empty)
+  }
+
+  result <- data |>
+    purrr::imap(\(project, project_id) {
+      merged <- identical(project$SINGLE_CELL, "MERGED")
+
+      # The project's sample metadata has the modality details we will need.
+      project_samples <- get_project_samples(project_id, simplify = FALSE)
+
+      # Get single cell samples for the project:
+      # - if merged from the project_samples metadata
+      # - if not merged, from the request list.
+      if (merged) {
+        single_cell_ids <- project_samples$scpca_sample_id[
+          project_samples$has_single_cell_data
+        ]
+      } else {
+        single_cell_ids <- as.character(project$SINGLE_CELL)
+      }
+
+      spatial_ids <- as.character(project$SPATIAL)
+      included_ids <- union(single_cell_ids, spatial_ids)
+      requested_bulk <- isTRUE(project$includes_bulk)
+
+      project_samples |>
+        # keep only the samples the dataset requests for this project
+        dplyr::filter(.data$scpca_sample_id %in% included_ids) |>
+        dplyr::mutate(
+          scpca_project_id = project_id,
+          # the single-cell sequencing unit (cell or nucleus), or NA when
+          # single-cell is not requested for the sample
+          seq_unit = purrr::map2_chr(
+            .data$seq_units,
+            .data$scpca_sample_id,
+            \(units, sample_id) {
+              if (!sample_id %in% single_cell_ids) {
+                return(NA_character_)
+              }
+              # get only the nucleus or cell (not spot or bulk)
+              # if both are present (unlikely), combine with a comma
+              intersect(c("cell", "nucleus"), as.character(units)) |>
+                paste(collapse = ",")
+            }
+          ),
+          # only modalities requested for the sample are reported; has_bulk also
+          # requires the sample to actually have bulk data
+          has_spatial = .data$scpca_sample_id %in% spatial_ids,
+          has_bulk = requested_bulk & .data$has_bulk_rna_seq,
+          has_cite_seq = .data$has_cite_seq_data,
+          has_multiplexed = .data$has_multiplexed_data
+        ) |>
+        dplyr::select(
+          "scpca_sample_id",
+          "scpca_project_id",
+          "seq_unit",
+          "has_spatial",
+          "has_bulk",
+          "has_cite_seq",
+          "has_multiplexed"
+        )
+    }) |>
+    purrr::list_rbind() |>
+    dplyr::arrange(.data$scpca_sample_id)
+
+  if (nrow(result) == 0) empty else result
+}
+
+
+#' Get a summary of a custom ScPCA dataset
+#'
+#' Fetches a custom dataset and returns a structured summary of its contents,
+#' including its processing status and a per-sample table describing the modality
+#' of each sample.
+#'
+#' For each project, the included samples and their modality details are looked
+#' up from the project's sample records (one request per project), so merged
+#' projects (whose individual sample IDs are not enumerated in the dataset
+#' record) are expanded to all of their single-cell samples. Projects whose
+#' single-cell data is merged are also listed in `merged_projects`.
+#'
+#' @param dataset the dataset UUID string (such as the value returned by
+#'   [create_dataset()]), or a list with an `$id` element (such as the value
+#'   returned by this function).
+#' @param auth_token an authorization token from [get_auth()]. Defaults to the
+#'   `SCPCA_AUTH_TOKEN` environment variable, which [get_auth()] sets automatically.
+#'
+#' @returns a named list with the following elements:
+#'   * `id`: the dataset UUID string
+#'   * `format`: the dataset file format (e.g. "SINGLE_CELL_EXPERIMENT", "ANN_DATA")
+#'   * `status`: the processing status — one of "pending", "processing",
+#'     "succeeded", "failed", or "expired" (see [get_dataset_status()])
+#'   * `n_samples`: the total number of samples in the dataset, taken from the
+#'     API's `total_sample_count`
+#'   * `n_projects`: the number of projects in the dataset
+#'   * `sample_info`: a data frame with one row per included sample and the following columns:
+#'     - `scpca_sample_id`
+#'     - `scpca_project_id`
+#'     - `seq_unit` ("cell" or "nucleus", or `NA` if the sample is not included as single-cell)
+#'     - `has_spatial`
+#'     - `has_bulk`
+#'     - `has_cite_seq`
+#'     - `has_multiplexed`
+#'   * `merged_projects`: a character vector of project IDs whose single-cell
+#'     data is merged; `character(0)` when none
+#'
+#' @import httr2
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ds_id <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
+#' info <- get_dataset_info(ds_id)
+#' info$status
+#' info$sample_info
+#' }
+get_dataset_info <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
+  auth_token <- resolve_auth_token(auth_token)
+  detail <- get_dataset_detail(dataset, auth_token)
+
+  samples_df <- make_dataset_data_df(detail$data)
+  merged_projects <- detail$data |>
+    purrr::keep(\(p) identical(p$SINGLE_CELL, "MERGED")) |>
+    names() |>
+    as.character()
+
+  list(
+    id = detail$id,
+    format = detail$format,
+    status = dataset_status_from_detail(detail),
+    # total_sample_count comes from the API and counts all samples in the dataset.
+    n_samples = detail$total_sample_count,
+    n_projects = length(detail$data),
+    sample_info = samples_df,
+    merged_projects = merged_projects
+  )
 }
 
 
