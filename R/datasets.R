@@ -622,8 +622,8 @@ remove_dataset_samples <- function(
 #' Build the per-sample data frame for a dataset
 #'
 #' For each project in the dataset `$data` list, fetches the project's sample
-#' metadata with [get_project_samples()] and keeps only the samples the dataset includes:
-#' for a "regular" project the IDs listed under `SINGLE_CELL`/`SPATIAL`,
+#' metadata with [get_project_samples()] and keeps only the samples that the dataset includes:
+#' For a "regular" project the IDs listed under `SINGLE_CELL`/`SPATIAL`,
 #' and for a merged project, all of the project's single-cell samples.
 #' Each modality is reported only when it is requested for the sample:
 #' `seq_unit` gives the single-cell sequencing unit ("cell" or "nucleus", or `NA` when the
@@ -664,7 +664,7 @@ make_dataset_data_df <- function(data) {
       project_samples <- get_project_samples(project_id, simplify = FALSE)
 
       # Get single cell samples for the project:
-      # - if merged from the projeect_samples metadata
+      # - if merged from the project_samples metadata
       # - if not merged, from the request list.
       if (merged) {
         single_cell_ids <- project_samples$scpca_sample_id[
