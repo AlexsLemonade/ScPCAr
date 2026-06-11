@@ -606,6 +606,7 @@ test_that("get_dataset_info builds a per-sample table from project sample data",
   )
 
   info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
 
   expect_equal(info$id, DATASET_ID)
   expect_equal(info$format, "SINGLE_CELL_EXPERIMENT")
@@ -614,9 +615,9 @@ test_that("get_dataset_info builds a per-sample table from project sample data",
   expect_equal(info$n_samples, 4)
   expect_equal(info$merged_projects, character(0))
   expect_null(info$bulk_projects)
-  expect_s3_class(info$samples, "data.frame")
+  expect_s3_class(sample_info, "data.frame")
   expect_setequal(
-    colnames(info$samples),
+    colnames(sample_info),
     c(
       "scpca_sample_id",
       "scpca_project_id",
@@ -628,10 +629,10 @@ test_that("get_dataset_info builds a per-sample table from project sample data",
     )
   )
   # one row per included sample; the unrequested SCPCS000099 is filtered out
-  expect_equal(nrow(info$samples), 4)
-  expect_false("SCPCS000099" %in% info$samples$scpca_sample_id)
+  expect_equal(nrow(sample_info), 4)
+  expect_false("SCPCS000099" %in% sample_info$scpca_sample_id)
 
-  field <- \(col, id) info$samples[[col]][info$samples$scpca_sample_id == id]
+  field <- \(col, id) sample_info[[col]][sample_info$scpca_sample_id == id]
   # seq_unit is the single-cell unit, or NA for a spatial-only sample
   expect_equal(field("seq_unit", "SCPCS000001"), "cell")
   expect_equal(field("seq_unit", "SCPCS000003"), "cell")
@@ -648,7 +649,7 @@ test_that("get_dataset_info builds a per-sample table from project sample data",
   expect_true(field("has_bulk", "SCPCS000003")) # requested + available
   expect_false(field("has_bulk", "SCPCS000001")) # project did not request bulk
   expect_false(field("has_bulk", "SCPCS000004")) # requested but sample has none
-  expect_false(any(info$samples$has_multiplexed))
+  expect_false(any(sample_info$has_multiplexed))
 })
 
 test_that("get_dataset_info combines modalities for a sample included as single-cell and spatial", {
@@ -683,11 +684,12 @@ test_that("get_dataset_info combines modalities for a sample included as single-
   )
 
   info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
 
   # one row for the sample: single-cell unit plus spatial
-  expect_equal(nrow(info$samples), 1)
-  expect_equal(info$samples$seq_unit, "cell")
-  expect_true(info$samples$has_spatial)
+  expect_equal(nrow(sample_info), 1)
+  expect_equal(sample_info$seq_unit, "cell")
+  expect_true(sample_info$has_spatial)
 })
 
 test_that("get_dataset_info returns empty samples data frame with correct schema for empty dataset", {
@@ -704,13 +706,14 @@ test_that("get_dataset_info returns empty samples data frame with correct schema
   )
 
   info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
 
   expect_equal(info$n_samples, 0)
   expect_equal(info$n_projects, 0)
-  expect_equal(nrow(info$samples), 0)
+  expect_equal(nrow(sample_info), 0)
   expect_null(info$bulk_projects)
   expect_setequal(
-    colnames(info$samples),
+    colnames(sample_info),
     c(
       "scpca_sample_id",
       "scpca_project_id",
@@ -775,18 +778,19 @@ test_that("get_dataset_info expands merged projects to all their single-cell sam
   )
 
   info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
 
   # merged project still surfaced in merged_projects
   expect_equal(info$merged_projects, "SCPCP000005")
   # its single-cell samples are expanded into the table; SCPCS000053 is excluded
   expect_setequal(
-    info$samples$scpca_sample_id,
+    sample_info$scpca_sample_id,
     c("SCPCS000001", "SCPCS000050", "SCPCS000051", "SCPCS000052")
   )
-  expect_false("SCPCS000053" %in% info$samples$scpca_sample_id)
+  expect_false("SCPCS000053" %in% sample_info$scpca_sample_id)
   # the nucleus seq_unit is reported for that sample
   expect_equal(
-    info$samples$seq_unit[info$samples$scpca_sample_id == "SCPCS000052"],
+    sample_info$seq_unit[sample_info$scpca_sample_id == "SCPCS000052"],
     "nucleus"
   )
   expect_equal(info$n_projects, 2)
@@ -853,10 +857,11 @@ test_that("get_dataset_info prunes projects where nothing is requested", {
   )
 
   info <- get_dataset_info(DATASET_ID, auth_token = "token")
+  sample_info <- info[["sample_info"]]
 
-  expect_equal(nrow(info$samples), 1)
-  expect_equal(info$samples$scpca_project_id, "SCPCP000001")
-  expect_false("SCPCP000002" %in% info$samples$scpca_project_id)
+  expect_equal(nrow(sample_info), 1)
+  expect_equal(sample_info$scpca_project_id, "SCPCP000001")
+  expect_false("SCPCP000002" %in% sample_info$scpca_project_id)
 })
 
 test_that("get_dataset_info errors when auth_token is empty", {

@@ -626,12 +626,12 @@ remove_dataset_samples <- function(
 #' For a "regular" project the IDs listed under `SINGLE_CELL`/`SPATIAL`,
 #' and for a merged project, all of the project's single-cell samples.
 #' Each modality is reported only when it is requested for the sample:
-#' `seq_unit` gives the single-cell sequencing unit ("cell" or "nucleus", or `NA` when the
+#' - `seq_unit` gives the single-cell sequencing unit ("cell" or "nucleus", or `NA` when the
 #' sample is not included as single-cell),
-#' `has_spatial` marks spatial inclusion
-#' `has_bulk` reflects the project's `includes_bulk` request
-#' intersected with whether the sample actually has bulk data.
-#' `has_cite_seq` and `has_multiplexed` come from the sample records.
+#' - `has_spatial` marks spatial inclusion
+#' - `has_bulk` reflects the project's `includes_bulk` request
+#'    intersected with whether the sample actually has bulk data.
+#' - `has_cite_seq` and `has_multiplexed` come from the sample records.
 #'
 #' @param data the project-keyed `$data` list from [get_dataset_detail()]
 #'
@@ -748,7 +748,7 @@ make_dataset_data_df <- function(data) {
 #'   * `n_samples`: the total number of samples in the dataset, taken from the
 #'     API's `total_sample_count`
 #'   * `n_projects`: the number of projects in the dataset
-#'   * `samples`: a data frame with one row per included sample and the following columns:
+#'   * `sample_info`: a data frame with one row per included sample and the following columns:
 #'     - `scpca_sample_id`
 #'     - `scpca_project_id`
 #'     - `seq_unit` ("cell" or "nucleus", or `NA` if the sample is not included as single-cell)
@@ -767,13 +767,13 @@ make_dataset_data_df <- function(data) {
 #' ds_id <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
 #' info <- get_dataset_info(ds_id)
 #' info$status
-#' info$samples
+#' info$sample_info
 #' }
 get_dataset_info <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN")) {
   auth_token <- resolve_auth_token(auth_token)
   detail <- get_dataset_detail(dataset, auth_token)
 
-  samples <- make_dataset_data_df(detail$data)
+  samples_df <- make_dataset_data_df(detail$data)
   merged_projects <- detail$data |>
     purrr::keep(\(p) identical(p$SINGLE_CELL, "MERGED")) |>
     names() |>
@@ -786,7 +786,7 @@ get_dataset_info <- function(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"
     # total_sample_count comes from the API and counts all samples in the dataset.
     n_samples = detail$total_sample_count,
     n_projects = length(detail$data),
-    samples = samples,
+    sample_info = samples_df,
     merged_projects = merged_projects
   )
 }
