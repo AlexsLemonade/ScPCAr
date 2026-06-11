@@ -14,9 +14,10 @@ get_dataset_detail(dataset, auth_token)
 
 - dataset:
 
-  the dataset UUID string, or a list with an `$id` element such as the
-  return value of
-  [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md).
+  the dataset UUID string (such as the value returned by
+  [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md)),
+  or a list with an `$id` element (such as the value returned by
+  `get_dataset_detail()`).
 
 - auth_token:
 

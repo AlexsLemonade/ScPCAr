@@ -18,9 +18,10 @@ start_dataset_processing(
 
 - dataset:
 
-  the dataset UUID string, or a list with an `$id` element, such as the
-  return value of
-  [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md).
+  the dataset UUID string (such as the value returned by
+  [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md)),
+  or a list with an `$id` element (such as the value returned by
+  [`get_dataset_detail()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_detail.md)).
 
 - email:
 
@@ -37,18 +38,25 @@ start_dataset_processing(
 
 ## Value
 
-the updated dataset detail as a list (invisibly)
+the dataset ID as a character string (invisibly)
 
 ## Details
 
-Once processing has started a dataset is locked and can no longer be
-modified; attempting to modify or re-start it will raise an error.
+Before sending the request the current dataset status is checked via
+[`get_dataset_status()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_status.md):
+
+- A `"pending"` or `"expired"` dataset is started normally.
+
+- A `"failed"` dataset is retried with a warning.
+
+- A `"processing"` or `"succeeded"` dataset is already underway or done;
+  a message is emitted and no request is sent.
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-ds <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
-start_dataset_processing(ds, email = "user@example.com")
+ds_id <- create_dataset(samples = c("SCPCS000001", "SCPCS000002"))
+start_dataset_processing(ds_id, email = "user@example.com")
 } # }
 ```

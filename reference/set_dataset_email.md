@@ -31,7 +31,7 @@ set_dataset_email(dataset, email, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"))
 
 ## Value
 
-the updated dataset detail as a list (invisibly)
+the dataset ID as a character string (invisibly)
 
 ## Details
 
@@ -41,6 +41,6 @@ A dataset that has already been started cannot be modified.
 
 ``` r
 if (FALSE) { # \dontrun{
-set_dataset_email(ds, email = "user@example.com")
+set_dataset_email(ds_id, email = "user@example.com")
 } # }
 ```

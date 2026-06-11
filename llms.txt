@@ -82,6 +82,8 @@ documentation](https://alexslemonade.github.io/ScPCAr/).
   : Create a custom dataset on the ScPCA Portal
 - [`get_dataset_status()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_status.md)
   : Get the processing status of a custom dataset
+- [`get_dataset_info()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_info.md)
+  : Get a summary of a custom ScPCA dataset
 - [`download_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/download_dataset.md)
   : Download a custom dataset's files from the ScPCA Portal
 - [`add_dataset_samples()`](https://alexslemonade.github.io/ScPCAr/reference/modify_dataset_samples.md)

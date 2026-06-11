@@ -1,8 +1,12 @@
 # Create a custom dataset on the ScPCA Portal
 
-Creates a new user dataset without starting processing. The returned
-list includes the dataset `$id` along with its current contents and
-status.
+Creates a new user dataset without starting processing. Returns the new
+dataset's ID (invisibly), which you can pass to the other dataset
+functions such as
+[`get_dataset_info()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_info.md),
+[`add_dataset_samples()`](https://alexslemonade.github.io/ScPCAr/reference/modify_dataset_samples.md),
+and
+[`start_dataset_processing()`](https://alexslemonade.github.io/ScPCAr/reference/start_dataset_processing.md).
 
 ## Usage
 
@@ -52,17 +56,17 @@ create_dataset(
 
 ## Value
 
-the API response as a list (invisibly), including the dataset `$id`
+the dataset ID as a character string (invisibly)
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
 token <- get_auth("user@example.com", agree = TRUE)
-ds <- create_dataset(
+ds_id <- create_dataset(
   auth_token = token,
   samples = c("SCPCS000001", "SCPCS000002")
 )
-ds$id
+ds_id
 } # }
 ```

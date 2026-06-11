@@ -1,10 +1,7 @@
 # Get the processing status of a custom dataset
 
 Returns a single string describing where a dataset is in the processing
-lifecycle, by fetching the dataset detail and translating its status
-fields (`is_started`, `is_succeeded`, `is_failed`). A dataset that has
-been started but has neither succeeded nor failed is reported as
-"processing".
+lifecycle.
 
 ## Usage
 
@@ -16,9 +13,10 @@ get_dataset_status(dataset, auth_token = Sys.getenv("SCPCA_AUTH_TOKEN"))
 
 - dataset:
 
-  the dataset UUID string, or a list with an `$id` element, such as the
-  return value of
-  [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md).
+  the dataset UUID string (such as the value returned by
+  [`create_dataset()`](https://alexslemonade.github.io/ScPCAr/reference/create_dataset.md)),
+  or a list with an `$id` element (such as the value returned by
+  [`get_dataset_detail()`](https://alexslemonade.github.io/ScPCAr/reference/get_dataset_detail.md)).
 
 - auth_token:
 
@@ -37,26 +35,22 @@ a single character string: one of "pending", "processing", "succeeded",
 
 Possible values are:
 
-- "pending":
+- `"pending"`: the dataset has not been started
 
-  the dataset has not been started
+- `"processing"`: the dataset has been started but is not yet finished
 
-- "processing":
+- `"succeeded"`: processing finished and the dataset is ready to
+  download
 
-  the dataset has been started but is not yet finished
+- `"expired"`: processing completed but the generated download has since
+  expired and must be regenerated
 
-- "succeeded":
-
-  processing finished and the dataset is ready to download
-
-- "failed":
-
-  processing failed
+- `"failed"`: processing failed
 
 ## Examples
 
 ``` r
 if (FALSE) { # \dontrun{
-get_dataset_status(ds)
+get_dataset_status(ds_id)
 } # }
 ```

@@ -50,7 +50,7 @@ replace_dataset_data(
 
 ## Value
 
-the updated dataset detail as a list (invisibly)
+the dataset ID as a character string (invisibly)
 
 ## Details
 
@@ -60,6 +60,6 @@ A dataset that has already started processing cannot be updated.
 
 ``` r
 if (FALSE) { # \dontrun{
-replace_dataset_data(ds, samples = c("SCPCS000001", "SCPCS000002"))
+replace_dataset_data(ds_id, samples = c("SCPCS000001", "SCPCS000002"))
 } # }
 ```

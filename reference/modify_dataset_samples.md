@@ -56,7 +56,7 @@ remove_dataset_samples(
 
 ## Value
 
-the updated dataset detail as a list (invisibly)
+the dataset ID as a character string (invisibly)
 
 ## Details
 
