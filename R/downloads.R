@@ -518,7 +518,7 @@ download_dataset <- function(
 
   detail <- get_dataset_detail(dataset_id, auth_token)
 
-  if (isTRUE(detail$is_pending)) {
+  if (isTRUE(dataset_status_from_detail(detail) == "pending")) {
     stop(
       glue::glue(
         "ScPCA dataset `{dataset_id}` has not been submitted for processing.",
