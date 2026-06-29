@@ -353,28 +353,30 @@ Each project will be in a subdirectory, with each sample directory nested within
 Note that in this example, there were two separate libraries for the `SCPCS000652` sample, so there are two sets of files for that sample.
 
 ```
-├── README.md
-├── SCPCP000008_single-cell
-│   ├── SCPCS000212
-│   │   ├── SCPCL000286_celltype-report.html
-│   │   ├── SCPCL000286_filtered.rds
-│   │   ├── SCPCL000286_processed.rds
-│   │   ├── SCPCL000286_qc.html
-│   │   └── SCPCL000286_unfiltered.rds
-│   └── single-cell_metadata.tsv
-└── SCPCP000022_single-cell
-    ├── SCPCS000652
-    │   ├── SCPCL000980_celltype-report.html
-    │   ├── SCPCL000980_filtered.rds
-    │   ├── SCPCL000980_processed.rds
-    │   ├── SCPCL000980_qc.html
-    │   ├── SCPCL000980_unfiltered.rds
-    │   ├── SCPCL000981_celltype-report.html
-    │   ├── SCPCL000981_filtered.rds
-    │   ├── SCPCL000981_processed.rds
-    │   ├── SCPCL000981_qc.html
-    │   └── SCPCL000981_unfiltered.rds
-    └── single-cell_metadata.tsv
+scpca_data
+└── {dataset_id}_single-cell-experiment_{YYYY-MM-DD}
+    ├── README.md
+    ├── SCPCP000008_single-cell
+    │   ├── SCPCS000212
+    │   │   ├── SCPCL000286_celltype-report.html
+    │   │   ├── SCPCL000286_filtered.rds
+    │   │   ├── SCPCL000286_processed.rds
+    │   │   ├── SCPCL000286_qc.html
+    │   │   └── SCPCL000286_unfiltered.rds
+    │   └── single-cell_metadata.tsv
+    └── SCPCP000022_single-cell
+        ├── SCPCS000652
+        │   ├── SCPCL000980_celltype-report.html
+        │   ├── SCPCL000980_filtered.rds
+        │   ├── SCPCL000980_processed.rds
+        │   ├── SCPCL000980_qc.html
+        │   ├── SCPCL000980_unfiltered.rds
+        │   ├── SCPCL000981_celltype-report.html
+        │   ├── SCPCL000981_filtered.rds
+        │   ├── SCPCL000981_processed.rds
+        │   ├── SCPCL000981_qc.html
+        │   └── SCPCL000981_unfiltered.rds
+        └── single-cell_metadata.tsv
 ```
 
 If bulk RNA-seq data were included, it would be found in a separate `{project_id}_bulk` directory as a single TSV file with all bulk samples for that project, along with a metadata file describing the RNA-seq samples, just as with the project downloads above.
@@ -420,14 +422,15 @@ gene_metadata <- rowData(sce)
 gene_metadata
 ```
 
-And of course we can make some standard plots, here a UMAP colored by the consensus cell type annotation.
+And of course we can make some standard plots.
+Here a UMAP colored by the consensus cell type annotation.
 (This one has a few too many cell types to be easily distinguishable, but we'll do it anyway for demonstration purposes only!)
 
 ```{r}
-#| label: plot-umap
+#| label: fig-umap
 #| fig.width: 10
 #| fig.height: 6
-#| fig.cap: "UMAP of sample SCPCS000001 colored by consensus cell type annotation."
+#| fig.cap: "UMAP of Library SCPCL000286 colored by consensus cell type annotation."
 # View the UMAP, colored by consensus cell type
 scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
   ggplot2::coord_fixed() +

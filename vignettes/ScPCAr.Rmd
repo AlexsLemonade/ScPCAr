@@ -334,11 +334,11 @@ head(file_paths)
 
 ```
 ## [1] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/README.md"                                                           
-## [2] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_bulk_rna/SCPCP000001_bulk_metadata.tsv"                  
-## [3] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_bulk_rna/SCPCP000001_bulk_quant.tsv"                     
-## [4] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_celltype-report.html"
-## [5] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_filtered.rds"        
-## [6] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_processed.rds"
+## [2] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/single-cell_metadata.tsv"                    
+## [3] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_celltype-report.html"
+## [4] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_filtered.rds"        
+## [5] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_processed.rds"       
+## [6] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_qc.html"
 ```
 
 ### Project download file structure
@@ -404,7 +404,7 @@ my_dataset <- create_dataset(samples = c("SCPCS000212", "SCPCS000652"))
 ```
 
 ```
-## ScPCA dataset 1b9f5d01-7ae1-4616-8bad-6a1862349c5e created.
+## ScPCA dataset f5fa92aa-b2e2-4387-a842-b63430404468 created.
 ```
 
 By default a new project will use SCE objects, but you can also specify `format = "anndata"` to create a dataset with AnnData objects instead.
@@ -436,7 +436,7 @@ get_dataset_info(my_dataset)
 
 ```
 ## $id
-## [1] "1b9f5d01-7ae1-4616-8bad-6a1862349c5e"
+## [1] "f5fa92aa-b2e2-4387-a842-b63430404468"
 ## 
 ## $format
 ## [1] "SINGLE_CELL_EXPERIMENT"
@@ -473,7 +473,7 @@ start_dataset_processing(my_dataset)
 ```
 
 ```
-## ScPCA dataset 1b9f5d01-7ae1-4616-8bad-6a1862349c5e processing started.
+## ScPCA dataset f5fa92aa-b2e2-4387-a842-b63430404468 processing started.
 ```
 
 The amount of time that a dataset takes to process varies by the number of samples included.
@@ -505,7 +505,7 @@ my_dataset_files <- download_dataset(
 
 ```
 ## Error:
-## ! ScPCA dataset `1b9f5d01-7ae1-4616-8bad-6a1862349c5e` is not ready for download (status: processing). Use `get_dataset_status("1b9f5d01-7ae1-4616-8bad-6a1862349c5e")` to monitor progress. Alternatively, rerun `download_dataset() with `await_processing = TRUE` to wait for processing and download when complete.
+## ! ScPCA dataset `f5fa92aa-b2e2-4387-a842-b63430404468` is not ready for download (status: processing). Use `get_dataset_status("f5fa92aa-b2e2-4387-a842-b63430404468")` to monitor progress. Alternatively, rerun `download_dataset() with `await_processing = TRUE` to wait for processing and download when complete.
 ```
 
 
@@ -522,15 +522,15 @@ my_dataset_files <- download_dataset(
 ```
 
 ```
-## ℹ Waiting for dataset 1b9f5d01-7ae1-4616-8bad-6a1862349c5e to finish processing...
+## ℹ Waiting for dataset f5fa92aa-b2e2-4387-a842-b63430404468 to finish processing...
 ```
 
 ```
-## Downloading 1b9f5d01-7ae1-4616-8bad-6a1862349c5e_single-cell-experiment_2026-06-29.zip...
+## Downloading f5fa92aa-b2e2-4387-a842-b63430404468_single-cell-experiment_2026-06-29.zip...
 ```
 
 ```
-## Unzipping to scpca_data/1b9f5d01-7ae1-4616-8bad-6a1862349c5e_single-cell-experiment_2026-06-29...
+## Unzipping to scpca_data/f5fa92aa-b2e2-4387-a842-b63430404468_single-cell-experiment_2026-06-29...
 ```
 ### Custom dataset download file structure
 
@@ -539,28 +539,30 @@ Each project will be in a subdirectory, with each sample directory nested within
 Note that in this example, there were two separate libraries for the `SCPCS000652` sample, so there are two sets of files for that sample.
 
 ```
-├── README.md
-├── SCPCP000008_single-cell
-│   ├── SCPCS000212
-│   │   ├── SCPCL000286_celltype-report.html
-│   │   ├── SCPCL000286_filtered.rds
-│   │   ├── SCPCL000286_processed.rds
-│   │   ├── SCPCL000286_qc.html
-│   │   └── SCPCL000286_unfiltered.rds
-│   └── single-cell_metadata.tsv
-└── SCPCP000022_single-cell
-    ├── SCPCS000652
-    │   ├── SCPCL000980_celltype-report.html
-    │   ├── SCPCL000980_filtered.rds
-    │   ├── SCPCL000980_processed.rds
-    │   ├── SCPCL000980_qc.html
-    │   ├── SCPCL000980_unfiltered.rds
-    │   ├── SCPCL000981_celltype-report.html
-    │   ├── SCPCL000981_filtered.rds
-    │   ├── SCPCL000981_processed.rds
-    │   ├── SCPCL000981_qc.html
-    │   └── SCPCL000981_unfiltered.rds
-    └── single-cell_metadata.tsv
+scpca_data
+└── {dataset_id}_single-cell-experiment_{YYYY-MM-DD}
+    ├── README.md
+    ├── SCPCP000008_single-cell
+    │   ├── SCPCS000212
+    │   │   ├── SCPCL000286_celltype-report.html
+    │   │   ├── SCPCL000286_filtered.rds
+    │   │   ├── SCPCL000286_processed.rds
+    │   │   ├── SCPCL000286_qc.html
+    │   │   └── SCPCL000286_unfiltered.rds
+    │   └── single-cell_metadata.tsv
+    └── SCPCP000022_single-cell
+        ├── SCPCS000652
+        │   ├── SCPCL000980_celltype-report.html
+        │   ├── SCPCL000980_filtered.rds
+        │   ├── SCPCL000980_processed.rds
+        │   ├── SCPCL000980_qc.html
+        │   ├── SCPCL000980_unfiltered.rds
+        │   ├── SCPCL000981_celltype-report.html
+        │   ├── SCPCL000981_filtered.rds
+        │   ├── SCPCL000981_processed.rds
+        │   ├── SCPCL000981_qc.html
+        │   └── SCPCL000981_unfiltered.rds
+        └── single-cell_metadata.tsv
 ```
 
 If bulk RNA-seq data were included, it would be found in a separate `{project_id}_bulk` directory as a single TSV file with all bulk samples for that project, along with a metadata file describing the RNA-seq samples, just as with the project downloads above.
@@ -788,7 +790,8 @@ gene_metadata
 ## ENSG00000274175 ENSG00000274175          NA 0.00000e+00 0.00000000
 ```
 
-And of course we can make some standard plots, here a UMAP colored by the consensus cell type annotation.
+And of course we can make some standard plots.
+Here a UMAP colored by the consensus cell type annotation.
 (This one has a few too many cell types to be easily distinguishable, but we'll do it anyway for demonstration purposes only!)
 
 
@@ -805,7 +808,7 @@ scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
   )
 ```
 
-![UMAP of sample SCPCS000001 colored by consensus cell type annotation.](scpcar-plot-umap-1.png)
+![UMAP of Library SCPCL000286 colored by consensus cell type annotation.](scpcar-fig-umap-1.png)
 
 
 
