@@ -5,8 +5,6 @@
 #
 # Usage: Rscript vignettes/precompile.R
 
-uuid_regex <- "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-
 devtools::load_all()
 setwd(here::here("vignettes"))
 
