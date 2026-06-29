@@ -7,7 +7,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r knitr-opts}
+```{r}
+#| label: knitr-setup
 #| include: FALSE
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -37,7 +38,8 @@ This vignette covers the following tasks for interacting with the ScPCA Portal:
 The ScPCAr package is currently available via GitHub.
 You can install the latest version using the `pak` package:
 
-```{r install}
+```{r}
+#| label: install-ScPCAr
 #| eval: FALSE
 # Install pak if needed
 if (!requireNamespace("pak", quietly = TRUE)) {
@@ -52,7 +54,8 @@ You can then load the `ScPCAr` package.
 Note that in this vignette we will use `ScPCAr::` when calling functions from the package, both for clarity and to avoid any possible namespace conflicts.
 We will also load the `SingleCellExperiment` package for later analysis.
 
-```{r setup}
+```{r}
+#| label: setup
 #| message: FALSE
 library(ScPCAr)
 library(SingleCellExperiment)
@@ -64,7 +67,8 @@ library(SingleCellExperiment)
 
 First, let's see what projects are available in the ScPCA Portal:
 
-```{r list-projects}
+```{r}
+#| label: list-projects
 # Get a data frame of all projects
 projects <- ScPCAr::scpca_projects()
 
@@ -76,7 +80,8 @@ The `scpca_projects()` function returns a data frame with basic project metadata
 By default, it returns a simplified version with list columns removed for easier viewing.
 You can see the full structure with additional data such as a list of diagnoses, data types, external accession numbers, etc., by setting `simplify = FALSE`:
 
-```{r list-projects-full}
+```{r}
+#| label: list-projects-full
 # Get the full project information including list columns
 projects_full <- ScPCAr::scpca_projects(simplify = FALSE)
 
@@ -92,7 +97,8 @@ We will use the first project, `SCPCP000001`, as an example.
 According to the project info above, these samples are from a study of pediatric high-grade gliomas.
 We can get more detailed information about this project using its `project_id`, and here we will set `simplifyVector = TRUE` to convert simple lists into vectors where possible.
 
-```{r project-info}
+```{r}
+#| label: project-info
 project_id <- "SCPCP000001"
 
 # Get detailed project metadata
@@ -104,14 +110,16 @@ You can explore the full structure of this list with `str()` or `dplyr::glimpse(
 
 For example, we can look at the set of diagnoses that are present, and their counts:
 
-```{r project-diagnoses}
+```{r}
+#| label: project-diagnoses
 data.frame(count = unlist(project_info$diagnoses_counts)) |>
   tibble::rownames_to_column("diagnosis")
 ```
 
 Similarly, we can look at the data modalities available for this project, which here includes both single-cell and bulk RNA-seq data:
 
-```{r project-modalities}
+```{r}
+#| label: project-modalities
 project_info$modalities
 ```
 
@@ -122,7 +130,8 @@ project_info$modalities
 
 Let's look at the samples within our selected project:
 
-```{r sample-info}
+```{r}
+#| label: project-samples
 # Get sample information for the project
 sample_info <- ScPCAr::get_project_samples(project_id)
 head(sample_info)
@@ -132,7 +141,8 @@ head(sample_info)
 
 We can also get detailed information for a specific sample:
 
-```{r detailed-sample}
+```{r}
+#| label: sample-detail
 sample_id <- "SCPCS000001"
 # Get detailed sample metadata
 sample_detail <- ScPCAr::get_sample_info(sample_id)
@@ -148,7 +158,8 @@ To download full data files, or to create a custom dataset, you must agree to th
 To view the terms of service in a web browser, run `ScPCAr::view_terms()`.
 Then you can use the `ScPCAr::get_auth()` function, providing your email address and agreeing to the terms of service:
 
-```{r auth}
+```{r}
+#| label: get-auth
 #| eval: FALSE
 # Get an authentication token
 # Replace with your actual email address
@@ -184,7 +195,8 @@ The function will download and unpack the files associated with that sample, and
 
 Let's start with SingleCellExperiment format:
 
-```{r download-project-sce}
+```{r}
+#| label: download-project-sce
 #| message: FALSE
 # Download SingleCellExperiment data for our project
 # This will create a directory structure under "scpca_data/"
@@ -228,7 +240,8 @@ For details about the contents of these files, see the [ScPCA Portal documentati
 
 `ScPCAr` also supports downloading data in AnnData (H5AD) format, which is commonly used in Python-based single-cell analysis workflows:
 
-```{r h5ad-discussion}
+```{r}
+#| label: h5ad-download
 #| eval: FALSE
 # Download the same project in H5AD format
 file_paths_h5ad <- ScPCAr::download_project(
@@ -256,6 +269,7 @@ Note that the dataset is also tied to the authentication token, so you will need
 Here we will make a small example dataset with two B-ALL samples from two different projects, `SCPCS000212` and `SCPCS000652`, which are from projects [SCPCP000008](https://scpca.alexslemonade.org/projects/SCPCP000008) and [SCPCS000022](https://scpca.alexslemonade.org/projects/SCPCP000022), respectively.
 
 ```{r}
+#| label: create-dataset
 my_dataset <- create_dataset(samples = c("SCPCS000212", "SCPCS000652"))
 ```
 
@@ -282,6 +296,7 @@ After dataset processing begins, you will not be able to modify the dataset cont
 To view the current contents of a dataset, use the `get_dataset_info()` function, which will return a list with the dataset ID (`$id`), a table of samples (`$sample_info`), and other metadata including the chosen dataset format, processing status, etc. 
 
 ```{r}
+#| label: get-dataset-info
 get_dataset_info(my_dataset)
 ```
 
@@ -291,6 +306,7 @@ get_dataset_info(my_dataset)
 Once you are satisfied with the contents of your custom dataset, submit it for processing using the `start_dataset_processing()` function:
 
 ```{r}
+#| label: start-dataset-processing
 start_dataset_processing(my_dataset)
 ```
 
@@ -299,6 +315,7 @@ For a small dataset like this, it should take only a few minutes.
 To check progress, run the `get_dataset_status()` function:
 
 ```{r}
+#| label: check-dataset-status
 get_dataset_status(my_dataset)
 ```
 
@@ -309,6 +326,7 @@ The function will also (silently) return a list of file paths for the downloaded
 If the dataset is not done processing, this will result in an error:
 
 ```{r}
+#| label: download-dataset-fail
 #| error: true
 my_dataset_files <- download_dataset(
   my_dataset, 
@@ -321,6 +339,7 @@ If you are willing to wait for the processing to complete before performing any 
 This option will also make sure that the dataset has been submitted for processing, if you did not previously run `start_dataset_processing()`.
 
 ```{r}
+#| label: download-dataset-await
 my_dataset_files <- download_dataset(
   my_dataset, 
   destination = "scpca_data",
@@ -365,7 +384,8 @@ If bulk RNA-seq data were included, it would be found in a separate `{project_id
 ## Loading data into R
 
 
-```{r load-sce}
+```{r}
+#| label: load-sce
 # select the processed SCE files using a pattern match for the file name.
 processed_sce_files <- stringr::str_subset(my_dataset_files, "_processed\\.rds$")
 
@@ -381,7 +401,8 @@ sce
 Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools.
 For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/sce_file_contents.html#components-of-a-singlecellexperiment-object).
 
-```{r work-with-sce}
+```{r}
+#| label: work-with-sce
 # Access library metadata
 library_metadata <- metadata(sce)
 library_metadata$sample_id
@@ -402,7 +423,8 @@ gene_metadata
 And of course we can make some standard plots, here a UMAP colored by the consensus cell type annotation.
 (This one has a few too many cell types to be easily distinguishable, but we'll do it anyway for demonstration purposes only!)
 
-```{r plot-umap}
+```{r}
+#| label: plot-umap
 #| fig.width: 10
 #| fig.height: 6
 #| fig.cap: "UMAP of sample SCPCS000001 colored by consensus cell type annotation."
@@ -424,7 +446,8 @@ scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
 
 <details>
 <summary>Click to expand R session info</summary>
-```{r session-info}
+```{r}
+#| label: session-info
 sessioninfo::session_info()
 ```
 </details>
