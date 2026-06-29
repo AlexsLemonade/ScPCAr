@@ -646,7 +646,7 @@ await_dataset_processing <- function(
       stop(glue::glue("ScPCA dataset `{dataset_id}` processing failed."), call. = FALSE)
     }
     if (status == "expired") {
-      if (!quiet) {
+      if (!quiet && interactive()) {
         cli::cli_progress_done()
       }
       stop(
@@ -660,7 +660,7 @@ await_dataset_processing <- function(
 
     elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "mins"))
     if (is.finite(timeout) && elapsed >= timeout) {
-      if (!quiet) {
+      if (!quiet && interactive()) {
         cli::cli_progress_done()
       }
       stop(
@@ -684,10 +684,10 @@ await_dataset_processing <- function(
     }
 
     status <- get_dataset_status(dataset_id, auth_token = auth_token)
-    if (!quiet) cli::cli_progress_update(force = TRUE)
+    if (!quiet && interactive()) cli::cli_progress_update(force = TRUE)
   }
 
-  if (!quiet) {
+  if (!quiet && interactive()) {
     cli::cli_progress_done()
   }
 
