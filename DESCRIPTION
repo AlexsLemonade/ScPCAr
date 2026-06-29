@@ -1,6 +1,6 @@
 Package: ScPCAr
 Title: Interact with the ScPCA Portal API
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person(c("Joshua", "A."), "Shapiro", , "josh.shapiro@ccdatalab.org", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6224-0347")),
