@@ -13,4 +13,4 @@ ScPCAr::get_auth(email = "scpca@ccdatalab.org", agree = TRUE)
 
 
 # Pre-compiled vignettes that depend on data downloads
-knitr::knit("uncompiled/ScPCAr_pre.Rmd", output = "ScPCAr.Rmd")
+knitr::knit("uncompiled/_pre_ScPCAr.Rmd", output = "ScPCAr.Rmd")
