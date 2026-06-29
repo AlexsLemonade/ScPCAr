@@ -2,7 +2,7 @@
 % Please edit documentation in R/datasets.R
 \name{make_dataset_data_df}
 \alias{make_dataset_data_df}
-\title{Make a per-sample data frame from the \verb{$data} list}
+\title{Build the per-sample data frame for a dataset}
 \usage{
 make_dataset_data_df(data)
 }
@@ -10,12 +10,25 @@ make_dataset_data_df(data)
 \item{data}{the project-keyed \verb{$data} list from \code{\link[=get_dataset_detail]{get_dataset_detail()}}}
 }
 \value{
-a data frame with columns \code{scpca_sample_id}, \code{scpca_project_id},
-\code{modality}, and \code{includes_bulk}
+a data frame with one row per included sample and columns
+\code{scpca_sample_id}, \code{scpca_project_id}, \code{seq_unit} (character: "cell",
+"nucleus", or \code{NA}), \code{has_spatial}, \code{has_bulk}, \code{has_cite_seq}, and
+\code{has_multiplexed} (all logical)
 }
 \description{
-Transforms the project-keyed \verb{$data} list from \code{\link[=get_dataset_detail]{get_dataset_detail()}} into a
-one-row-per-sample data frame. Projects with merged single-cell data
-(\code{SINGLE_CELL = "MERGED"}) are excluded.
+For each project in the dataset \verb{$data} list, fetches the project's sample
+metadata with \code{\link[=get_project_samples]{get_project_samples()}} and keeps only the samples that the dataset includes:
+For a "regular" project the IDs listed under \code{SINGLE_CELL}/\code{SPATIAL},
+and for a merged project, all of the project's single-cell samples.
+Each modality flag is reported only as TRUE for samples that are both included in the dataset
+and actually have that modality available:
+\itemize{
+\item \code{seq_unit} gives the single-cell sequencing unit ("cell" or "nucleus", or \code{NA} when the
+sample is not included as single-cell)
+\item \code{has_spatial} marks spatial inclusion, if requested, for the sample or project
+\item \code{has_bulk} indicates that the sample is present in the bulk data table, if requested for a project.
+\item \code{has_cite_seq} and \code{has_multiplexed} come from the sample records
+and do not depend on the specific request
+}
 }
 \keyword{internal}
