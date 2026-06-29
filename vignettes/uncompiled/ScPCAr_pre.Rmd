@@ -206,7 +206,7 @@ A standard download of SingleCellExperiment data for a project will create a dir
 scpca_data
 └── {project_id}_single-cell-experiment_{YYYY-MM-DD}
     ├── README.md
-    ├── {project_id}_bulk_rna
+    ├── {project_id}_bulk
     │   ├── {project_id}_bulk_metadata.tsv
     │   └── {project_id}_bulk_quant.tsv
     └── {project_id}_single-cell
@@ -250,15 +250,115 @@ After exploring the metadata with functions like `get_project_info()`, `get_proj
 
 To create a custom dataset, use the `create_dataset()` function.
 This will return a dataset ID that you will want to keep track of for later access to the dataset.
-Note that the dataset is also tied to the authentication token, so you will need to use the same token to access the dataset later. 
-Make sure you have it saved somewhere safe!
+Note that the dataset is also tied to the authentication token, so you will need to use the same token to access the dataset later. **Make sure you have the token saved somewhere safe!**
+
+`create_dataset()` takes a vector of samples and/or a vector of projects, and will return a dataset ID that you can use later to add or removed samples and projects, as well as to initiate dataset processing and download. 
+Here we will make a small example dataset with two B-ALL samples from two different projects, `SCPCS000212` and `SCPCS000652`, which are from projects [SCPCP000008](https://scpca.alexslemonade.org/projects/SCPCP000008) and [SCPCS000022](https://scpca.alexslemonade.org/projects/SCPCP000022), respectively.
 
 ```{r}
+my_dataset <- create_dataset(samples = c("SCPCS000212", "SCPCS000652"))
+```
 
+By default a new project will use SCE objects, but you can also specify `format = "anndata"` to create a dataset with AnnData objects instead.
+*Once a dataset is created, you can not change the format, and must start fresh with a new dataset.*
+
+Other options include whether or not to include bulk RNA-seq data; the default is no bulk data, but you can include bulk data with `include_bulk = "TRUE"`.
+Note that the bulk data will be included for each entire project, not just the specified samples.
+
+You can also specify an email address that will be used for notification when the dataset has completed processed.
+For more details on processing, [see below](#processing-and-downloading-a-custom dataset). 
+
+### Modifying a custom dataset
+
+To add samples or projects to a custom dataset, use the `add_dataset_samples()` function; to remove samples or projects, use the `remove_dataset_samples()` function.
+You can also fully replace the contents of dataset with a new set of samples and/or projects using the `replace_dataset_data()` function.
+(This may be convenient as it will not generate a new dataset ID, while rerunning `create_dataset()` would.)
+
+Each of these functions will be available until a dataset is submitted for processing.
+After dataset processing begins, you will not be able to modify the dataset contents, and you will need to create a new dataset if you want to change the samples or projects.
+
+### Viewing the contents of a custom dataset
+
+To view the current contents of a dataset, use the `get_dataset_info()` function, which will return a list with the dataset ID (`$id`), a table of samples (`$sample_info`), and other metadata including the chosen dataset format, processing status, etc. 
+
+```{r}
+get_dataset_info(my_dataset)
 ```
 
 
+## Processing and downloading a custom dataset
 
+Once you are satisfied with the contents of your custom dataset, submit it for processing using the `start_dataset_processing()` function:
+
+```{r}
+start_dataset_processing(my_dataset)
+```
+
+The amount of time that a dataset takes to process varies by the number of samples included.
+For a small dataset like this, it should take only a few minutes.
+To check progress, run the `get_dataset_status()` function:
+
+```{r}
+get_dataset_status(my_dataset)
+```
+
+You can run this repeatedly until the sample status changes to "succeeded", at which point the dataset is ready for download, and can be downloaded with the `download_dataset` function. 
+As with the `download_project()` function, you can specify a destination.
+The function will also (silently) return a list of file paths for the downloaded files.
+
+If the dataset is not done processing, this will result in an error:
+
+```{r}
+#| error: true
+my_dataset_files <- download_dataset(
+  my_dataset, 
+  destination = "scpca_data"
+)
+```
+
+
+If you are willing to wait for the processing to complete before performing any other work in your session (or you are using a multithreading package like `future`), you can use the `download_dataset()` function with `await_processing = TRUE`.
+This option will also make sure that the dataset has been submitted for processing, if you did not previously run `start_dataset_processing()`.
+
+```{r}
+my_dataset_files <- download_dataset(
+  my_dataset, 
+  destination = "scpca_data",
+  await_processing = TRUE
+)
+```
+### Custom dataset download file structure
+
+The downloaded files will be placed in a directory named with the dataset id, format, and download date.
+Each project will be in a subdirectory, with each sample directory nested within that. 
+Note that in this example, there were two separate libraries for the `SCPCS000652` sample, so there are two sets of files for that sample.
+
+```
+├── README.md
+├── SCPCP000008_single-cell
+│   ├── SCPCS000212
+│   │   ├── SCPCL000286_celltype-report.html
+│   │   ├── SCPCL000286_filtered.rds
+│   │   ├── SCPCL000286_processed.rds
+│   │   ├── SCPCL000286_qc.html
+│   │   └── SCPCL000286_unfiltered.rds
+│   └── single-cell_metadata.tsv
+└── SCPCP000022_single-cell
+    ├── SCPCS000652
+    │   ├── SCPCL000980_celltype-report.html
+    │   ├── SCPCL000980_filtered.rds
+    │   ├── SCPCL000980_processed.rds
+    │   ├── SCPCL000980_qc.html
+    │   ├── SCPCL000980_unfiltered.rds
+    │   ├── SCPCL000981_celltype-report.html
+    │   ├── SCPCL000981_filtered.rds
+    │   ├── SCPCL000981_processed.rds
+    │   ├── SCPCL000981_qc.html
+    │   └── SCPCL000981_unfiltered.rds
+    └── single-cell_metadata.tsv
+```
+
+If bulk RNA-seq data were included, it would be found in a separate `{project_id}_bulk` directory as a single TSV file with all bulk samples for that project, along with a metadata file describing the RNA-seq samples, just as with the project downloads above.
 
 # Working with ScPCA data in R
 
@@ -267,7 +367,7 @@ Make sure you have it saved somewhere safe!
 
 ```{r load-sce}
 # select the processed SCE files using a pattern match for the file name.
-processed_sce_files <- stringr::str_subset(file_paths, "_processed\\.rds$")
+processed_sce_files <- stringr::str_subset(my_dataset_files, "_processed\\.rds$")
 
 # Load the first SingleCellExperiment object
 sce <- readRDS(processed_sce_files[1])
