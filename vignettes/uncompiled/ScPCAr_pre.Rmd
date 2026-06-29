@@ -28,23 +28,24 @@ This vignette covers the following tasks for interacting with the ScPCA Portal:
 1. Listing available projects
 2. Selecting a project and exploring its samples
 3. Obtaining an authentication token
-4. Downloading data for individual samples
-5. Loading the data into R
+4. Downloading all data for an ScPCA project
+5. Creating a custom dataset with specified samples and data types
+6. Loading ScPCA data into R
 
 # Installing the ScPCAr Package
 
 The ScPCAr package is currently available via GitHub.
-You can install the latest version using the `remotes` package:
+You can install the latest version using the `pak` package:
 
 ```{r install}
 #| eval: FALSE
-# Install remotes if needed
-if (!requireNamespace("remotes", quietly = TRUE)) {
-  install.packages("remotes")
+# Install pak if needed
+if (!requireNamespace("pak", quietly = TRUE)) {
+  install.packages("pak")
 }
 
 # Install ScPCAr from GitHub
-remotes::install_github("Alexslemonade/ScPCAr")
+pak::pak("Alexslemonade/ScPCAr")
 ```
 
 You can then load the `ScPCAr` package.
@@ -123,8 +124,8 @@ Let's look at the samples within our selected project:
 
 ```{r sample-info}
 # Get sample information for the project
-samples <- ScPCAr::get_project_samples(project_id)
-head(samples)
+sample_info <- ScPCAr::get_project_samples(project_id)
+head(sample_info)
 ```
 
 ## Getting detailed sample information
@@ -166,110 +167,72 @@ If you have a saved token from a previous session, you can populate the environm
 - If you create a custom dataset using `ScPCAr::create_dataset()`, you will need to use the same token to access that dataset later, so be sure to save it somewhere safe (e.g., a password manager).
   - In a later session, you can use `Sys.setenv(SCPCA_AUTH_TOKEN = saved_token)` to set the environment variable with your saved token.
 
-# Downloading data for an ScPCA sample
+# Downloading data for an ScPCA project
 
-## Downloading SingleCellExperiment objects
+There are two main ways for downloading data from the ScPCA Portal using `ScPCAr`: 
 
-Now we can download data for our selected sample.
-We will use the `download_sample()` function, specifying the sample ID, authentication token, desired destination directory, and the file format.
+- Project downloads contain all available samples for a given project
+- Custom datasets allow you to specify specific subsets of samples, including samples from separate projects
+
+We will start with project downloads first, as they are a bit simpler, though less flexible. 
+
+## Downloading a project SingleCellExperiment objects
+
+We will use the `download_project()` function, specifying the project ID, desired destination directory, and the file format.
+We also have the option to download a merged object with all samples contained in a single object.
 The function will download and unpack the files associated with that sample, and return a list of file paths for the downloaded files
+
 Let's start with SingleCellExperiment format:
 
-```{r download-sce}
+```{r download-project-sce}
 #| message: FALSE
-# Download SingleCellExperiment data for our sample
+# Download SingleCellExperiment data for our project
 # This will create a directory structure under "scpca_data/"
-file_paths <- ScPCAr::download_sample(
-  sample_id = "SCPCS000001",
-  auth_token = auth_token,
+file_paths <- ScPCAr::download_project(
+  project_id,
   destination = "scpca_data",
   format = "sce"
 )
 
-# List the files that were downloaded
-file_paths
+# List some of the files that were downloaded
+head(file_paths)
 ```
 
-## Understanding the downloaded file structure
+### Project download file structure
 
-A standard download of SingleCellExperiment data for a sample will create a directory structure like this:
+A standard download of SingleCellExperiment data for a project will create a directory structure like this:
 
 ```
-scpca_data/
-└── {sample_id}_{MODALITY}_{FORMAT}_{YYYY-MM-DD}/
+scpca_data
+└── {project_id}_single-cell-experiment_{YYYY-MM-DD}
     ├── README.md
-    ├── single_cell_metadata.tsv
-    ├── {library_id}_filtered.rds
-    ├── {library_id}_processed.rds
-    ├── {library_id}_unfiltered.rds
-    ├── {library_id}_qc.html
-    └── {library_id}_celltype-report.html
+    ├── {project_id}_bulk_rna
+    │   ├── {project_id}_bulk_metadata.tsv
+    │   └── {project_id}_bulk_quant.tsv
+    └── {project_id}_single-cell
+        ├── {sample1_id}
+        │   ├── {library1_id}_celltype-report.html
+        │   ├── {library1_id}_filtered.rds
+        │   ├── {library1_id}_processed.rds
+        │   ├── {library1_id}_qc.html
+        │   └── {library1_id}_unfiltered.rds
+        ├── {sample2_id}
+        ...
+        
 ```
 
 Note that the `library_id` and `sample_id` often have different numbers, as a single sample may have been sequenced across multiple libraries.
 For details about the contents of these files, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/download_files.html).
 
-
-## Loading data into R
-
-Now let's load in the processed data for our sample.
-First we will select the processed SingleCellExperiment file from the downloaded paths, then use `readRDS()` to load it.
-
-```{r load-sce}
-# select the processed SCE file using a pattern match for the file name.
-processed_sce_files <- stringr::str_subset(file_paths, "_processed\\.rds$")
-
-# Load the first (in this case only) SingleCellExperiment object
-sce <- readRDS(processed_sce_files[1])
-
-# View a summary of the object
-sce
-```
-
-## Working with the SingleCellExperiment object
-
-Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools.
-For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/sce_file_contents.html#components-of-a-singlecellexperiment-object).
-
-```{r work-with-sce}
-# Access count data
-counts <- counts(sce)
-dim(counts)
-
-# Access cell metadata
-cell_metadata <- colData(sce)
-head(cell_metadata)
-
-# Access gene metadata
-gene_metadata <- rowData(sce)
-head(gene_metadata)
-```
-
-And of course we can make some standard plots, here a UMAP colored by the consensus cell type annotation.
-
-```{r plot-umap}
-#| fig.cap: "UMAP of sample SCPCS000001 colored by consensus cell type annotation."
-# View the UMAP, colored by consensus cell type
-scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
-  ggplot2::guides(color = ggplot2::guide_legend(title="Cell type")) +
-  ggplot2::theme_classic() +
-  # remove axis ticks
-  ggplot2::theme(
-    axis.ticks = ggplot2::element_blank(),
-    axis.text = ggplot2::element_blank()
-  )
-```
-
-## Downloading data in AnnData/H5AD format
+## Downloading projects in AnnData/H5AD format
 
 `ScPCAr` also supports downloading data in AnnData (H5AD) format, which is commonly used in Python-based single-cell analysis workflows:
 
 ```{r h5ad-discussion}
 #| eval: FALSE
-# Download the same sample in H5AD format
-file_paths_h5ad <- ScPCAr::download_sample(
-  sample_id = sample_id,
-  auth_token = auth_token,
+# Download the same project in H5AD format
+file_paths_h5ad <- ScPCAr::download_project(
+  project_id,
   destination = "scpca_data",
   format = "anndata"
 )
@@ -278,34 +241,81 @@ file_paths_h5ad <- ScPCAr::download_sample(
 For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](https://scpca.readthedocs.io/en/stable/download_files.html#anndata-downloads).
 
 
-# Downloading projects
+# Custom ScPCA datasets
 
-In addition to downloading the data for a single sample, `ScPCAr` provides a function to download an entire project, fittingly named `download_project()`.
-This function takes a project id and authentication token as required input, and like the `download_sample` function allows you to specify the destination and format of the downloaded files.
-There are also a few other options, such as the ability to download a merged object containing all samples in the project, and whether to include multiplexed samples, where multiple samples were pooled and sequenced together, but have not been demultiplexed.
-Please see the function documentation for more information.
+The ScPCAr package supports the creation of custom datasets that allow you to choose specific samples for download, including samples from multiple projects.
+After exploring the metadata with functions like `get_project_info()`, `get_project_samples()` and `get_sample_info()`, you may have a list of samples that you would like to download. 
 
-```{r download-project}
-#| eval: FALSE
+## Creating a custom dataset
 
-# Download an entire project in SingleCellExperiment format,
-# with separate files for each sample (default behavior).
-project_file_paths <- ScPCAr::download_project(
-  project_id = project_id,
-  auth_token = auth_token,
-  destination = "scpca_data",
-  format = "sce"
-)
+To create a custom dataset, use the `create_dataset()` function.
+This will return a dataset ID that you will want to keep track of for later access to the dataset.
+Note that the dataset is also tied to the authentication token, so you will need to use the same token to access the dataset later. 
+Make sure you have it saved somewhere safe!
 
-# Download an entire project in SingleCellExperiment format,
-# with all samples merged into a single object (but not integrated!).
-project_file_paths <- ScPCAr::download_project(
-  project_id = project_id,
-  auth_token = auth_token,
-  destination = "scpca_data",
-  format = "sce",
-  merged = TRUE
-)
+```{r}
+
+```
+
+
+
+
+# Working with ScPCA data in R
+
+## Loading data into R
+
+
+```{r load-sce}
+# select the processed SCE files using a pattern match for the file name.
+processed_sce_files <- stringr::str_subset(file_paths, "_processed\\.rds$")
+
+# Load the first SingleCellExperiment object
+sce <- readRDS(processed_sce_files[1])
+
+# View a summary of the object
+sce
+```
+
+### Working with the SingleCellExperiment object
+
+Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools.
+For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/sce_file_contents.html#components-of-a-singlecellexperiment-object).
+
+```{r work-with-sce}
+# Access library metadata
+library_metadata <- metadata(sce)
+library_metadata$sample_id
+
+# Access count data
+counts <- counts(sce)
+dim(counts)
+
+# Access cell metadata
+cell_metadata <- colData(sce)
+cell_metadata
+
+# Access gene metadata
+gene_metadata <- rowData(sce)
+gene_metadata
+```
+
+And of course we can make some standard plots, here a UMAP colored by the consensus cell type annotation.
+(This one has a few too many cell types to be easily distinguishable, but we'll do it anyway for demonstration purposes only!)
+
+```{r plot-umap}
+#| fig.width: 10
+#| fig.height: 6
+#| fig.cap: "UMAP of sample SCPCS000001 colored by consensus cell type annotation."
+# View the UMAP, colored by consensus cell type
+scater::plotUMAP(sce, color_by = "consensus_celltype_annotation") +
+  ggplot2::coord_fixed() +
+  ggplot2::theme_classic() +
+  ggplot2::guides(color = ggplot2::guide_legend(title = "Cell type")) +
+  # remove axis ticks
+  ggplot2::theme(
+    axis.ticks = ggplot2::element_blank(),
+    axis.text = ggplot2::element_blank()
+  )
 ```
 
 
@@ -315,6 +325,6 @@ project_file_paths <- ScPCAr::download_project(
 <details>
 <summary>Click to expand R session info</summary>
 ```{r session-info}
-sessionInfo()
+sessioninfo::session_info()
 ```
 </details>

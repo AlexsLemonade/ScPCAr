@@ -16,3 +16,4 @@
 ^typos.toml$
 ^vignettes/articles$
 ^vignettes/scpca_data$
+^vignettes/uncompiled$
