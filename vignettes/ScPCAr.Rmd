@@ -37,7 +37,7 @@ if (!requireNamespace("pak", quietly = TRUE)) {
 }
 
 # Install ScPCAr from GitHub
-pak::pak("Alexslemonade/ScPCAr")
+pak::pak("AlexsLemonade/ScPCAr")
 ```
 
 You can then load the `ScPCAr` package.
@@ -147,7 +147,7 @@ dplyr::glimpse(projects_full)
 Now let's get more detailed information about the samples in a selected project.
 We will use the first project, `SCPCP000001`, as an example.
 According to the project info above, these samples are from a study of pediatric high-grade gliomas.
-We can get more detailed information about this project using its `project_id`, and here we will set `simplifyVector = TRUE` to convert simple lists into vectors where possible.
+We can get more detailed information about this project using its `project_id`.
 
 
 ``` r
@@ -158,7 +158,7 @@ project_info <- ScPCAr::get_project_info(project_id)
 ```
 
 This returns a `list` with more detailed information about the project and the samples within.
-You can explore the full structure of this list with `str()` or `dplyr::glimpse()`, but for now we will just look at a few of the components that might be of interest.
+You can explore the full structure of this list with `str()`, but for now we will just look at a few of the components that might be of interest.
 
 For example, we can look at the set of diagnoses that are present, and their counts:
 
@@ -267,6 +267,8 @@ str(sample_detail, max.level = 1)
 ##  $ updated_at                   : chr "2026-05-11T15:50:13.135257Z"
 ```
 
+
+
 ``` r
 # Check which data modalities are available for this sample
 sample_detail$modalities
@@ -298,8 +300,8 @@ If you have a saved token from a previous session, you can populate the environm
 - You must set `agree = TRUE` to indicate you accept the terms of service
 - Replace `"your.email@example.com"` with your actual email address
 - Keep your token secure and don't share it publicly
-- If you create a custom dataset using `ScPCAr::create_dataset()`, you will need to use the same token to access that dataset later, so be sure to save it somewhere safe (e.g., a password manager).
-  - In a later session, you can use `Sys.setenv(SCPCA_AUTH_TOKEN = saved_token)` to set the environment variable with your saved token.
+- If you create a custom dataset using `ScPCAr::create_dataset()`, you will need to use the same token to access that dataset in future R sessions, so be sure to save it somewhere safe (e.g., a password manager).
+  - To use your saved token the token in the future, use `Sys.setenv(SCPCA_AUTH_TOKEN = saved_token)`.
 
 # Downloading data for an ScPCA project
 
@@ -310,11 +312,11 @@ There are two main ways for downloading data from the ScPCA Portal using `ScPCAr
 
 We will start with project downloads first, as they are a bit simpler, though less flexible. 
 
-## Downloading a project SingleCellExperiment objects
+## Downloading a project in SingleCellExperiment format
 
 We will use the `download_project()` function, specifying the project ID, desired destination directory, and the file format.
-We also have the option to download a merged object with all samples contained in a single object.
-The function will download and unpack the files associated with that sample, and return a list of file paths for the downloaded files
+We also have the option to download a merged object with all samples contained in a single object instead of as individual objects.
+The function will download and unpack the files associated with that sample, and return a list of file paths for the downloaded files.
 
 Let's start with SingleCellExperiment format:
 
@@ -333,12 +335,12 @@ head(file_paths)
 ```
 
 ```
-## [1] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/README.md"                                                           
-## [2] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/single-cell_metadata.tsv"                    
-## [3] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_celltype-report.html"
-## [4] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_filtered.rds"        
-## [5] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_processed.rds"       
-## [6] "scpca_data/SCPCP000001_single-cell-experiment_2026-06-29/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_qc.html"
+## [1] "scpca_data/SCPCP000001_single-cell-experiment_2026-07-01/README.md"                                                           
+## [2] "scpca_data/SCPCP000001_single-cell-experiment_2026-07-01/SCPCP000001_single-cell/single-cell_metadata.tsv"                    
+## [3] "scpca_data/SCPCP000001_single-cell-experiment_2026-07-01/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_celltype-report.html"
+## [4] "scpca_data/SCPCP000001_single-cell-experiment_2026-07-01/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_filtered.rds"        
+## [5] "scpca_data/SCPCP000001_single-cell-experiment_2026-07-01/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_processed.rds"       
+## [6] "scpca_data/SCPCP000001_single-cell-experiment_2026-07-01/SCPCP000001_single-cell/SCPCS000001/SCPCL000001_qc.html"
 ```
 
 ### Project download file structure
@@ -365,9 +367,9 @@ scpca_data
 ```
 
 Note that the `library_id` and `sample_id` often have different numbers, as a single sample may have been sequenced across multiple libraries.
-For details about the contents of these files, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/download_files.html).
+For details about the contents of these files, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/stable/download_files.html#project-downloads).
 
-## Downloading projects in AnnData/H5AD format
+## Downloading a project in AnnData/H5AD format
 
 `ScPCAr` also supports downloading data in AnnData (H5AD) format, which is commonly used in Python-based single-cell analysis workflows:
 
@@ -381,7 +383,7 @@ file_paths_h5ad <- ScPCAr::download_project(
 )
 ```
 
-For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](https://scpca.readthedocs.io/en/stable/download_files.html#anndata-downloads).
+For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](https://scpca.readthedocs.io/en/stable/download_files.html#download-folder-structure-for-anndata-project-downloads).
 
 
 # Custom ScPCA datasets
@@ -393,9 +395,11 @@ After exploring the metadata with functions like `get_project_info()`, `get_proj
 
 To create a custom dataset, use the `create_dataset()` function.
 This will return a dataset ID that you will want to keep track of for later access to the dataset.
-Note that the dataset is also tied to the authentication token, so you will need to use the same token to access the dataset later. **Make sure you have the token saved somewhere safe!**
+Note that the dataset is also tied to the authentication token, so you will need to use the same token to access the dataset later. 
+**Make sure you have the token saved somewhere safe!** 
+See [Authentication](#authentication) for details.
 
-`create_dataset()` takes a vector of samples and/or a vector of projects, and will return a dataset ID that you can use later to add or removed samples and projects, as well as to initiate dataset processing and download. 
+`create_dataset()` takes a vector of samples and/or a vector of projects (specified with the `projects` argument), and will return a dataset ID that you can use later to add or removed samples and projects, as well as to initiate dataset processing and download. 
 Here we will make a small example dataset with two B-ALL samples from two different projects, `SCPCS000212` and `SCPCS000652`, which are from projects [SCPCP000008](https://scpca.alexslemonade.org/projects/SCPCP000008) and [SCPCS000022](https://scpca.alexslemonade.org/projects/SCPCP000022), respectively.
 
 
@@ -404,14 +408,15 @@ my_dataset <- create_dataset(samples = c("SCPCS000212", "SCPCS000652"))
 ```
 
 ```
-## ScPCA dataset f5fa92aa-b2e2-4387-a842-b63430404468 created.
+## ScPCA dataset 57cc78cb-2336-446a-9022-7a5a5f2f17af created.
 ```
 
-By default a new project will use SCE objects, but you can also specify `format = "anndata"` to create a dataset with AnnData objects instead.
-*Once a dataset is created, you can not change the format, and must start fresh with a new dataset.*
+By default, single-cell data will be formatted as SingleCellExperiment objects, but you can also specify `format = "anndata"` to create a dataset with AnnData objects instead.
+*Once a dataset is created, you can not change the format.
+You must use `create_dataset()` to create a new dataset with a different format.*
 
 Other options include whether or not to include bulk RNA-seq data; the default is no bulk data, but you can include bulk data with `include_bulk = "TRUE"`.
-Note that the bulk data will be included for each entire project, not just the specified samples.
+Note that the bulk data will be included for all available samples in each project that the selected samples come from, not just the specified samples.
 
 You can also specify an email address that will be used for notification when the dataset has completed processed.
 For more details on processing, [see below](#processing-and-downloading-a-custom dataset). 
@@ -436,7 +441,7 @@ get_dataset_info(my_dataset)
 
 ```
 ## $id
-## [1] "f5fa92aa-b2e2-4387-a842-b63430404468"
+## [1] "57cc78cb-2336-446a-9022-7a5a5f2f17af"
 ## 
 ## $format
 ## [1] "SINGLE_CELL_EXPERIMENT"
@@ -473,7 +478,7 @@ start_dataset_processing(my_dataset)
 ```
 
 ```
-## ScPCA dataset f5fa92aa-b2e2-4387-a842-b63430404468 processing started.
+## ScPCA dataset 57cc78cb-2336-446a-9022-7a5a5f2f17af processing started.
 ```
 
 The amount of time that a dataset takes to process varies by the number of samples included.
@@ -505,7 +510,7 @@ my_dataset_files <- download_dataset(
 
 ```
 ## Error:
-## ! ScPCA dataset `f5fa92aa-b2e2-4387-a842-b63430404468` is not ready for download (status: processing). Use `get_dataset_status("f5fa92aa-b2e2-4387-a842-b63430404468")` to monitor progress. Alternatively, rerun `download_dataset() with `await_processing = TRUE` to wait for processing and download when complete.
+## ! ScPCA dataset `57cc78cb-2336-446a-9022-7a5a5f2f17af` is not ready for download (status: processing). Use `get_dataset_status("57cc78cb-2336-446a-9022-7a5a5f2f17af")` to monitor progress. Alternatively, rerun `download_dataset() with `await_processing = TRUE` to wait for processing and download when complete.
 ```
 
 
@@ -522,15 +527,15 @@ my_dataset_files <- download_dataset(
 ```
 
 ```
-## ℹ Waiting for dataset f5fa92aa-b2e2-4387-a842-b63430404468 to finish processing...
+## ℹ Waiting for dataset 57cc78cb-2336-446a-9022-7a5a5f2f17af to finish processing...
 ```
 
 ```
-## Downloading f5fa92aa-b2e2-4387-a842-b63430404468_single-cell-experiment_2026-06-29.zip...
+## Downloading 57cc78cb-2336-446a-9022-7a5a5f2f17af_single-cell-experiment_2026-07-01.zip...
 ```
 
 ```
-## Unzipping to scpca_data/f5fa92aa-b2e2-4387-a842-b63430404468_single-cell-experiment_2026-06-29...
+## Unzipping to scpca_data/57cc78cb-2336-446a-9022-7a5a5f2f17af_single-cell-experiment_2026-07-01...
 ```
 ### Custom dataset download file structure
 
@@ -604,7 +609,7 @@ sce
 ### Working with the SingleCellExperiment object
 
 Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools.
-For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/sce_file_contents.html#components-of-a-singlecellexperiment-object).
+For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/stable/sce_file_contents.html#components-of-a-singlecellexperiment-object).
 
 
 ``` r
@@ -822,7 +827,7 @@ sessioninfo::session_info()
 ```
 
 ```
-## ─ Session info ──────────────────────────────────────────────────────────────────────────────────────────────────────
+## ─ Session info ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ##  setting  value
 ##  version  R version 4.5.3 (2026-03-11)
 ##  os       macOS Tahoe 26.5.1
@@ -832,11 +837,11 @@ sessioninfo::session_info()
 ##  collate  en_US.UTF-8
 ##  ctype    en_US.UTF-8
 ##  tz       America/New_York
-##  date     2026-06-29
+##  date     2026-07-01
 ##  pandoc   3.9.0.2 @ /Users/josh/.pixi/bin/pandoc
 ##  quarto   1.8.27 @ /Users/josh/.pixi/bin/quarto
 ## 
-## ─ Packages ──────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ─ Packages ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ##  ! package              * version   date (UTC) lib source
 ##    abind                  1.4-8     2024-09-12 [1] CRAN (R 4.5.0)
 ##    beachmat               2.26.0    2025-10-29 [1] https://b~
@@ -936,6 +941,6 @@ sessioninfo::session_info()
 ##  * ── Packages attached to the search path.
 ##  P ── Loaded and on-disk path mismatch.
 ## 
-## ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+## ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
 </details>
