@@ -47,7 +47,7 @@ if (!requireNamespace("pak", quietly = TRUE)) {
 }
 
 # Install ScPCAr from GitHub
-pak::pak("Alexslemonade/ScPCAr")
+pak::pak("AlexsLemonade/ScPCAr")
 ```
 
 You can then load the `ScPCAr` package.
@@ -187,7 +187,7 @@ There are two main ways for downloading data from the ScPCA Portal using `ScPCAr
 
 We will start with project downloads first, as they are a bit simpler, though less flexible. 
 
-## Downloading a project SingleCellExperiment objects
+## Downloading a project as SingleCellExperiment objects
 
 We will use the `download_project()` function, specifying the project ID, desired destination directory, and the file format.
 We also have the option to download a merged object with all samples contained in a single object instead of as individual objects.
@@ -263,7 +263,9 @@ After exploring the metadata with functions like `get_project_info()`, `get_proj
 
 To create a custom dataset, use the `create_dataset()` function.
 This will return a dataset ID that you will want to keep track of for later access to the dataset.
-Note that the dataset is also tied to the authentication token, so you will need to use the same token to access the dataset later. **Make sure you have the token saved somewhere safe!**
+Note that the dataset is also tied to the authentication token, so you will need to use the same token to access the dataset later. 
+**Make sure you have the token saved somewhere safe!** 
+See [Authentication](#authentication) for details.
 
 `create_dataset()` takes a vector of samples and/or a vector of projects, and will return a dataset ID that you can use later to add or removed samples and projects, as well as to initiate dataset processing and download. 
 Here we will make a small example dataset with two B-ALL samples from two different projects, `SCPCS000212` and `SCPCS000652`, which are from projects [SCPCP000008](https://scpca.alexslemonade.org/projects/SCPCP000008) and [SCPCS000022](https://scpca.alexslemonade.org/projects/SCPCP000022), respectively.
@@ -278,7 +280,7 @@ By default, single-cell data will be formatted as SingleCellExperiment objects, 
 You must use `create_dataset()` to create a new dataset with a different format.*
 
 Other options include whether or not to include bulk RNA-seq data; the default is no bulk data, but you can include bulk data with `include_bulk = "TRUE"`.
-Note that the bulk data will be included for each entire project, not just the specified samples.
+Note that the bulk data will be included for all available samples in each project that the selected samples come from, not just the specified samples.
 
 You can also specify an email address that will be used for notification when the dataset has completed processed.
 For more details on processing, [see below](#processing-and-downloading-a-custom dataset). 
