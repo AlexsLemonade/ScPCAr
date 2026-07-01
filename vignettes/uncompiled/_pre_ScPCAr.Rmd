@@ -404,7 +404,7 @@ sce
 ### Working with the SingleCellExperiment object
 
 Once loaded, you can work with the SingleCellExperiment object using standard Bioconductor tools.
-For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/sce_file_contents.html#components-of-a-singlecellexperiment-object).
+For more information on the contents of the SingleCellExperiment objects provided by ScPCA, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/stable/sce_file_contents.html#components-of-a-singlecellexperiment-object).
 
 ```{r}
 #| label: work-with-sce
