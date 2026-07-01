@@ -518,7 +518,7 @@ download_dataset <- function(
 
   detail <- get_dataset_detail(dataset_id, auth_token)
 
-  if (isTRUE(detail$is_pending)) {
+  if (isTRUE(dataset_status_from_detail(detail) == "pending")) {
     stop(
       glue::glue(
         "ScPCA dataset `{dataset_id}` has not been submitted for processing.",
@@ -620,15 +620,20 @@ await_dataset_processing <- function(
     "quiet must be a logical value" = is.logical(quiet) && length(quiet) == 1
   )
   dataset_id <- resolve_dataset_id(dataset)
+  interactive_session <- interactive()
 
   start_time <- Sys.time()
   status <- get_dataset_status(dataset_id, auth_token = auth_token)
 
   if (!quiet) {
-    cli::cli_progress_bar(
-      format = "{cli::pb_spin} Waiting for dataset {dataset_id} [{status}] {cli::pb_elapsed}",
-      clear = FALSE
-    )
+    if (interactive_session) {
+      cli::cli_progress_bar(
+        format = "{cli::pb_spin} Waiting for dataset {dataset_id} [{status}] {cli::pb_elapsed}",
+        clear = FALSE
+      )
+    } else {
+      cli::cli_alert_info("Waiting for dataset {dataset_id} to finish processing...")
+    }
   }
 
   repeat {
@@ -642,7 +647,7 @@ await_dataset_processing <- function(
       stop(glue::glue("ScPCA dataset `{dataset_id}` processing failed."), call. = FALSE)
     }
     if (status == "expired") {
-      if (!quiet) {
+      if (!quiet && interactive_session) {
         cli::cli_progress_done()
       }
       stop(
@@ -656,7 +661,7 @@ await_dataset_processing <- function(
 
     elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "mins"))
     if (is.finite(timeout) && elapsed >= timeout) {
-      if (!quiet) {
+      if (!quiet && interactive_session) {
         cli::cli_progress_done()
       }
       stop(
@@ -668,7 +673,7 @@ await_dataset_processing <- function(
       )
     }
 
-    if (!quiet) {
+    if (!quiet && interactive_session) {
       next_loop <- Sys.time() + poll_interval * 60
       # keep the progress spinner updating every half second until the next poll
       while (Sys.time() < next_loop) {
@@ -680,10 +685,10 @@ await_dataset_processing <- function(
     }
 
     status <- get_dataset_status(dataset_id, auth_token = auth_token)
-    if (!quiet) cli::cli_progress_update(force = TRUE)
+    if (!quiet && interactive_session) cli::cli_progress_update(force = TRUE)
   }
 
-  if (!quiet) {
+  if (!quiet && interactive_session) {
     cli::cli_progress_done()
   }
 

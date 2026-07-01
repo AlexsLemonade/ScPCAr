@@ -5,9 +5,12 @@
 #
 # Usage: Rscript vignettes/precompile.R
 
-
 devtools::load_all()
 setwd(here::here("vignettes"))
 
+# Get auth token and set it in the environment for knitr to use
+ScPCAr::get_auth(email = "scpca@ccdatalab.org", agree = TRUE)
+
+
 # Pre-compiled vignettes that depend on data downloads
-knitr::knit("ScPCAr.Rmd.orig", output = "ScPCAr.Rmd")
+knitr::knit("uncompiled/_pre_ScPCAr.Rmd", output = "ScPCAr.Rmd")
