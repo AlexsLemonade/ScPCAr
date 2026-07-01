@@ -11,7 +11,7 @@ An R package for interacting with the [Single-cell Pediatric Cancer Atlas (ScPCA
 The `ScPCAr` package can be installed from the GitHub repository using the `remotes` package:
 
 ```r
-remotes::install_github("AlexsLemonade/ScPCAr")
+pak::pak("AlexsLemonade/ScPCAr")
 ```
 
 ## Usage

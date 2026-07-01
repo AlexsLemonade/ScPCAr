@@ -175,8 +175,8 @@ If you have a saved token from a previous session, you can populate the environm
 - You must set `agree = TRUE` to indicate you accept the terms of service
 - Replace `"your.email@example.com"` with your actual email address
 - Keep your token secure and don't share it publicly
-- If you create a custom dataset using `ScPCAr::create_dataset()`, you will need to use the same token to access that dataset later, so be sure to save it somewhere safe (e.g., a password manager).
-  - In a later session, you can use `Sys.setenv(SCPCA_AUTH_TOKEN = saved_token)` to set the environment variable with your saved token.
+- If you create a custom dataset using `ScPCAr::create_dataset()`, you will need to use the same token to access that dataset in future R sessions, so be sure to save it somewhere safe (e.g., a password manager).
+  - To use your saved token the token in the future, use `Sys.setenv(SCPCA_AUTH_TOKEN = saved_token)`.
 
 # Downloading data for an ScPCA project
 
@@ -190,8 +190,8 @@ We will start with project downloads first, as they are a bit simpler, though le
 ## Downloading a project SingleCellExperiment objects
 
 We will use the `download_project()` function, specifying the project ID, desired destination directory, and the file format.
-We also have the option to download a merged object with all samples contained in a single object.
-The function will download and unpack the files associated with that sample, and return a list of file paths for the downloaded files
+We also have the option to download a merged object with all samples contained in a single object instead of as individual objects.
+The function will download and unpack the files associated with that sample, and return a list of file paths for the downloaded files.
 
 Let's start with SingleCellExperiment format:
 
@@ -234,7 +234,7 @@ scpca_data
 ```
 
 Note that the `library_id` and `sample_id` often have different numbers, as a single sample may have been sequenced across multiple libraries.
-For details about the contents of these files, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/latest/download_files.html).
+For details about the contents of these files, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/stable/download_files.html#project-downloads).
 
 ## Downloading projects in AnnData/H5AD format
 
@@ -251,7 +251,7 @@ file_paths_h5ad <- ScPCAr::download_project(
 )
 ```
 
-For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](https://scpca.readthedocs.io/en/stable/download_files.html#anndata-downloads).
+For more about the expected files when downloading samples in this format, see the [ScPCA Portal AnnData docs](https://scpca.readthedocs.io/en/stable/download_files.html#download-folder-structure-for-anndata-project-downloads).
 
 
 # Custom ScPCA datasets
@@ -273,8 +273,9 @@ Here we will make a small example dataset with two B-ALL samples from two differ
 my_dataset <- create_dataset(samples = c("SCPCS000212", "SCPCS000652"))
 ```
 
-By default a new project will use SCE objects, but you can also specify `format = "anndata"` to create a dataset with AnnData objects instead.
-*Once a dataset is created, you can not change the format, and must start fresh with a new dataset.*
+By default, single-cell data will be formatted as SingleCellExperiment objects, but you can also specify `format = "anndata"` to create a dataset with AnnData objects instead.
+*Once a dataset is created, you can not change the format.
+You must use `create_dataset()` to create a new dataset with a different format.*
 
 Other options include whether or not to include bulk RNA-seq data; the default is no bulk data, but you can include bulk data with `include_bulk = "TRUE"`.
 Note that the bulk data will be included for each entire project, not just the specified samples.
