@@ -187,7 +187,7 @@ If you have a saved token from a previous session, you can populate the environm
 There are two main patterns for downloading data from the ScPCA Portal using `ScPCAr`: downloading pre-defined projects or constructing custom data sets.
 
 - Project downloads contain all available samples for a given project
-- Creating a custom dataset allows you to specify specific sets of samples, including samples from different projects
+- Custom datasets allow you to specify specific sets of samples, including samples from different projects
 
 We will start with project downloads first, as they are a bit simpler, though less flexible. 
 
