@@ -95,7 +95,7 @@ dplyr::glimpse(projects_full)
 Now let's get more detailed information about the samples in a selected project.
 We will use the first project, `SCPCP000001`, as an example.
 According to the project info above, these samples are from a study of pediatric high-grade gliomas.
-We can get more detailed information about this project using its `project_id`, and here we will set `simplifyVector = TRUE` to convert simple lists into vectors where possible.
+We can get more detailed information about this project using its `project_id`.
 
 ```{r}
 #| label: project-info
@@ -106,7 +106,7 @@ project_info <- ScPCAr::get_project_info(project_id)
 ```
 
 This returns a `list` with more detailed information about the project and the samples within.
-You can explore the full structure of this list with `str()` or `dplyr::glimpse()`, but for now we will just look at a few of the components that might be of interest.
+You can explore the full structure of this list with `str()`, but for now we will just look at a few of the components that might be of interest.
 
 For example, we can look at the set of diagnoses that are present, and their counts:
 
@@ -147,7 +147,11 @@ sample_id <- "SCPCS000001"
 # Get detailed sample metadata
 sample_detail <- ScPCAr::get_sample_info(sample_id)
 str(sample_detail, max.level = 1)
+```
 
+
+```{r}
+#| label: sample-modalities
 # Check which data modalities are available for this sample
 sample_detail$modalities
 ```
@@ -267,7 +271,7 @@ Note that the dataset is also tied to the authentication token, so you will need
 **Make sure you have the token saved somewhere safe!** 
 See [Authentication](#authentication) for details.
 
-`create_dataset()` takes a vector of samples and/or a vector of projects, and will return a dataset ID that you can use later to add or removed samples and projects, as well as to initiate dataset processing and download. 
+`create_dataset()` takes a vector of samples and/or a vector of projects (specified with the `projects` argument), and will return a dataset ID that you can use later to add or removed samples and projects, as well as to initiate dataset processing and download. 
 Here we will make a small example dataset with two B-ALL samples from two different projects, `SCPCS000212` and `SCPCS000652`, which are from projects [SCPCP000008](https://scpca.alexslemonade.org/projects/SCPCP000008) and [SCPCS000022](https://scpca.alexslemonade.org/projects/SCPCP000022), respectively.
 
 ```{r}
