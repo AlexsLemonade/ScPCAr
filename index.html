@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">ScPCAr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,7 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/ScPCAr.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -65,12 +66,12 @@
 </h2>
 <p>The <code>ScPCAr</code> package can be installed from the GitHub repository using the <code>remotes</code> package:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"AlexsLemonade/ScPCAr"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"AlexsLemonade/ScPCAr"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>The package provides functions to get metadata and download data from the ScPCA Portal from within R. The code chunk below shows an example of how to authenticate and download a single sample from the portal.</p>
+<p>The package provides functions to get metadata and download data from the ScPCA Portal from within R. The code chunk below shows an example of how to authenticate and download data for an ScPCA project.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alexslemonade.github.io/ScPCAr">ScPCAr</a></span><span class="op">)</span></span>
 <span></span>
@@ -85,14 +86,14 @@
 <span><span class="co"># Get the sample metadata for a project</span></span>
 <span><span class="va">sample_metadata</span> <span class="op">&lt;-</span> <span class="fu">get_sample_metadata</span><span class="op">(</span>project_id <span class="op">=</span> <span class="st">"SCPCP000001"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Download data for a sample</span></span>
+<span><span class="co"># Download the data files for the project (warning, large!)</span></span>
 <span><span class="co"># this function returns a vector of the downloaded file paths</span></span>
-<span><span class="va">file_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/download_sample.html">download_sample</a></span><span class="op">(</span></span>
-<span>  sample_id <span class="op">=</span> <span class="st">"SCPCS000001"</span>,</span>
+<span><span class="va">file_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/download_project.html">download_project</a></span><span class="op">(</span></span>
+<span>  project_id <span class="op">=</span> <span class="st">"SCPCP000001"</span>,</span>
 <span>  destination <span class="op">=</span> <span class="st">"scpca_data"</span>,</span>
 <span>  format <span class="op">=</span> <span class="st">"sce"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>For detailed usage instructions, please refer to the <a href="https://alexslemonade.github.io/ScPCAr/">package documentation</a>.</p>
+<p>For detailed usage instructions, including instructions on creating and downloading custom datasets, please refer to the <a href="https://alexslemonade.github.io/ScPCAr/">package documentation</a>.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
