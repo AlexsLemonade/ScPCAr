@@ -308,7 +308,7 @@ If you have a saved token from a previous session, you can populate the environm
 There are two main patterns for downloading data from the ScPCA Portal using `ScPCAr`: downloading pre-defined projects or constructing custom data sets.
 
 - Project downloads contain all available samples for a given project
-- Creating a custom dataset allows you to specify specific sets of samples, including samples from different projects
+- Custom datasets allow you to specify specific sets of samples, including samples from different projects
 
 We will start with project downloads first, as they are a bit simpler, though less flexible. 
 
@@ -408,7 +408,7 @@ my_dataset <- create_dataset(samples = c("SCPCS000212", "SCPCS000652"))
 ```
 
 ```
-## ScPCA dataset 57cc78cb-2336-446a-9022-7a5a5f2f17af created.
+## ScPCA dataset 96a5478a-32b4-4707-9ee8-295a174f5741 created.
 ```
 
 By default, single-cell data will be formatted as SingleCellExperiment objects, but you can also specify `format = "anndata"` to create a dataset with AnnData objects instead.
@@ -441,7 +441,7 @@ get_dataset_info(my_dataset)
 
 ```
 ## $id
-## [1] "57cc78cb-2336-446a-9022-7a5a5f2f17af"
+## [1] "96a5478a-32b4-4707-9ee8-295a174f5741"
 ## 
 ## $format
 ## [1] "SINGLE_CELL_EXPERIMENT"
@@ -478,7 +478,7 @@ start_dataset_processing(my_dataset)
 ```
 
 ```
-## ScPCA dataset 57cc78cb-2336-446a-9022-7a5a5f2f17af processing started.
+## ScPCA dataset 96a5478a-32b4-4707-9ee8-295a174f5741 processing started.
 ```
 
 The amount of time that a dataset takes to process varies by the number of samples included.
@@ -510,7 +510,7 @@ my_dataset_files <- download_dataset(
 
 ```
 ## Error:
-## ! ScPCA dataset `57cc78cb-2336-446a-9022-7a5a5f2f17af` is not ready for download (status: processing). Use `get_dataset_status("57cc78cb-2336-446a-9022-7a5a5f2f17af")` to monitor progress. Alternatively, rerun `download_dataset() with `await_processing = TRUE` to wait for processing and download when complete.
+## ! ScPCA dataset `96a5478a-32b4-4707-9ee8-295a174f5741` is not ready for download (status: processing). Use `get_dataset_status("96a5478a-32b4-4707-9ee8-295a174f5741")` to monitor progress. Alternatively, rerun `download_dataset() with `await_processing = TRUE` to wait for processing and download when complete.
 ```
 
 
@@ -527,15 +527,15 @@ my_dataset_files <- download_dataset(
 ```
 
 ```
-## ℹ Waiting for dataset 57cc78cb-2336-446a-9022-7a5a5f2f17af to finish processing...
+## ℹ Waiting for dataset 96a5478a-32b4-4707-9ee8-295a174f5741 to finish processing...
 ```
 
 ```
-## Downloading 57cc78cb-2336-446a-9022-7a5a5f2f17af_single-cell-experiment_2026-07-01.zip...
+## Downloading 96a5478a-32b4-4707-9ee8-295a174f5741_single-cell-experiment_2026-07-01.zip...
 ```
 
 ```
-## Unzipping to scpca_data/57cc78cb-2336-446a-9022-7a5a5f2f17af_single-cell-experiment_2026-07-01...
+## Unzipping to scpca_data/96a5478a-32b4-4707-9ee8-295a174f5741_single-cell-experiment_2026-07-01...
 ```
 ### Custom dataset download file structure
 
