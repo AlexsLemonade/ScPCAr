@@ -187,7 +187,7 @@ There are two main ways for downloading data from the ScPCA Portal using `ScPCAr
 
 We will start with project downloads first, as they are a bit simpler, though less flexible. 
 
-## Downloading a project as SingleCellExperiment objects
+## Downloading a project in SingleCellExperiment format
 
 We will use the `download_project()` function, specifying the project ID, desired destination directory, and the file format.
 We also have the option to download a merged object with all samples contained in a single object instead of as individual objects.
@@ -236,7 +236,7 @@ scpca_data
 Note that the `library_id` and `sample_id` often have different numbers, as a single sample may have been sequenced across multiple libraries.
 For details about the contents of these files, see the [ScPCA Portal documentation](https://scpca.readthedocs.io/en/stable/download_files.html#project-downloads).
 
-## Downloading projects in AnnData/H5AD format
+## Downloading a project in AnnData/H5AD format
 
 `ScPCAr` also supports downloading data in AnnData (H5AD) format, which is commonly used in Python-based single-cell analysis workflows:
 
